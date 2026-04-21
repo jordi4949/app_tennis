@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Partidos</title>
+</head>
+<body>
+    <h1>Gestión de partidos</h1>
+
+    <h2>Añadir partido</h2>
+
+    <form action="/partidos" method="post">
+        <label for="torneo_id">Torneo:</label><br>
+        <select name="torneo_id" id="torneo_id" required>
+            <option value="">-- Selecciona un torneo --</option>
+            {% for torneo in torneos %}
+                <option value="{{ torneo[0] }}">
+                    {{ torneo[1] }} - {{ torneo[2] }} - {{ torneo[3] }} - {{ torneo[4] }}
+                </option>
+            {% endfor %}
+        </select>
+        <br><br>
+
+        <label for="fecha_partido">Fecha del partido:</label><br>
+        <input type="date" id="fecha_partido" name="fecha_partido" required>
+        <br><br>
+
+        <label for="jugador1_id">Jugador 1:</label><br>
+        <select name="jugador1_id" id="jugador1_id" required>
+            <option value="">-- Selecciona jugador 1 --</option>
+            {% for jugador in jugadores %}
+                <option value="{{ jugador[0] }}">
+                    {{ jugador[1] }} {{ jugador[2] }} {{ jugador[3] or '' }}
+                </option>
+            {% endfor %}
+        </select>
+        <br><br>
+
+        <label for="jugador2_id">Jugador 2:</label><br>
+        <select name="jugador2_id" id="jugador2_id" required>
+            <option value="">-- Selecciona jugador 2 --</option>
+            {% for jugador in jugadores %}
+                <option value="{{ jugador[0] }}">
+                    {{ jugador[1] }} {{ jugador[2] }} {{ jugador[3] or '' }}
+                </option>
+            {% endfor %}
+        </select>
+        <br><br>
+
+        <label for="ganador_id">Ganador:</label><br>
+        <select name="ganador_id" id="ganador_id" required>
+            <option value="">-- Selecciona ganador --</option>
+            {% for jugador in jugadores %}
+                <option value="{{ jugador[0] }}">
+                    {{ jugador[1] }} {{ jugador[2] }} {{ jugador[3] or '' }}
+                </option>
+            {% endfor %}
+        </select>
+        <br><br>
+
+        <label for="ronda">Ronda:</label><br>
+        <input type="text" id="ronda" name="ronda" placeholder="Ej: Cuartos, Semifinal, Final" required>
+        <br><br>
+
+        <label for="resultado">Resultado:</label><br>
+        <input type="text" id="resultado" name="resultado" placeholder="Ej: 6-4 6-3" required>
+        <br><br>
+
+        <button type="submit">Guardar partido</button>
+    </form>
+
+    <hr>
+
+    <h2>Lista de partidos</h2>
+
+    <table border="1" cellpadding="5">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Torneo</th>
+                <th>Fecha</th>
+                <th>Jugador 1</th>
+                <th>Jugador 2</th>
+                <th>Ganador</th>
+                <th>Ronda</th>
+                <th>Resultado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for partido in partidos %}
+            <tr>
+                <td>{{ partido[0] }}</td>
+                <td>{{ partido[1] }}</td>
+                <td>{{ partido[2] }}</td>
+                <td>{{ partido[3] }}</td>
+                <td>{{ partido[4] }}</td>
+                <td>{{ partido[5] if partido[5] else '' }}</td>
+                <td>{{ partido[6] }}</td>
+                <td>{{ partido[7] if partido[7] else '' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <br>
+    <a href="/">Volver al inicio</a>
+</body>
+</html>

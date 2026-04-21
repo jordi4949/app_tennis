@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Jugadores</title>
+</head>
+<body>
+    <h1>Jugadores</h1>
+
+    <form method="post" action="/jugadores">
+        <div>
+            <label>Nombre:</label>
+            <input type="text" name="nombre" required>
+        </div>
+
+        <div>
+            <label>Apellido 1:</label>
+            <input type="text" name="apellido1" required>
+        </div>
+
+        <div>
+            <label>Apellido 2:</label>
+            <input type="text" name="apellido2">
+        </div>
+
+        <div>
+            <label>Club:</label>
+            <input type="text" name="club">
+        </div>
+
+        <div>
+            <label>Año nacimiento:</label>
+            <input type="number" name="ano_nacimiento" min="1900" max="2100" required>
+        </div>
+
+        <br>
+        <button type="submit">Guardar jugador</button>
+    </form>
+
+    <h2>Jugadores guardados</h2>
+
+    <table border="1" cellpadding="5">
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Apellido 1</th>
+            <th>Apellido 2</th>
+            <th>Club</th>
+            <th>Año</th>
+        </tr>
+
+        {% for jugador in jugadores %}
+        <tr>
+            <td>{{ jugador[0] }}</td>
+            <td>{{ jugador[1] }}</td>
+            <td>{{ jugador[2] }}</td>
+            <td>{{ jugador[3] }}</td>
+            <td>{{ jugador[4] }}</td>
+            <td>{{ jugador[5] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <br>
+    <a href="/">Volver</a>
+</body>
+</html>

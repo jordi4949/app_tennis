@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Sets</title>
+</head>
+<body>
+    <h1>Gestión de Sets</h1>
+
+    <form method="post" action="/sets">
+        <label for="partido_id">Partido:</label>
+        <select name="partido_id" required>
+            {% for partido in partidos %}
+                <option value="{{ partido[0] }}">
+    {{ partido[1] }} {{ partido[2] }} vs {{ partido[3] }} {{ partido[4] }}
+    - ganador: {{ partido[8] }} {{ partido[9] }}
+    - {{ partido[6] }}
+    - {{ partido[7] }}
+    {% if partido[5] %} ({{ partido[5] }}) {% endif %}
+</option>
+    {% endfor %}
+</select>
+        <br><br>
+
+        <label for="numero_set">Número de set:</label>
+        <select name="numero_set" required>
+            <option value="1">1er set</option>
+            <option value="2">2º set</option>
+        </select>
+        <br><br>
+
+        <label for="juegos_jugador1">Juegos jugador 1:</label>
+        <input type="number" name="juegos_jugador1" required>
+        <br><br>
+
+        <label for="juegos_jugador2">Juegos jugador 2:</label>
+        <input type="number" name="juegos_jugador2" required>
+        <br><br>
+
+        <label for="tiebreak_jugador1">Tiebreak jugador 1:</label>
+        <input type="number" name="tiebreak_jugador1">
+        <br><br>
+
+        <label for="tiebreak_jugador2">Tiebreak jugador 2:</label>
+        <input type="number" name="tiebreak_jugador2">
+        <br><br>
+
+        <label for="tipo_set">Tipo de set:</label>
+        <select name="tipo_set" required>
+            <option value="1">Set normal</option>
+            <option value="2">Set con tiebreak</option>
+            <option value="3">Super tiebreak</option>
+        </select>
+        <br><br>
+
+        <button type="submit">Guardar set</button>
+    </form>
+
+    <hr>
+
+    <h2>Lista de sets</h2>
+
+    <table border="1" cellpadding="5">
+        <tr>
+            <th>ID</th>
+            <th>Partido ID</th>
+            <th>Número set</th>
+            <th>Juegos J1</th>
+            <th>Juegos J2</th>
+            <th>Tiebreak J1</th>
+            <th>Tiebreak J2</th>
+            <th>Tipo set</th>
+        </tr>
+
+        {% for s in sets %}
+        <tr>
+            <td>{{ s[0] }}</td>
+            <td>{{ s[1] }}</td>
+            <td>{{ s[2] }}</td>
+            <td>{{ s[3] }}</td>
+            <td>{{ s[4] }}</td>
+            <td>{{ s[5] }}</td>
+            <td>{{ s[6] }}</td>
+            <td>{{ s[7] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <br>
+    <a href="/">Volver al inicio</a>
+</body>
+</html>

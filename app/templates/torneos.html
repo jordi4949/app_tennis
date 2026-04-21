@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Torneos</title>
+</head>
+<body>
+    <h1>Torneos</h1>
+
+    <p><a href="/">Inicio</a> | <a href="/jugadores">Jugadores</a></p>
+
+    <h2>Nuevo torneo</h2>
+
+    <form method="post" action="/torneos">
+        <label>Nombre:</label>
+        <input type="text" name="nombre" required>
+        <br><br>
+
+        <label>Fecha inicio:</label>
+        <input type="date" name="fecha_inicio" required>
+        <br><br>
+
+        <label>Categoría:</label>
+        <input type="text" name="categoria" required>
+        <br><br>
+
+        <label>Ubicación:</label>
+        <input type="text" name="ubicacion" required>
+        <br><br>
+
+        <button type="submit">Guardar torneo</button>
+    </form>
+
+    <h2>Lista de torneos</h2>
+
+    <table border="1" cellpadding="8">
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Fecha inicio</th>
+            <th>Categoría</th>
+            <th>Ubicación</th>
+        </tr>
+
+        {% for torneo in torneos %}
+        <tr>
+            <td>{{ torneo[0] }}</td>
+            <td>{{ torneo[1] }}</td>
+            <td>{{ torneo[2] }}</td>
+            <td>{{ torneo[3] }}</td>
+            <td>{{ torneo[4] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
