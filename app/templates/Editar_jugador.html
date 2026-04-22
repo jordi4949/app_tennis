@@ -1,0 +1,32 @@
+<h1>Editar jugador</h1>
+
+<form action="/jugadores/editar/{{ jugador[0] }}" method="post">
+    <label>Nombre:</label>
+    <input type="text" name="nombre" value="{{ jugador[1] }}" required>
+    <br><br>
+
+    <label>Apellido 1:</label>
+    <input type="text" name="apellido1" value="{{ jugador[2] }}" required>
+    <br><br>
+
+    <label>Apellido 2:</label>
+    <input type="text" name="apellido2" value="{{ jugador[3] }}">
+    <br><br>
+
+    <label>Club:</label>
+    <input type="text" name="club" value="{{ jugador[4] }}">
+    <br><br>
+
+    <label>Año nacimiento:</label>
+    <input type="number" name="ano_nacimiento" value="{{ jugador[5] }}" required>
+    <br><br>
+
+    <label>Número licencia:</label>
+    <input type="text" name="numero_licencia" value="{{ jugador[6] }}">
+    <br><br>
+
+    <button type="submit">Guardar cambios</button>
+</form>
+
+<br>
+<a href="/jugadores">Cancelar y volver</a>

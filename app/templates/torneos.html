@@ -3,54 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <title>Torneos</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-image: url('/static/tennis.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .overlay {
+            min-height: 100vh;
+            background: rgba(0, 0, 0, 0.45);
+            padding: 30px 20px;
+        }
+
+        .contenedor {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .tarjeta {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 18px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+            padding: 28px;
+            margin-bottom: 24px;
+        }
+
+        h1, h2 {
+            margin-top: 0;
+            color: #1f2937;
+        }
+
+        .texto-suave {
+            color: #4b5563;
+            margin-bottom: 18px;
+        }
+
+        .grid-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .campo label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .campo input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .fila-botones {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 18px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-secundario {
+            background: #6b7280;
+        }
+
+        .btn-secundario:hover {
+            background: #4b5563;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        th {
+            background: #eaf1ff;
+        }
+
+        tr:hover td {
+            background: #f8fafc;
+        }
+    </style>
 </head>
+
 <body>
-    <h1>Torneos</h1>
+    <div class="overlay">
+        <div class="contenedor">
 
-    <p><a href="/">Inicio</a> | <a href="/jugadores">Jugadores</a></p>
+            <div class="tarjeta">
+                <h1>Torneos</h1>
+                <p class="texto-suave">Crear nuevo torneo</p>
 
-    <h2>Nuevo torneo</h2>
+                <form method="post" action="/torneos">
+                    <div class="grid-form">
 
-    <form method="post" action="/torneos">
-        <label>Nombre:</label>
-        <input type="text" name="nombre" required>
-        <br><br>
+                        <div class="campo">
+                            <label>Nombre:</label>
+                            <input type="text" name="nombre" required>
+                        </div>
 
-        <label>Fecha inicio:</label>
-        <input type="date" name="fecha_inicio" required>
-        <br><br>
+                        <div class="campo">
+                            <label>Fecha inicio:</label>
+                            <input type="date" name="fecha_inicio" required>
+                        </div>
 
-        <label>Categoría:</label>
-        <input type="text" name="categoria" required>
-        <br><br>
+                        <div class="campo">
+                            <label>Categoría:</label>
+                            <input type="text" name="categoria" required>
+                        </div>
 
-        <label>Ubicación:</label>
-        <input type="text" name="ubicacion" required>
-        <br><br>
+                        <div class="campo">
+                            <label>Ubicación:</label>
+                            <input type="text" name="ubicacion" required>
+                        </div>
 
-        <button type="submit">Guardar torneo</button>
-    </form>
+                    </div>
 
-    <h2>Lista de torneos</h2>
+                    <div class="fila-botones">
+                        <button type="submit" class="btn">Guardar torneo</button>
+                        <a href="/" class="btn btn-secundario">Volver</a>
+                    </div>
+                </form>
+            </div>
 
-    <table border="1" cellpadding="8">
-        <tr>
-            <th>ID</th>
-            <th>Nombre</th>
-            <th>Fecha inicio</th>
-            <th>Categoría</th>
-            <th>Ubicación</th>
-        </tr>
+            <div class="tarjeta">
+                <h2>Lista de torneos</h2>
+                <p class="texto-suave">Torneos registrados</p>
 
-        {% for torneo in torneos %}
-        <tr>
-            <td>{{ torneo[0] }}</td>
-            <td>{{ torneo[1] }}</td>
-            <td>{{ torneo[2] }}</td>
-            <td>{{ torneo[3] }}</td>
-            <td>{{ torneo[4] }}</td>
-        </tr>
-        {% endfor %}
-    </table>
+                <table>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Fecha inicio</th>
+                        <th>Categoría</th>
+                        <th>Ubicación</th>
+                    </tr>
+
+                    {% for torneo in torneos %}
+                    <tr>
+                        <td>{{ torneo[1] }}</td>
+                        <td>{{ torneo[2] }}</td>
+                        <td>{{ torneo[3] }}</td>
+                        <td>{{ torneo[4] }}</td>
+                    </tr>
+                    {% endfor %}
+
+                </table>
+            </div>
+
+        </div>
+    </div>
 </body>
 </html>
