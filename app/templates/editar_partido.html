@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Partidos</title>
+    <title>Editar partido</title>
     <style>
         body {
             margin: 0;
@@ -20,7 +20,7 @@
         }
 
         .contenedor {
-            max-width: 1200px;
+            max-width: 900px;
             margin: 0 auto;
         }
 
@@ -32,7 +32,7 @@
             margin-bottom: 24px;
         }
 
-        h1, h2 {
+        h1 {
             margin-top: 0;
             color: #1f2937;
         }
@@ -98,92 +98,23 @@
         .btn-secundario:hover {
             background: #4b5563;
         }
-
-        .tabla-contenedor {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        th, td {
-            padding: 12px 10px;
-            border-bottom: 1px solid #e5e7eb;
-            text-align: left;
-        }
-
-        th {
-            background: #eaf1ff;
-            color: #1f2937;
-        }
-
-        tr:hover td {
-            background: #f8fafc;
-        }
-
-         .no-wrap {
-        white-space: nowrap;
-    }
-
-    .acciones {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.btn-editar {
-    background-color: orange;
-    color: white;
-    padding: 8px 12px;
-    text-decoration: none;
-    border-radius: 8px;
-    font-weight: bold;
-    display: inline-block;
-}
-
-.btn-editar:hover {
-    background-color: darkorange;
-}
-
-.btn-borrar {
-    background-color: red;
-    color: white;
-    padding: 8px 12px;
-    border: none;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.btn-borrar:hover {
-    background-color: darkred;
-}
     </style>
 </head>
 <body>
     <div class="overlay">
         <div class="contenedor">
-
             <div class="tarjeta">
-                <h1>Partidos</h1>
-                <p class="texto-suave">Añadir nuevo partido</p>
+                <h1>Editar partido</h1>
+                <p class="texto-suave">Modifica los datos del partido</p>
 
-                <form action="/partidos" method="post">
+                <form action="/partidos/editar/{{ partido[0] }}" method="post">
                     <div class="grid-form">
 
                         <div class="campo">
                             <label for="torneo_id">Torneo:</label>
                             <select name="torneo_id" id="torneo_id" required>
-                                <option value="">-- Selecciona un torneo --</option>
                                 {% for torneo in torneos %}
-                                    <option value="{{ torneo[0] }}">
+                                    <option value="{{ torneo[0] }}" {% if torneo[0] == partido[1] %}selected{% endif %}>
                                         {{ torneo[1] }} - {{ torneo[2] }} - {{ torneo[3] }} - {{ torneo[4] }}
                                     </option>
                                 {% endfor %}
@@ -192,15 +123,14 @@
 
                         <div class="campo">
                             <label for="fecha_partido">Fecha del partido:</label>
-                            <input type="date" id="fecha_partido" name="fecha_partido" required>
+                            <input type="date" id="fecha_partido" name="fecha_partido" value="{{ partido[2].strftime('%Y-%m-%d') }}" required>
                         </div>
 
                         <div class="campo">
                             <label for="jugador1_id">Jugador 1:</label>
                             <select name="jugador1_id" id="jugador1_id" required>
-                                <option value="">-- Selecciona jugador 1 --</option>
                                 {% for jugador in jugadores %}
-                                    <option value="{{ jugador[0] }}">
+                                    <option value="{{ jugador[0] }}" {% if jugador[0] == partido[3] %}selected{% endif %}>
                                         {{ jugador[1] }} {{ jugador[2] }} {{ jugador[3] or '' }}
                                     </option>
                                 {% endfor %}
@@ -210,9 +140,8 @@
                         <div class="campo">
                             <label for="jugador2_id">Jugador 2:</label>
                             <select name="jugador2_id" id="jugador2_id" required>
-                                <option value="">-- Selecciona jugador 2 --</option>
                                 {% for jugador in jugadores %}
-                                    <option value="{{ jugador[0] }}">
+                                    <option value="{{ jugador[0] }}" {% if jugador[0] == partido[4] %}selected{% endif %}>
                                         {{ jugador[1] }} {{ jugador[2] }} {{ jugador[3] or '' }}
                                     </option>
                                 {% endfor %}
@@ -222,9 +151,8 @@
                         <div class="campo">
                             <label for="ganador_id">Ganador:</label>
                             <select name="ganador_id" id="ganador_id" required>
-                                <option value="">-- Selecciona ganador --</option>
                                 {% for jugador in jugadores %}
-                                    <option value="{{ jugador[0] }}">
+                                    <option value="{{ jugador[0] }}" {% if jugador[0] == partido[5] %}selected{% endif %}>
                                         {{ jugador[1] }} {{ jugador[2] }} {{ jugador[3] or '' }}
                                     </option>
                                 {% endfor %}
@@ -233,70 +161,22 @@
 
                         <div class="campo">
                             <label for="ronda">Ronda:</label>
-                            <input type="text" id="ronda" name="ronda" placeholder="Ej: Cuartos, Semifinal, Final" required>
+                            <input type="text" id="ronda" name="ronda" value="{{ partido[6] }}" required>
                         </div>
 
                         <div class="campo">
                             <label for="resultado">Resultado:</label>
-                            <input type="text" id="resultado" name="resultado" placeholder="Ej: 6-4 6-3" required>
+                            <input type="text" id="resultado" name="resultado" value="{{ partido[7] }}" required>
                         </div>
 
                     </div>
 
                     <div class="fila-botones">
-                        <button type="submit" class="btn">Guardar partido</button>
-                        <a href="/" class="btn btn-secundario">Volver</a>
+                        <button type="submit" class="btn">Guardar cambios</button>
+                        <a href="/partidos" class="btn btn-secundario">Cancelar</a>
                     </div>
                 </form>
             </div>
-
-            <div class="tarjeta">
-                <h2>Lista de partidos</h2>
-                <p class="texto-suave">Partidos registrados actualmente.</p>
-
-                <div class="tabla-contenedor">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Torneo</th>
-                                <th class="no-wrap">Fecha</th>
-                                <th>Jugador 1</th>
-                                <th>Jugador 2</th>
-                                <th>Ganador</th>
-                                <th>Ronda</th>
-                                <th>Resultado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for partido in partidos %}
-                            <tr>
-                                <td>{{ partido[1] }}</td>
-                                <td class="no-wrap">{{ partido[6] }}</td>
-                                <td>{{ partido[2] }}</td>
-                                <td>{{ partido[3] }}</td>
-                                <td>{{ partido[4] if partido[4] else '' }}</td>
-                                <td>{{ partido[5] }}</td>
-                                <td>{{ partido[7] if partido[7] else '' }}</td>
-                                <td>
-                                    <div class="acciones">
-                                        <a href="/partidos/editar/{{ partido[0] }}" class="btn-editar">Editar</a>
-
-                                        <form action="/partidos/borrar/{{ partido[0] }}" method="post" style="display:inline;">
-                                            <button type="submit" class="btn-borrar"
-                                                onclick="return confirm('¿Seguro que quieres borrar este partido?')">
-                                                Borrar
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
         </div>
     </div>
 </body>

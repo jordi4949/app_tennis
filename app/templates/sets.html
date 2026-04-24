@@ -135,6 +135,42 @@
         .no-wrap {
             white-space: nowrap;
         }
+
+        .acciones {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.btn-editar {
+    background-color: orange;
+    color: white;
+    padding: 8px 12px;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+.btn-editar:hover {
+    background-color: darkorange;
+}
+
+.btn-borrar {
+    background-color: red;
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-borrar:hover {
+    background-color: darkred;
+}
     </style>
 </head>
 <body>
@@ -151,7 +187,7 @@
                     <div class="campo campo-ancho-completo">
                         <label for="partido_id">Partido:</label>
                         <select name="partido_id" id="partido_id" required>
-                            option value="">-- Selecciona un partido --</option>
+                            <option value="">-- Selecciona un partido --</option>
                             {% for partido in partidos %}
                             <option value="{{ partido[0] }}"
                                     data-j1="{{ partido[1] }} {{ partido[2] }}"
@@ -220,6 +256,7 @@
                 <div class="tabla-contenedor">
                     <table>
                         <tr>
+                            
                             <th class="no-wrap">Partido</th>
                             <th class="no-wrap">Ganador</th>
                             <th class="no-wrap">Ronda</th>
@@ -228,8 +265,10 @@
                             <th class="no-wrap">TB ganador</th>
                             <th class="no-wrap">TB rival</th>
                             <th class="no-wrap">Tipo</th>
-                        </tr>
+                            <th class="no-wrap">Acciones</th>
 
+                            
+                        </tr>
                         {% for s in sets %}
                         <tr>
                             <td>{{ s.partido }}</td>
@@ -240,8 +279,21 @@
                             <td class="no-wrap">{{ s.tiebreak_ganador }}</td>
                             <td class="no-wrap">{{ s.tiebreak_rival }}</td>
                             <td class="no-wrap">{{ s.tipo_set }}</td>
+                            <td>
+                                <div class="acciones">
+                                    <a href="/sets/editar/{{ s.id }}" class="btn-editar">Editar</a>
+
+                                    <form action="/sets/borrar/{{ s.id }}" method="post" style="display:inline;">
+                                        <button type="submit" class="btn-borrar"
+                                            onclick="return confirm('¿Seguro que quieres borrar este set?')">
+                                            Borrar
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
                         </tr>
                         {% endfor %}
+                        
                     </table>
                 </div>
             </div>

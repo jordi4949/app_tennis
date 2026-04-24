@@ -26,15 +26,16 @@ def ver_jugadores(request: Request, buscar: str = ""):
     texto_busqueda = f"%{buscar.strip()}%"
 
     cur.execute("""
-        SELECT id, nombre, apellido1, apellido2, club, ano_nacimiento
+        SELECT id, nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia
         FROM jugadores
         WHERE
             nombre ILIKE %s
             OR apellido1 ILIKE %s
             OR COALESCE(apellido2, '') ILIKE %s
             OR club ILIKE %s
+            OR COALESCE(numero_licencia, '') ILIKE %s
         ORDER BY apellido1, apellido2, nombre
-    """, (texto_busqueda, texto_busqueda, texto_busqueda, texto_busqueda))
+    """, (texto_busqueda, texto_busqueda, texto_busqueda, texto_busqueda, texto_busqueda))
 
     jugadores = cur.fetchall()
 
@@ -66,7 +67,7 @@ def guardar_jugador(
 
     cur.execute("""
         INSERT INTO jugadores (nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia)
-        VALUES (%s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s)
     """, (nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia))
 
     conn.commit()
@@ -194,6 +195,75 @@ def guardar_torneo(
     conn.close()
 
     return RedirectResponse(url="/torneos", status_code=303)
+@app.get("/torneos/editar/{torneo_id}", response_class=HTMLResponse)
+def editar_torneo_form(request: Request, torneo_id: int):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT id, nombre, fecha_inicio, categoria, ubicacion
+        FROM torneos
+        WHERE id = %s
+    """, (torneo_id,))
+
+    torneo = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    if not torneo:
+        return RedirectResponse(url="/torneos", status_code=303)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="editar_torneo.html",
+        context={
+            "request": request,
+            "torneo": torneo
+        }
+    )
+
+
+@app.post("/torneos/editar/{torneo_id}")
+def actualizar_torneo(
+    torneo_id: int,
+    nombre: str = Form(...),
+    fecha_inicio: str = Form(...),
+    categoria: str = Form(...),
+    ubicacion: str = Form(...)
+):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        UPDATE torneos
+        SET nombre = %s,
+            fecha_inicio = %s,
+            categoria = %s,
+            ubicacion = %s
+        WHERE id = %s
+    """, (nombre, fecha_inicio, categoria, ubicacion, torneo_id))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return RedirectResponse(url="/torneos", status_code=303)
+
+
+@app.post("/torneos/borrar/{torneo_id}")
+def borrar_torneo(torneo_id: int):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("DELETE FROM torneos WHERE id = %s", (torneo_id,))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return RedirectResponse(url="/torneos", status_code=303)
+
 @app.get("/partidos", response_class=HTMLResponse)
 def ver_partidos(request: Request):
     conn = get_connection()
@@ -285,6 +355,96 @@ def guardar_partido(
         ronda,
         resultado
     ))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return RedirectResponse(url="/partidos", status_code=303)
+
+@app.get("/partidos/editar/{partido_id}", response_class=HTMLResponse)
+def editar_partido_form(request: Request, partido_id: int):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT id, nombre, fecha_inicio, categoria, ubicacion
+        FROM torneos
+        ORDER BY id
+    """)
+    torneos = cur.fetchall()
+
+    cur.execute("""
+        SELECT id, nombre, apellido1, apellido2
+        FROM jugadores
+        ORDER BY apellido1, apellido2, nombre
+    """)
+    jugadores = cur.fetchall()
+
+    cur.execute("""
+        SELECT id, torneo_id, fecha_partido, jugador1_id, jugador2_id, ganador_id, ronda, resultado
+        FROM partidos
+        WHERE id = %s
+    """, (partido_id,))
+    partido = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    if not partido:
+        return RedirectResponse(url="/partidos", status_code=303)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="editar_partido.html",
+        context={
+            "request": request,
+            "partido": partido,
+            "torneos": torneos,
+            "jugadores": jugadores
+        }
+    )
+
+
+@app.post("/partidos/editar/{partido_id}")
+def actualizar_partido(
+    partido_id: int,
+    torneo_id: int = Form(...),
+    fecha_partido: str = Form(...),
+    jugador1_id: int = Form(...),
+    jugador2_id: int = Form(...),
+    ganador_id: int = Form(...),
+    ronda: str = Form(...),
+    resultado: str = Form(...)
+):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        UPDATE partidos
+        SET torneo_id = %s,
+            fecha_partido = %s,
+            jugador1_id = %s,
+            jugador2_id = %s,
+            ganador_id = %s,
+            ronda = %s,
+            resultado = %s
+        WHERE id = %s
+    """, (torneo_id, fecha_partido, jugador1_id, jugador2_id, ganador_id, ronda, resultado, partido_id))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return RedirectResponse(url="/partidos", status_code=303)
+
+
+@app.post("/partidos/borrar/{partido_id}")
+def borrar_partido(partido_id: int):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("DELETE FROM partidos WHERE id = %s", (partido_id,))
 
     conn.commit()
     cur.close()
@@ -462,6 +622,113 @@ def guardar_set(
         tiebreak_jugador2,
         tipo_set
     ))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return RedirectResponse(url="/sets", status_code=303)
+
+@app.get("/sets/editar/{set_id}", response_class=HTMLResponse)
+def editar_set_form(request: Request, set_id: int):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT
+            p.id,
+            j1.nombre || ' ' || j1.apellido1 || ' ' || COALESCE(j1.apellido2, '') AS jugador1,
+            j2.nombre || ' ' || j2.apellido1 || ' ' || COALESCE(j2.apellido2, '') AS jugador2,
+            p.resultado,
+            p.ronda,
+            p.fecha_partido
+        FROM partidos p
+        JOIN jugadores j1 ON p.jugador1_id = j1.id
+        JOIN jugadores j2 ON p.jugador2_id = j2.id
+        ORDER BY p.fecha_partido, p.id
+    """)
+    partidos = cur.fetchall()
+
+    cur.execute("""
+        SELECT
+            id,
+            partido_id,
+            numero_set,
+            juegos_jugador1,
+            juegos_jugador2,
+            COALESCE(tiebreak_jugador1, 0),
+            COALESCE(tiebreak_jugador2, 0),
+            tipo_set
+        FROM sets
+        WHERE id = %s
+    """, (set_id,))
+    set_item = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    if not set_item:
+        return RedirectResponse(url="/sets", status_code=303)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="editar_set.html",
+        context={
+            "request": request,
+            "set_item": set_item,
+            "partidos": partidos
+        }
+    )
+
+
+@app.post("/sets/editar/{set_id}")
+def actualizar_set(
+    set_id: int,
+    partido_id: int = Form(...),
+    numero_set: int = Form(...),
+    juegos_jugador1: int = Form(...),
+    juegos_jugador2: int = Form(...),
+    tiebreak_jugador1: int = Form(0),
+    tiebreak_jugador2: int = Form(0),
+    tipo_set: int = Form(...)
+):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        UPDATE sets
+        SET partido_id = %s,
+            numero_set = %s,
+            juegos_jugador1 = %s,
+            juegos_jugador2 = %s,
+            tiebreak_jugador1 = %s,
+            tiebreak_jugador2 = %s,
+            tipo_set = %s
+        WHERE id = %s
+    """, (
+        partido_id,
+        numero_set,
+        juegos_jugador1,
+        juegos_jugador2,
+        tiebreak_jugador1,
+        tiebreak_jugador2,
+        tipo_set,
+        set_id
+    ))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return RedirectResponse(url="/sets", status_code=303)
+
+
+@app.post("/sets/borrar/{set_id}")
+def borrar_set(set_id: int):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("DELETE FROM sets WHERE id = %s", (set_id,))
 
     conn.commit()
     cur.close()

@@ -111,6 +111,40 @@
         tr:hover td {
             background: #f8fafc;
         }
+        .acciones {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+}
+
+.btn-editar {
+    background-color: orange;
+    color: white;
+    padding: 8px 12px;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+.btn-editar:hover {
+    background-color: darkorange;
+}
+
+.btn-borrar {
+    background-color: red;
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-borrar:hover {
+    background-color: darkred;
+}
     </style>
 </head>
 
@@ -164,6 +198,7 @@
                         <th>Fecha inicio</th>
                         <th>Categoría</th>
                         <th>Ubicación</th>
+                        <th>Acciones</th>
                     </tr>
 
                     {% for torneo in torneos %}
@@ -172,8 +207,25 @@
                         <td>{{ torneo[2] }}</td>
                         <td>{{ torneo[3] }}</td>
                         <td>{{ torneo[4] }}</td>
+                        <td>
+                            <div class="acciones">
+                                <a href="/torneos/editar/{{ torneo[0] }}" class="btn-editar">Editar</a>
+
+                                <form action="/torneos/borrar/{{ torneo[0] }}" method="post" style="display:inline;">
+                                    <button type="submit" class="btn-borrar"
+                                            onclick="return confirm('¿Seguro que quieres borrar este torneo?')">
+                                        Borrar
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
                     </tr>
                     {% endfor %}
+                        
+                        
+                        
+                    
+                    
 
                 </table>
             </div>
