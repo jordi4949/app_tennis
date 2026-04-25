@@ -1,25 +1,41 @@
-from fastapi import FastAPI, Request, Form
+from fastapi import FastAPI, Request, Form, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+import secrets
 
 from app.database import get_connection
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="app/Static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
+security = HTTPBasic()
+
+def comprobar_admin(credentials: HTTPBasicCredentials = Depends(security)):
+    usuario_correcto = secrets.compare_digest(credentials.username, "admin")
+    password_correcto = secrets.compare_digest(credentials.password, "Jordi_Eduard")
+
+    if not (usuario_correcto and password_correcto):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No autorizado",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+
+    return credentials.username
 
 @app.get("/", response_class=HTMLResponse)
-def inicio(request: Request):
+def inicio(request: Request, admin: str = Depends(comprobar_admin)):
     return templates.TemplateResponse(
         request=request,
         name="index.html",
         context={"request": request}
     )
 
-
 @app.get("/jugadores", response_class=HTMLResponse)
-def ver_jugadores(request: Request, buscar: str = ""):
+def jugadores(request: Request, admin: str = Depends(comprobar_admin)):
+
     conn = get_connection()
     cur = conn.cursor()
 
@@ -60,7 +76,8 @@ def guardar_jugador(
     apellido2: str = Form(""),
     club: str = Form(""),
     ano_nacimiento: int = Form(...),
-    numero_licencia: str = Form("")
+    numero_licencia: str = Form(""),
+    admin: str = Depends(comprobar_admin)
 ):
     conn = get_connection()
     cur = conn.cursor()
@@ -78,7 +95,9 @@ def guardar_jugador(
     return RedirectResponse(url="/jugadores", status_code=303)
 
 @app.get("/jugadores/editar/{jugador_id}", response_class=HTMLResponse)
-def editar_jugador_form(request: Request, jugador_id: int):
+def editar_jugador_form(request: Request, jugador_id: int,
+admin: str = Depends(comprobar_admin) 
+):
     conn = get_connection()
     cur = conn.cursor()
 
@@ -113,7 +132,8 @@ def actualizar_jugador(
     apellido2: str = Form(""),
     club: str = Form(""),
     ano_nacimiento: int = Form(...),
-    numero_licencia: str = Form("")
+    numero_licencia: str = Form(""),
+    admin: str = Depends(comprobar_admin)
 ):
     conn = get_connection()
     cur = conn.cursor()
@@ -137,7 +157,9 @@ def actualizar_jugador(
 
 
 @app.post("/jugadores/borrar/{jugador_id}")
-def borrar_jugador(jugador_id: int):
+def borrar_jugador(jugador_id: int,
+      admin: str = Depends(comprobar_admin)            
+):
     conn = get_connection()
     cur = conn.cursor()
 
@@ -150,7 +172,7 @@ def borrar_jugador(jugador_id: int):
     return RedirectResponse(url="/jugadores", status_code=303)
 
 @app.get("/torneos", response_class=HTMLResponse)
-def ver_torneos(request: Request):
+def ver_torneos(request: Request, admin: str = Depends(comprobar_admin)):
     conn = get_connection()
     cur = conn.cursor()
 
@@ -179,7 +201,8 @@ def guardar_torneo(
     nombre: str = Form(...),
     fecha_inicio: str = Form(...),
     categoria: str = Form(...),
-    ubicacion: str = Form(...)
+    ubicacion: str = Form(...),
+    admin: str = Depends(comprobar_admin),
 ):
     conn = get_connection()
     cur = conn.cursor()
@@ -196,7 +219,9 @@ def guardar_torneo(
 
     return RedirectResponse(url="/torneos", status_code=303)
 @app.get("/torneos/editar/{torneo_id}", response_class=HTMLResponse)
-def editar_torneo_form(request: Request, torneo_id: int):
+def editar_torneo_form(request: Request, torneo_id: int,
+admin: str = Depends(comprobar_admin)
+):
     conn = get_connection()
     cur = conn.cursor()
 
@@ -230,7 +255,8 @@ def actualizar_torneo(
     nombre: str = Form(...),
     fecha_inicio: str = Form(...),
     categoria: str = Form(...),
-    ubicacion: str = Form(...)
+    ubicacion: str = Form(...),
+    admin: str = Depends(comprobar_admin)
 ):
     conn = get_connection()
     cur = conn.cursor()
@@ -252,7 +278,9 @@ def actualizar_torneo(
 
 
 @app.post("/torneos/borrar/{torneo_id}")
-def borrar_torneo(torneo_id: int):
+def borrar_torneo(torneo_id: int,
+admin: str = Depends(comprobar_admin)
+):
     conn = get_connection()
     cur = conn.cursor()
 
@@ -265,7 +293,7 @@ def borrar_torneo(torneo_id: int):
     return RedirectResponse(url="/torneos", status_code=303)
 
 @app.get("/partidos", response_class=HTMLResponse)
-def ver_partidos(request: Request):
+def ver_partidos(request: Request,admin: str = Depends(comprobar_admin)):
     conn = get_connection()
     cur = conn.cursor()
 
@@ -325,7 +353,8 @@ def guardar_partido(
     jugador2_id: int = Form(...),
     ganador_id: int = Form(...),
     ronda: str = Form(...),
-    resultado: str = Form(...)
+    resultado: str = Form(...),
+    admin: str = Depends(comprobar_admin)
 ):
     if jugador1_id == jugador2_id:
         return RedirectResponse(url="/partidos", status_code=303)
@@ -363,7 +392,9 @@ def guardar_partido(
     return RedirectResponse(url="/partidos", status_code=303)
 
 @app.get("/partidos/editar/{partido_id}", response_class=HTMLResponse)
-def editar_partido_form(request: Request, partido_id: int):
+def editar_partido_form(request: Request, partido_id: int,
+admin: str = Depends(comprobar_admin)
+):
     conn = get_connection()
     cur = conn.cursor()
 
@@ -415,7 +446,8 @@ def actualizar_partido(
     jugador2_id: int = Form(...),
     ganador_id: int = Form(...),
     ronda: str = Form(...),
-    resultado: str = Form(...)
+    resultado: str = Form(...),
+    admin: str = Depends(comprobar_admin)
 ):
     conn = get_connection()
     cur = conn.cursor()
@@ -440,7 +472,9 @@ def actualizar_partido(
 
 
 @app.post("/partidos/borrar/{partido_id}")
-def borrar_partido(partido_id: int):
+def borrar_partido(partido_id: int,
+admin: str = Depends(comprobar_admin)
+):
     conn = get_connection()
     cur = conn.cursor()
 
@@ -453,7 +487,9 @@ def borrar_partido(partido_id: int):
     return RedirectResponse(url="/partidos", status_code=303)
 
 @app.get("/sets", response_class=HTMLResponse)
-def ver_sets(request: Request):
+def ver_sets(request: Request,
+admin: str = Depends(comprobar_admin)
+):
     conn = get_connection()
     cur = conn.cursor()
 
@@ -584,7 +620,8 @@ def guardar_set(
     juegos_jugador2: int = Form(...),
     tiebreak_jugador1: int = Form(None),
     tiebreak_jugador2: int = Form(None),
-    tipo_set: int = Form(...)
+    tipo_set: int = Form(...),
+    admin: str = Depends(comprobar_admin)
 ):
     conn = get_connection()
     cur = conn.cursor()
@@ -630,7 +667,9 @@ def guardar_set(
     return RedirectResponse(url="/sets", status_code=303)
 
 @app.get("/sets/editar/{set_id}", response_class=HTMLResponse)
-def editar_set_form(request: Request, set_id: int):
+def editar_set_form(request: Request, set_id: int,
+admin: str = Depends(comprobar_admin)
+):
     conn = get_connection()
     cur = conn.cursor()
 
@@ -690,7 +729,8 @@ def actualizar_set(
     juegos_jugador2: int = Form(...),
     tiebreak_jugador1: int = Form(0),
     tiebreak_jugador2: int = Form(0),
-    tipo_set: int = Form(...)
+    tipo_set: int = Form(...),
+    admin: str = Depends(comprobar_admin)
 ):
     conn = get_connection()
     cur = conn.cursor()
@@ -724,7 +764,9 @@ def actualizar_set(
 
 
 @app.post("/sets/borrar/{set_id}")
-def borrar_set(set_id: int):
+def borrar_set(set_id: int,
+admin: str = Depends(comprobar_admin)
+):
     conn = get_connection()
     cur = conn.cursor()
 
