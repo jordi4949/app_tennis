@@ -3,32 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <title>Editar torneo</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-image: url('/static/tennis.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .overlay {
+            min-height: 100vh;
+            background: rgba(0, 0, 0, 0.45);
+            padding: 30px 20px;
+        }
+
+        .contenedor {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .tarjeta {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 18px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+            padding: 28px;
+        }
+
+        h1 {
+            margin-top: 0;
+            color: #1f2937;
+        }
+
+        .grid-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .campo label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #374151;
+        }
+
+        .campo input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .fila-botones {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 18px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-secundario {
+            background: #6b7280;
+        }
+
+        .btn-secundario:hover {
+            background: #4b5563;
+        }
+    </style>
 </head>
+
 <body>
-    <h1>Editar torneo</h1>
+    <div class="overlay">
+        <div class="contenedor">
 
-    <form method="post" action="/admin/torneos/editar/{{ torneo[0] }}">
-        <label>Nombre:</label>
-        <input type="text" name="nombre" value="{{ torneo[1] }}" required>
-        <br><br>
+            <div class="tarjeta">
+                <h1>Editar torneo</h1>
 
-        <label>Fecha inicio:</label>
-        <input type="date" name="fecha_inicio" value="{{ torneo[2].strftime('%Y-%m-%d') }}" required>
-        <br><br>
+                <form action="/admin/torneos/editar/{{ torneo[0] }}" method="post">
+                    <div class="grid-form">
 
-        <label>Categoría:</label>
-        <input type="text" name="categoria" value="{{ torneo[3] }}" required>
-        <br><br>
+                        <div class="campo">
+                            <label>Nombre:</label>
+                            <input type="text" name="nombre" value="{{ torneo[1] }}" required>
+                        </div>
 
-        <label>Ubicación:</label>
-        <input type="text" name="ubicacion" value="{{ torneo[4] }}" required>
-        <br><br>
+                        <div class="campo">
+                            <label>Fecha inicio:</label>
+                            <input type="date" name="fecha_inicio" value="{{ torneo[2] }}" required>
+                        </div>
 
-        <button type="submit" onclick="return confirm('¿Guardar cambios del torneo?')">
-            Guardar cambios
-        </button>
+                        <div class="campo">
+                            <label>Categoría:</label>
+                            <input type="text" name="categoria" value="{{ torneo[3] or '' }}">
+                        </div>
 
-        <a href="/admin/torneos">Cancelar</a>
-    </form>
+                        <div class="campo">
+                            <label>Ubicación:</label>
+                            <input type="text" name="ubicacion" value="{{ torneo[4] or '' }}">
+                        </div>
+
+                    </div>
+
+                    <div class="fila-botones">
+                        <button type="submit" class="btn">Guardar cambios</button>
+                        <a href="/admin/torneos" class="btn btn-secundario">Cancelar</a>
+                    </div>
+                </form>
+
+            </div>
+
+        </div>
+    </div>
 </body>
 </html>
