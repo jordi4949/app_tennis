@@ -7,7 +7,7 @@
 <body>
     <h1>Editar torneo</h1>
 
-    <form method="post" action="/torneos/editar/{{ torneo[0] }}">
+    <form method="post" action="/admin/torneos/editar/{{ torneo[0] }}">
         <label>Nombre:</label>
         <input type="text" name="nombre" value="{{ torneo[1] }}" required>
         <br><br>
@@ -28,7 +28,7 @@
             Guardar cambios
         </button>
 
-        <a href="/torneos">Cancelar</a>
+        <a href="/admin/torneos">Cancelar</a>
     </form>
 </body>
 </html>

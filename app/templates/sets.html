@@ -181,7 +181,7 @@
                 <h1>Sets</h1>
                 <p class="texto-suave">Añadir nuevo set</p>
 
-                <form method="post" action="/sets">
+                <form method="post" action="/admin/sets">
                     <div class="grid-form">
 
                     <div class="campo campo-ancho-completo">
@@ -281,9 +281,9 @@
                             <td class="no-wrap">{{ s.tipo_set }}</td>
                             <td>
                                 <div class="acciones">
-                                    <a href="/sets/editar/{{ s.id }}" class="btn-editar">Editar</a>
+                                    <a href="/admin/sets/editar/{{ s.id }}" class="btn-editar">Editar</a>
 
-                                    <form action="/sets/borrar/{{ s.id }}" method="post" style="display:inline;">
+                                    <form action="/admin/sets/borrar/{{ s.id }}" method="post" style="display:inline;">
                                         <button type="submit" class="btn-borrar"
                                             onclick="return confirm('¿Seguro que quieres borrar este set?')">
                                             Borrar

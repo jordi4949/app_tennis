@@ -175,7 +175,7 @@
                 <h1>Partidos</h1>
                 <p class="texto-suave">Añadir nuevo partido</p>
 
-                <form action="/partidos" method="post">
+                <form action="/admin/partidos" method="post">
                     <div class="grid-form">
 
                         <div class="campo">
@@ -280,9 +280,9 @@
                                 <td>{{ partido[7] if partido[7] else '' }}</td>
                                 <td>
                                     <div class="acciones">
-                                        <a href="/partidos/editar/{{ partido[0] }}" class="btn-editar">Editar</a>
+                                        <a href="/admin/partidos/editar/{{ partido[0] }}" class="btn-editar">Editar</a>
 
-                                        <form action="/partidos/borrar/{{ partido[0] }}" method="post" style="display:inline;">
+                                        <form action="/admin/partidos/borrar/{{ partido[0] }}" method="post" style="display:inline;">
                                             <button type="submit" class="btn-borrar"
                                                 onclick="return confirm('¿Seguro que quieres borrar este partido?')">
                                                 Borrar

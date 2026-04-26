@@ -176,7 +176,7 @@
                 <h1>Jugadores</h1>
                 <p class="texto-suave">Añadir nuevo jugador</p>
 
-                <form action="/jugadores" method="post">
+                <form action="/admin/jugadores" method="post">
                     <div class="grid-form">
                         <div class="campo">
                             <label>Nombre:</label>
@@ -242,11 +242,11 @@
                             <td>{{ jugador[6] }}</td>
                             <td>
                                 <div class="acciones">
-                                    <a href="/jugadores/editar/{{ jugador[0] }}" class="btn-editar">
+                                    <a href="/admin/jugadores/editar/{{ jugador[0] }}" class="btn-editar">
                                         Editar
                                     </a>
 
-                                    <form action="/jugadores/borrar/{{ jugador[0] }}" method="post" style="display:inline;">
+                                    <form action="/admin/jugadores/borrar/{{ jugador[0] }}" method="post" style="display:inline;">
                                         <button type="submit" class="btn-borrar"
                                             onclick="return confirm('¿Seguro que quieres borrar este jugador?')">
                                             Borrar

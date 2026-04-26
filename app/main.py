@@ -25,7 +25,7 @@ def comprobar_admin(credentials: HTTPBasicCredentials = Depends(security)):
 
     return credentials.username
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/admin", response_class=HTMLResponse)
 def inicio(request: Request, admin: str = Depends(comprobar_admin)):
     return templates.TemplateResponse(
         request=request,
@@ -33,7 +33,7 @@ def inicio(request: Request, admin: str = Depends(comprobar_admin)):
         context={"request": request}
     )
 
-@app.get("/jugadores", response_class=HTMLResponse)
+@app.get("/admin/jugadores", response_class=HTMLResponse)
 def jugadores(request: Request, admin: str = Depends(comprobar_admin)):
 
     conn = get_connection()
@@ -69,7 +69,7 @@ def jugadores(request: Request, admin: str = Depends(comprobar_admin)):
     )
 
 
-@app.post("/jugadores")
+@app.post("/admin/jugadores")
 def guardar_jugador(
     nombre: str = Form(...),
     apellido1: str = Form(...),
@@ -94,7 +94,7 @@ def guardar_jugador(
 
     return RedirectResponse(url="/jugadores", status_code=303)
 
-@app.get("/jugadores/editar/{jugador_id}", response_class=HTMLResponse)
+@app.get("/admin/jugadores/editar/{jugador_id}", response_class=HTMLResponse)
 def editar_jugador_form(request: Request, jugador_id: int,
 admin: str = Depends(comprobar_admin) 
 ):
@@ -112,7 +112,7 @@ admin: str = Depends(comprobar_admin)
     conn.close()
 
     if not jugador:
-        return RedirectResponse(url="/jugadores", status_code=303)
+        return RedirectResponse(url="/admin/jugadores", status_code=303)
 
     return templates.TemplateResponse(
         request=request,
@@ -124,7 +124,7 @@ admin: str = Depends(comprobar_admin)
     )
 
 
-@app.post("/jugadores/editar/{jugador_id}")
+@app.post("/admin/jugadores/editar/{jugador_id}")
 def actualizar_jugador(
     jugador_id: int,
     nombre: str = Form(...),
@@ -153,10 +153,10 @@ def actualizar_jugador(
     cur.close()
     conn.close()
 
-    return RedirectResponse(url="/jugadores", status_code=303)
+    return RedirectResponse(url="/admin/jugadores", status_code=303)
 
 
-@app.post("/jugadores/borrar/{jugador_id}")
+@app.post("/admin/jugadores/borrar/{jugador_id}")
 def borrar_jugador(jugador_id: int,
       admin: str = Depends(comprobar_admin)            
 ):
@@ -169,9 +169,9 @@ def borrar_jugador(jugador_id: int,
     cur.close()
     conn.close()
 
-    return RedirectResponse(url="/jugadores", status_code=303)
+    return RedirectResponse(url="/admin/jugadores", status_code=303)
 
-@app.get("/torneos", response_class=HTMLResponse)
+@app.get("/admin/torneos", response_class=HTMLResponse)
 def ver_torneos(request: Request, admin: str = Depends(comprobar_admin)):
     conn = get_connection()
     cur = conn.cursor()
@@ -196,7 +196,7 @@ def ver_torneos(request: Request, admin: str = Depends(comprobar_admin)):
     )
 
 
-@app.post("/torneos")
+@app.post("/admin/torneos")
 def guardar_torneo(
     nombre: str = Form(...),
     fecha_inicio: str = Form(...),
@@ -217,8 +217,8 @@ def guardar_torneo(
     cur.close()
     conn.close()
 
-    return RedirectResponse(url="/torneos", status_code=303)
-@app.get("/torneos/editar/{torneo_id}", response_class=HTMLResponse)
+    return RedirectResponse(url="/admin/torneos", status_code=303)
+@app.get("/admin/torneos/editar/{torneo_id}", response_class=HTMLResponse)
 def editar_torneo_form(request: Request, torneo_id: int,
 admin: str = Depends(comprobar_admin)
 ):
@@ -237,7 +237,7 @@ admin: str = Depends(comprobar_admin)
     conn.close()
 
     if not torneo:
-        return RedirectResponse(url="/torneos", status_code=303)
+        return RedirectResponse(url="/admin/torneos", status_code=303)
 
     return templates.TemplateResponse(
         request=request,
@@ -249,7 +249,7 @@ admin: str = Depends(comprobar_admin)
     )
 
 
-@app.post("/torneos/editar/{torneo_id}")
+@app.post("/admin/torneos/editar/{torneo_id}")
 def actualizar_torneo(
     torneo_id: int,
     nombre: str = Form(...),
@@ -277,7 +277,7 @@ def actualizar_torneo(
     return RedirectResponse(url="/torneos", status_code=303)
 
 
-@app.post("/torneos/borrar/{torneo_id}")
+@app.post("/admin/torneos/borrar/{torneo_id}")
 def borrar_torneo(torneo_id: int,
 admin: str = Depends(comprobar_admin)
 ):
@@ -290,9 +290,9 @@ admin: str = Depends(comprobar_admin)
     cur.close()
     conn.close()
 
-    return RedirectResponse(url="/torneos", status_code=303)
+    return RedirectResponse(url="/admin/torneos", status_code=303)
 
-@app.get("/partidos", response_class=HTMLResponse)
+@app.get("/admin/partidos", response_class=HTMLResponse)
 def ver_partidos(request: Request,admin: str = Depends(comprobar_admin)):
     conn = get_connection()
     cur = conn.cursor()
@@ -345,7 +345,7 @@ def ver_partidos(request: Request,admin: str = Depends(comprobar_admin)):
         }
     )
 
-@app.post("/partidos")
+@app.post("/admin/partidos")
 def guardar_partido(
     torneo_id: int = Form(...),
     fecha_partido: str = Form(...),
@@ -389,9 +389,9 @@ def guardar_partido(
     cur.close()
     conn.close()
 
-    return RedirectResponse(url="/partidos", status_code=303)
+    return RedirectResponse(url="/admin/partidos", status_code=303)
 
-@app.get("/partidos/editar/{partido_id}", response_class=HTMLResponse)
+@app.get("/admin/partidos/editar/{partido_id}", response_class=HTMLResponse)
 def editar_partido_form(request: Request, partido_id: int,
 admin: str = Depends(comprobar_admin)
 ):
@@ -423,7 +423,7 @@ admin: str = Depends(comprobar_admin)
     conn.close()
 
     if not partido:
-        return RedirectResponse(url="/partidos", status_code=303)
+        return RedirectResponse(url="/admin/partidos", status_code=303)
 
     return templates.TemplateResponse(
         request=request,
@@ -437,7 +437,7 @@ admin: str = Depends(comprobar_admin)
     )
 
 
-@app.post("/partidos/editar/{partido_id}")
+@app.post("/admin/partidos/editar/{partido_id}")
 def actualizar_partido(
     partido_id: int,
     torneo_id: int = Form(...),
@@ -468,10 +468,10 @@ def actualizar_partido(
     cur.close()
     conn.close()
 
-    return RedirectResponse(url="/partidos", status_code=303)
+    return RedirectResponse(url="/admin/partidos", status_code=303)
 
 
-@app.post("/partidos/borrar/{partido_id}")
+@app.post("/admin/partidos/borrar/{partido_id}")
 def borrar_partido(partido_id: int,
 admin: str = Depends(comprobar_admin)
 ):
@@ -486,7 +486,7 @@ admin: str = Depends(comprobar_admin)
 
     return RedirectResponse(url="/partidos", status_code=303)
 
-@app.get("/sets", response_class=HTMLResponse)
+@app.get("/admin/sets", response_class=HTMLResponse)
 def ver_sets(request: Request,
 admin: str = Depends(comprobar_admin)
 ):
@@ -612,7 +612,7 @@ admin: str = Depends(comprobar_admin)
         }
     )
 
-@app.post("/sets")
+@app.post("/admin/sets")
 def guardar_set(
     partido_id: int = Form(...),
     numero_set: int = Form(...),
@@ -637,7 +637,7 @@ def guardar_set(
     if set_existente:
         cur.close()
         conn.close()
-        return RedirectResponse(url="/sets", status_code=303)
+        return RedirectResponse(url="/admin/sets", status_code=303)
 
     cur.execute("""
         INSERT INTO sets (
@@ -664,9 +664,9 @@ def guardar_set(
     cur.close()
     conn.close()
 
-    return RedirectResponse(url="/sets", status_code=303)
+    return RedirectResponse(url="/admin/sets", status_code=303)
 
-@app.get("/sets/editar/{set_id}", response_class=HTMLResponse)
+@app.get("/admin/sets/editar/{set_id}", response_class=HTMLResponse)
 def editar_set_form(request: Request, set_id: int,
 admin: str = Depends(comprobar_admin)
 ):
@@ -720,7 +720,7 @@ admin: str = Depends(comprobar_admin)
     )
 
 
-@app.post("/sets/editar/{set_id}")
+@app.post("/admin/sets/editar/{set_id}")
 def actualizar_set(
     set_id: int,
     partido_id: int = Form(...),
@@ -760,10 +760,10 @@ def actualizar_set(
     cur.close()
     conn.close()
 
-    return RedirectResponse(url="/sets", status_code=303)
+    return RedirectResponse(url="/admin/sets", status_code=303)
 
 
-@app.post("/sets/borrar/{set_id}")
+@app.post("/admin/sets/borrar/{set_id}")
 def borrar_set(set_id: int,
 admin: str = Depends(comprobar_admin)
 ):
