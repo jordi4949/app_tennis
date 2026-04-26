@@ -92,7 +92,7 @@ def guardar_jugador(
     cur.close()
     conn.close()
 
-    return RedirectResponse(url="/jugadores", status_code=303)
+    return RedirectResponse(url="/admin/jugadores", status_code=303)
 
 @app.get("/admin/jugadores/editar/{jugador_id}", response_class=HTMLResponse)
 def editar_jugador_form(request: Request, jugador_id: int,
@@ -274,7 +274,7 @@ def actualizar_torneo(
     cur.close()
     conn.close()
 
-    return RedirectResponse(url="/torneos", status_code=303)
+    return RedirectResponse(url="/admin/torneos", status_code=303)
 
 
 @app.post("/admin/torneos/borrar/{torneo_id}")
@@ -357,9 +357,9 @@ def guardar_partido(
     admin: str = Depends(comprobar_admin)
 ):
     if jugador1_id == jugador2_id:
-        return RedirectResponse(url="/partidos", status_code=303)
+        return RedirectResponse(url="/admin/partidos", status_code=303)
     if ganador_id not in (jugador1_id, jugador2_id):
-        return RedirectResponse(url="/partidos", status_code=303)
+        return RedirectResponse(url="/admin/partidos", status_code=303)
 
     conn = get_connection()
     cur = conn.cursor()
@@ -484,7 +484,7 @@ admin: str = Depends(comprobar_admin)
     cur.close()
     conn.close()
 
-    return RedirectResponse(url="/partidos", status_code=303)
+    return RedirectResponse(url="/admin/partidos", status_code=303)
 
 @app.get("/admin/sets", response_class=HTMLResponse)
 def ver_sets(request: Request,
@@ -707,7 +707,7 @@ admin: str = Depends(comprobar_admin)
     conn.close()
 
     if not set_item:
-        return RedirectResponse(url="/sets", status_code=303)
+        return RedirectResponse(url="/admin/sets", status_code=303)
 
     return templates.TemplateResponse(
         request=request,
@@ -776,4 +776,4 @@ admin: str = Depends(comprobar_admin)
     cur.close()
     conn.close()
 
-    return RedirectResponse(url="/sets", status_code=303)
+    return RedirectResponse(url="/admin/sets", status_code=303)
