@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Set</title>
+</head>
+<body>
+
+    <h1>Editar Set</h1>
+
+    <form action="/admin/sets/editar/{{ set_item[0] }}" method="post">
+
+        <label>Partido:</label>
+        <select name="partido_id" required>
+            {% for partido in partidos %}
+                <option value="{{ partido[0] }}"
+                    {% if partido[0] == set_item[1] %}selected{% endif %}>
+                    {{ partido[5] }} - {{ partido[1] }} vs {{ partido[2] }} - {{ partido[4] }} - {{ partido[3] }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <br><br>
+
+        <label>Número de set:</label>
+        <input type="number" name="numero_set" value="{{ set_item[2] }}" required>
+
+        <br><br>
+
+        <label>Juegos jugador 1:</label>
+        <input type="number" name="juegos_jugador1" value="{{ set_item[3] }}" required>
+
+        <br><br>
+
+        <label>Juegos jugador 2:</label>
+        <input type="number" name="juegos_jugador2" value="{{ set_item[4] }}" required>
+
+        <br><br>
+
+        <label>Tiebreak jugador 1:</label>
+        <input type="number" name="tiebreak_jugador1" value="{{ set_item[5] }}">
+
+        <br><br>
+
+        <label>Tiebreak jugador 2:</label>
+        <input type="number" name="tiebreak_jugador2" value="{{ set_item[6] }}">
+
+        <br><br>
+
+        <label>Tipo set:</label>
+        <select name="tipo_set" required>
+            <option value="1" {% if set_item[7] == 1 %}selected{% endif %}>Set normal</option>
+            <option value="2" {% if set_item[7] == 2 %}selected{% endif %}>Supertiebreak</option>
+        </select>
+
+        <br><br>
+
+        <button type="submit">Guardar cambios</button>
+    </form>
+
+    <br>
+
+    <a href="/admin/sets">Volver a Sets</a>
+
+</body>
+</html>

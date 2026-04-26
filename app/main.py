@@ -39,7 +39,8 @@ def jugadores(
     buscar: str = "",
     admin: str = Depends(comprobar_admin)
 ):
-
+    
+    texto_busqueda = f"%{buscar.strip()}%"
     conn = get_connection()
     cur = conn.cursor()
 
