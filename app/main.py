@@ -34,7 +34,11 @@ def inicio(request: Request, admin: str = Depends(comprobar_admin)):
     )
 
 @app.get("/admin/jugadores", response_class=HTMLResponse)
-def jugadores(request: Request, admin: str = Depends(comprobar_admin)):
+def jugadores(
+    request: Request,
+    buscar: str = "",
+    admin: str = Depends(comprobar_admin)
+):
 
     conn = get_connection()
     cur = conn.cursor()
