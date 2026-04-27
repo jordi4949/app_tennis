@@ -176,6 +176,27 @@ def borrar_jugador(jugador_id: int,
 
     return RedirectResponse(url="/admin/jugadores", status_code=303)
 
+@app.get("/admin/importar-jugadores")
+def ver_importados(request: Request):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT id, nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia
+        FROM jugadores_importados
+        ORDER BY id DESC
+    """)
+
+    jugadores = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return templates.TemplateResponse(
+        "importar_jugadores.html",
+        {"request": request, "jugadores": jugadores}
+    )
+
 @app.get("/admin/torneos", response_class=HTMLResponse)
 def ver_torneos(request: Request, admin: str = Depends(comprobar_admin)):
     conn = get_connection()
