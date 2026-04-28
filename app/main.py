@@ -193,9 +193,11 @@ def ver_importados(request: Request):
     conn.close()
 
     return templates.TemplateResponse(
-        "importar_jugadores.html",
-        {"request": request, "jugadores": jugadores}
-    )
+    request=request,
+    name="importar_jugadores.html",
+    context={"request": request, "jugadores": jugadores}
+)
+    
 @app.get("/admin/importar-jugadores/aprobar/{jugador_id}")
 def aprobar_jugador_importado(
     jugador_id: int,
