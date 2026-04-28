@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Jugadores Importados</title>
+</head>
+<body>
+
+<h1>Jugadores Importados (OCR)</h1>
+
+<table border="1">
+    <tr>
+        <th>Nombre</th>
+        <th>Apellido1</th>
+        <th>Apellido2</th>
+        <th>Club</th>
+        <th>Año</th>
+        <th>Licencia</th>
+        <th>Acciones</th>
+    </tr>
+
+    {% for j in jugadores %}
+    <tr>
+        <td>{{ j[1] }}</td>
+        <td>{{ j[2] }}</td>
+        <td>{{ j[3] }}</td>
+        <td>{{ j[4] }}</td>
+        <td>{{ j[5] }}</td>
+        <td>{{ j[6] }}</td>
+        <td>
+            <a href="/admin/importar-jugadores/aprobar/{{ j[0] }}">Aprobar</a>
+        </td>
+    </tr>
+    {% endfor %}
+
+</table>
+
+<br>
+<a href="/admin">Volver al menú</a>
+
+</body>
+</html>

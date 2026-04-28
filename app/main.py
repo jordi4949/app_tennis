@@ -196,6 +196,41 @@ def ver_importados(request: Request):
         "importar_jugadores.html",
         {"request": request, "jugadores": jugadores}
     )
+@app.get("/admin/importar-jugadores/aprobar/{jugador_id}")
+def aprobar_jugador_importado(
+    jugador_id: int,
+    admin: str = Depends(comprobar_admin)
+):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia
+        FROM jugadores_importados
+        WHERE id = %s
+    """, (jugador_id,))
+
+    jugador = cur.fetchone()
+
+    if jugador:
+        cur.execute("""
+            INSERT INTO jugadores
+            (nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            ON CONFLICT (numero_licencia) DO NOTHING
+        """, jugador)
+
+        cur.execute("""
+            DELETE FROM jugadores_importados
+            WHERE id = %s
+        """, (jugador_id,))
+
+        conn.commit()
+
+    cur.close()
+    conn.close()
+
+    return RedirectResponse(url="/admin/importar-jugadores", status_code=303)
 
 @app.get("/admin/torneos", response_class=HTMLResponse)
 def ver_torneos(request: Request, admin: str = Depends(comprobar_admin)):
