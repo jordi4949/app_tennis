@@ -273,11 +273,11 @@ def editar_importado(
 
     # lista de clubs existentes
     cur.execute("""
-        SELECT DISTINCT club
-        FROM jugadores
-        WHERE club IS NOT NULL AND club <> ''
-        ORDER BY club ASC
-    """)
+    SELECT nombre
+    FROM clubs
+    ORDER BY nombre ASC
+""")
+    
     clubs = cur.fetchall()
 
     cur.close()
