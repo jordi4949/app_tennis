@@ -234,7 +234,7 @@ def aprobar_jugador_importado(
 
     return RedirectResponse(url="/admin/importar-jugadores", status_code=303)
 
-    @app.get("/admin/importar-jugadores/editar/{jugador_id}")
+@app.get("/admin/importar-jugadores/editar/{jugador_id}")
 def editar_importado(
     request: Request,
     jugador_id: int,
