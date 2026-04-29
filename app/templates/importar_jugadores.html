@@ -28,10 +28,15 @@
         <td>{{ j[5] }}</td>
         <td>{{ j[6] }}</td>
         <td>
-            <a href="/admin/importar-jugadores/editar/{{ j[0] }}">Editar</a>
-            |
-            <a href="/admin/importar-jugadores/aprobar/{{ j[0] }}">Aprobar</a>
-        </td>
+    <a href="/admin/importar-jugadores/editar/{{ j[0] }}">Editar</a>
+    |
+    <a href="/admin/importar-jugadores/aprobar/{{ j[0] }}">Aprobar</a>
+    |
+    <a href="/admin/importar-jugadores/borrar/{{ j[0] }}"
+       onclick="return confirm('¿Seguro que quieres borrar este jugador?')">
+       Borrar
+    </a>
+</td>
             
         
     </tr>

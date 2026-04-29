@@ -234,6 +234,26 @@ def aprobar_jugador_importado(
 
     return RedirectResponse(url="/admin/importar-jugadores", status_code=303)
 
+@app.get("/admin/importar-jugadores/borrar/{jugador_id}")
+def borrar_importado(
+    jugador_id: int,
+    admin: str = Depends(comprobar_admin)
+):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        DELETE FROM jugadores_importados
+        WHERE id = %s
+    """, (jugador_id,))
+
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+    return RedirectResponse(url="/admin/importar-jugadores", status_code=303)
+
 @app.get("/admin/importar-jugadores/editar/{jugador_id}")
 def editar_importado(
     request: Request,
