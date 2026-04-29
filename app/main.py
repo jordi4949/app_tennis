@@ -298,13 +298,22 @@ def guardar_importado(
     nombre: str = Form(...),
     apellido1: str = Form(...),
     apellido2: str = Form(""),
-    club: str = Form(...),
+    club_existente: str = Form(""),
+    club_nuevo: str = Form(""),
     ano_nacimiento: int = Form(...),
     numero_licencia: str = Form(...),
     admin: str = Depends(comprobar_admin)
 ):
     conn = get_connection()
     cur = conn.cursor()
+
+    club_final = club_nuevo.strip() if club_nuevo.strip() else club_existente
+    cur.execute("""
+        INSERT INTO clubs (nombre)
+        VALUES (%s)
+        ON CONFLICT (nombre) DO NOTHING
+    """, (club_final,))
+
 
     cur.execute("""
         UPDATE jugadores_importados
@@ -313,7 +322,7 @@ def guardar_importado(
         WHERE id=%s
     """, (
         nombre, apellido1, apellido2,
-        club, ano_nacimiento, numero_licencia,
+        club_final, ano_nacimiento, numero_licencia,
         jugador_id
     ))
 
