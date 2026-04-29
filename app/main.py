@@ -234,6 +234,75 @@ def aprobar_jugador_importado(
 
     return RedirectResponse(url="/admin/importar-jugadores", status_code=303)
 
+    @app.get("/admin/importar-jugadores/editar/{jugador_id}")
+def editar_importado(
+    request: Request,
+    jugador_id: int,
+    admin: str = Depends(comprobar_admin)
+):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # jugador
+    cur.execute("""
+        SELECT id, nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia
+        FROM jugadores_importados
+        WHERE id = %s
+    """, (jugador_id,))
+    jugador = cur.fetchone()
+
+    # lista de clubs existentes
+    cur.execute("""
+        SELECT DISTINCT club
+        FROM jugadores
+        WHERE club IS NOT NULL AND club <> ''
+        ORDER BY club ASC
+    """)
+    clubs = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return templates.TemplateResponse(
+        request=request,
+        name="editar_jugador_importado.html",
+        context={
+            "request": request,
+            "jugador": jugador,
+            "clubs": clubs
+        }
+    )
+@app.post("/admin/importar-jugadores/editar/{jugador_id}")
+def guardar_importado(
+    jugador_id: int,
+    nombre: str = Form(...),
+    apellido1: str = Form(...),
+    apellido2: str = Form(""),
+    club: str = Form(...),
+    ano_nacimiento: int = Form(...),
+    numero_licencia: str = Form(...),
+    admin: str = Depends(comprobar_admin)
+):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        UPDATE jugadores_importados
+        SET nombre=%s, apellido1=%s, apellido2=%s,
+            club=%s, ano_nacimiento=%s, numero_licencia=%s
+        WHERE id=%s
+    """, (
+        nombre, apellido1, apellido2,
+        club, ano_nacimiento, numero_licencia,
+        jugador_id
+    ))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return RedirectResponse("/admin/importar-jugadores", status_code=303)
+
 @app.get("/admin/torneos", response_class=HTMLResponse)
 def ver_torneos(request: Request, admin: str = Depends(comprobar_admin)):
     conn = get_connection()

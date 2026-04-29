@@ -1,0 +1,34 @@
+<h1>Editar jugador</h1>
+
+<form method="post" action="/admin/importar-jugadores/editar/{{ jugador[0] }}">
+
+Nombre:
+<input type="text" name="nombre" value="{{ jugador[1] }}"><br>
+
+Apellido1:
+<input type="text" name="apellido1" value="{{ jugador[2] }}"><br>
+
+Apellido2:
+<input type="text" name="apellido2" value="{{ jugador[3] }}"><br>
+
+Club:
+<select name="club">
+    {% for c in clubs %}
+        <option value="{{ c[0] }}" {% if c[0] == jugador[4] %}selected{% endif %}>
+            {{ c[0] }}
+        </option>
+    {% endfor %}
+</select>
+<br>
+
+Año:
+<input type="number" name="ano_nacimiento" value="{{ jugador[5] }}"><br>
+
+Licencia:
+<input type="text" name="numero_licencia" value="{{ jugador[6] }}"><br>
+
+<button type="submit">Guardar</button>
+
+</form>
+
+<a href="/admin/importar-jugadores">Volver</a>
