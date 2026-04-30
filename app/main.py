@@ -177,15 +177,29 @@ def borrar_jugador(jugador_id: int,
     return RedirectResponse(url="/admin/jugadores", status_code=303)
 
 @app.get("/admin/importar-jugadores")
-def ver_importados(request: Request):
+def ver_importados(
+    request: Request,
+    buscar: str = "",
+    admin: str = Depends(comprobar_admin)
+):
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute("""
-        SELECT id, nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia
-        FROM jugadores_importados
-        ORDER BY id DESC
-    """)
+    if buscar:
+        cur.execute("""
+            SELECT id, nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia
+            FROM jugadores_importados
+            WHERE nombre ILIKE %s
+               OR apellido1 ILIKE %s
+               OR apellido2 ILIKE %s
+            ORDER BY apellido1 ASC
+        """, (f"%{buscar}%", f"%{buscar}%", f"%{buscar}%"))
+    else:
+        cur.execute("""
+            SELECT id, nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia
+            FROM jugadores_importados
+            ORDER BY apellido1 ASC
+        """)
 
     jugadores = cur.fetchall()
 
@@ -193,10 +207,12 @@ def ver_importados(request: Request):
     conn.close()
 
     return templates.TemplateResponse(
-    request=request,
-    name="importar_jugadores.html",
-    context={"request": request, "jugadores": jugadores}
-)
+        request=request,
+        name="importar_jugadores.html",
+        context={"request": request, "jugadores": jugadores, "buscar": buscar}
+    )
+
+
     
 @app.get("/admin/importar-jugadores/aprobar/{jugador_id}")
 def aprobar_jugador_importado(
