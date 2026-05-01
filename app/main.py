@@ -47,10 +47,10 @@ def jugadores(
     cur = conn.cursor()
 
     texto_busqueda = f"%{buscar.strip()}%"
-if ordenar == "club":
-    order_by = "club, apellido1, apellido2, nombre"
-else:
-    order_by = "apellido1, apellido2, nombre"
+    if ordenar == "club":
+        order_by = "club, apellido1, apellido2, nombre"
+    else:
+        order_by = "apellido1, apellido2, nombre"
 
 
 
