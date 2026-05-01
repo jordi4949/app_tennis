@@ -34,37 +34,33 @@ def inicio(request: Request, admin: str = Depends(comprobar_admin)):
     )
 
 @app.get("/admin/jugadores", response_class=HTMLResponse)
-
 def jugadores(
     request: Request,
     buscar: str = "",
     ordenar: str = "apellido",
     admin: str = Depends(comprobar_admin)
 ):
-    
     texto_busqueda = f"%{buscar.strip()}%"
-    conn = get_connection()
-    cur = conn.cursor()
 
-    texto_busqueda = f"%{buscar.strip()}%"
     if ordenar == "club":
         order_by = "club, apellido1, apellido2, nombre"
     else:
         order_by = "apellido1, apellido2, nombre"
 
+    conn = get_connection()
+    cur = conn.cursor()
 
-
-cur.execute(f"""
-    SELECT id, nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia
-    FROM jugadores
-    WHERE
-        nombre ILIKE %s
-        OR apellido1 ILIKE %s
-        OR COALESCE(apellido2, '') ILIKE %s
-        OR club ILIKE %s
-        OR COALESCE(numero_licencia, '') ILIKE %s
-    ORDER BY {order_by}
-""", (texto_busqueda, texto_busqueda, texto_busqueda, texto_busqueda, texto_busqueda))
+    cur.execute(f"""
+        SELECT id, nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia
+        FROM jugadores
+        WHERE
+            nombre ILIKE %s
+            OR apellido1 ILIKE %s
+            OR COALESCE(apellido2, '') ILIKE %s
+            OR club ILIKE %s
+            OR COALESCE(numero_licencia, '') ILIKE %s
+        ORDER BY {order_by}
+    """, (texto_busqueda, texto_busqueda, texto_busqueda, texto_busqueda, texto_busqueda))
 
     jugadores = cur.fetchall()
 
@@ -81,7 +77,6 @@ cur.execute(f"""
             "ordenar": ordenar
         }
     )
-
 
 @app.post("/admin/jugadores")
 def guardar_jugador(
@@ -193,31 +188,32 @@ def ver_importados(
     admin: str = Depends(comprobar_admin)
 ):
     if ordenar == "club":
-    order_by = "club, apellido1, apellido2, nombre"
+        order_by = "club, apellido1, apellido2, nombre"
     else:
-    order_by = "apellido1, apellido2, nombre"
+        order_by = "apellido1, apellido2, nombre"
 
     conn = get_connection()
     cur = conn.cursor()
 
     if buscar:
+        texto_busqueda = f"%{buscar.strip()}%"
+
         cur.execute(f"""
-    SELECT id, nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia
-    FROM jugadores_importados
-    WHERE nombre ILIKE %s
-       OR apellido1 ILIKE %s
-       OR apellido2 ILIKE %s
-       OR club ILIKE %s
-       OR numero_licencia ILIKE %s
-    ORDER BY {order_by}
-""", (f"%{buscar}%", f"%{buscar}%", f"%{buscar}%", f"%{buscar}%", f"%{buscar}%"))
-        
+            SELECT id, nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia
+            FROM jugadores_importados
+            WHERE nombre ILIKE %s
+               OR apellido1 ILIKE %s
+               OR COALESCE(apellido2, '') ILIKE %s
+               OR club ILIKE %s
+               OR COALESCE(numero_licencia, '') ILIKE %s
+            ORDER BY {order_by}
+        """, (texto_busqueda, texto_busqueda, texto_busqueda, texto_busqueda, texto_busqueda))
     else:
         cur.execute(f"""
-    SELECT id, nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia
-    FROM jugadores_importados
-    ORDER BY {order_by}
-""")
+            SELECT id, nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia
+            FROM jugadores_importados
+            ORDER BY {order_by}
+        """)
 
     jugadores = cur.fetchall()
 
@@ -227,9 +223,13 @@ def ver_importados(
     return templates.TemplateResponse(
         request=request,
         name="importar_jugadores.html",
-        context={"request": request,"jugadores": jugadores,"buscar": buscar,"ordenar": ordenar}
+        context={
+            "request": request,
+            "jugadores": jugadores,
+            "buscar": buscar,
+            "ordenar": ordenar
+        }
     )
-
 
     
 @app.get("/admin/importar-jugadores/aprobar/{jugador_id}")
