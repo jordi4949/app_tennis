@@ -44,6 +44,8 @@ def jugadores(
 
     if ordenar == "club":
         order_by = "club, apellido1, apellido2, nombre"
+    elif ordenar == "licencia":
+        order_by = "NULLIF(numero_licencia, '') NULLS LAST, apellido1, apellido2, nombre"
     else:
         order_by = "apellido1, apellido2, nombre"
 
@@ -189,6 +191,8 @@ def ver_importados(
 ):
     if ordenar == "club":
         order_by = "club, apellido1, apellido2, nombre"
+    elif ordenar == "licencia":
+        order_by = "NULLIF(numero_licencia, '') NULLS LAST, apellido1, apellido2, nombre"
     else:
         order_by = "apellido1, apellido2, nombre"
 
