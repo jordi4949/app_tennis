@@ -40,10 +40,13 @@
     <a href="/admin/importar-jugadores/aprobar/{{ j[0] }}">Aprobar</a>
     |
     <a href="/admin/importar-jugadores/borrar/{{ j[0] }}"
-       onclick="return confirm('¿Seguro que quieres borrar este jugador?')">
-       Borrar
-    </a>
-</td>
+       onclick="return confirm('¿Seguro que quieres borrar este jugador?')">Borrar</a>
+    <a href="/admin/importar-jugadores?buscar={{ buscar }}&ordenar=apellido">
+    Ordenar por apellido</a>
+
+    <a href="/admin/importar-jugadores?buscar={{ buscar }}&ordenar=club">
+    Ordenar por club</a>
+        </td>
             
         
     </tr>
