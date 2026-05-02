@@ -4,6 +4,13 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 import secrets
+from rapidfuzz import process, fuzz
+import unicodedata
+import re
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
 
 from app.database import get_connection
 
@@ -13,8 +20,11 @@ templates = Jinja2Templates(directory="app/templates")
 security = HTTPBasic()
 
 def comprobar_admin(credentials: HTTPBasicCredentials = Depends(security)):
-    usuario_correcto = secrets.compare_digest(credentials.username, "admin")
-    password_correcto = secrets.compare_digest(credentials.password, "Jordi_Eduard")
+    ADMIN_USER = os.getenv("ADMIN_USER")
+    ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
+
+    usuario_correcto = secrets.compare_digest(credentials.username, ADMIN_USER)
+    password_correcto = secrets.compare_digest(credentials.password, ADMIN_PASSWORD)
 
     if not (usuario_correcto and password_correcto):
         raise HTTPException(
@@ -24,6 +34,35 @@ def comprobar_admin(credentials: HTTPBasicCredentials = Depends(security)):
         )
 
     return credentials.username
+
+def normalizar_club_para_comparar(texto: str) -> str:
+    if not texto:
+        return ""
+
+    texto = texto.upper().strip()
+
+    # Quitar acentos
+    texto = unicodedata.normalize("NFD", texto)
+    texto = "".join(c for c in texto if unicodedata.category(c) != "Mn")
+
+    # Errores típicos OCR
+    texto = texto.replace("0", "O")
+    texto = texto.replace("1", "I")
+
+    # Separar comas pegadas: "BARCINO,CT" -> "BARCINO CT"
+    texto = texto.replace(",", " ")
+
+    # Quitar símbolos raros: puntos, guiones, apóstrofes, etc.
+    texto = re.sub(r"[^A-Z0-9 ]", " ", texto)
+
+    # Normalizar abreviaturas frecuentes
+    texto = re.sub(r"\bC T\b", "CT", texto)
+    texto = re.sub(r"\bT\b", "CT", texto)
+
+    # Espacios repetidos
+    texto = re.sub(r"\s+", " ", texto).strip()
+
+    return texto
 
 @app.get("/admin", response_class=HTMLResponse)
 def inicio(request: Request, admin: str = Depends(comprobar_admin)):
@@ -235,6 +274,86 @@ def ver_importados(
         }
     )
 
+@app.post("/admin/importar-jugadores/corregir-clubs")
+def corregir_clubs_importados(admin: str = Depends(comprobar_admin)):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # Clubs distintos que vienen del OCR
+    cur.execute("""
+        SELECT DISTINCT club
+        FROM jugadores_importados
+        WHERE club IS NOT NULL
+          AND TRIM(club) <> ''
+    """)
+    clubs_importados = [fila[0] for fila in cur.fetchall()]
+
+    # Clubs buenos desde tabla clubs
+    cur.execute("""
+        SELECT nombre
+        FROM clubs
+        WHERE nombre IS NOT NULL
+          AND TRIM(nombre) <> ''
+    """)
+    clubs_tabla = [fila[0] for fila in cur.fetchall()]
+
+    # Clubs buenos desde jugadores ya aprobados
+    cur.execute("""
+        SELECT DISTINCT club
+        FROM jugadores
+        WHERE club IS NOT NULL
+          AND TRIM(club) <> ''
+    """)
+    clubs_jugadores = [fila[0] for fila in cur.fetchall()]
+
+    clubs_buenos = sorted(set(clubs_tabla + clubs_jugadores))
+
+    if not clubs_importados or not clubs_buenos:
+        cur.close()
+        conn.close()
+        return RedirectResponse(
+            url="/admin/importar-jugadores?ordenar=club",
+            status_code=303
+        )
+
+    clubs_buenos_normalizados = {
+        normalizar_club_para_comparar(club): club
+        for club in clubs_buenos
+    }
+
+    for club_importado in clubs_importados:
+        club_importado_norm = normalizar_club_para_comparar(club_importado)
+
+        mejor = process.extractOne(
+            club_importado_norm,
+            list(clubs_buenos_normalizados.keys()),
+            scorer=fuzz.WRatio
+        )
+
+        if not mejor:
+            continue
+
+        club_bueno_norm, puntuacion, _ = mejor
+        club_bueno = clubs_buenos_normalizados[club_bueno_norm]
+
+        # Umbral alto para evitar cambios peligrosos.
+        # Si corrige poco, luego bajamos a 85.
+        if puntuacion >= 88 and club_importado != club_bueno:
+            cur.execute("""
+                UPDATE jugadores_importados
+                SET club = %s
+                WHERE club = %s
+            """, (club_bueno, club_importado))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return RedirectResponse(
+        url="/admin/importar-jugadores?ordenar=club",
+        status_code=303
+    )
+
     
 @app.get("/admin/importar-jugadores/aprobar/{jugador_id}")
 def aprobar_jugador_importado(
@@ -253,6 +372,12 @@ def aprobar_jugador_importado(
     jugador = cur.fetchone()
 
     if jugador:
+        cur.execute("""
+            INSERT INTO clubs (nombre)
+            VALUES (%s)
+            ON CONFLICT (nombre) DO NOTHING
+        """, (jugador[3],))
+        
         cur.execute("""
             INSERT INTO jugadores
             (nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia)
