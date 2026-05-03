@@ -8,6 +8,28 @@
 
 <h1>Cuadros</h1>
 
+<h2>Filtrar cuadros por torneo</h2>
+
+<form method="get" action="/admin/cuadros">
+    <label>Ver cuadros del torneo:</label>
+
+    <select name="torneo_id">
+        <option value="">Todos los torneos</option>
+
+        {% for torneo in torneos %}
+            <option value="{{ torneo[0] }}"
+                {% if torneo_id and torneo[0] == torneo_id %}selected{% endif %}>
+                {{ torneo[1] }} - {{ torneo[3] }} - {{ torneo[4] }} - {{ torneo[2] }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <button type="submit">Ver</button>
+</form>
+
+<hr>
+
+
 <h2>Crear nuevo cuadro</h2>
 
 <form method="post" action="/admin/cuadros">
