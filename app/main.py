@@ -663,7 +663,11 @@ admin: str = Depends(comprobar_admin)
     return RedirectResponse(url="/admin/torneos", status_code=303)
 
 @app.get("/admin/cuadros", response_class=HTMLResponse)
-def ver_cuadros(request: Request, admin: str = Depends(comprobar_admin)):
+def ver_cuadros(
+    request: Request,
+    torneo_id: int | None = None,
+    admin: str = Depends(comprobar_admin)
+):
     conn = get_connection()
     cur = conn.cursor()
 
@@ -674,20 +678,40 @@ def ver_cuadros(request: Request, admin: str = Depends(comprobar_admin)):
     """)
     torneos = cur.fetchall()
 
-    cur.execute("""
-        SELECT
-            c.id,
-            c.nombre,
-            c.tamano,
-            COALESCE(c.observaciones, ''),
-            t.nombre,
-            t.fecha_inicio,
-            t.categoria,
-            t.ubicacion
-        FROM cuadros c
-        JOIN torneos t ON c.torneo_id = t.id
-        ORDER BY t.fecha_inicio DESC, t.nombre, c.nombre
-    """)
+    if torneo_id:
+        cur.execute("""
+            SELECT
+                c.id,
+                c.nombre,
+                c.tamano,
+                c.numero_jugadores,
+                COALESCE(c.observaciones, ''),
+                t.nombre,
+                t.fecha_inicio,
+                t.categoria,
+                t.ubicacion
+            FROM cuadros c
+            JOIN torneos t ON c.torneo_id = t.id
+            WHERE c.torneo_id = %s
+            ORDER BY c.nombre
+        """, (torneo_id,))
+    else:
+        cur.execute("""
+            SELECT
+                c.id,
+                c.nombre,
+                c.tamano,
+                c.numero_jugadores,
+                COALESCE(c.observaciones, ''),
+                t.nombre,
+                t.fecha_inicio,
+                t.categoria,
+                t.ubicacion
+            FROM cuadros c
+            JOIN torneos t ON c.torneo_id = t.id
+            ORDER BY t.fecha_inicio DESC, t.nombre, c.nombre
+        """)
+
     cuadros = cur.fetchall()
 
     cur.close()
@@ -699,7 +723,8 @@ def ver_cuadros(request: Request, admin: str = Depends(comprobar_admin)):
         context={
             "request": request,
             "torneos": torneos,
-            "cuadros": cuadros
+            "cuadros": cuadros,
+            "torneo_id": torneo_id
         }
     )
 
@@ -719,6 +744,74 @@ def guardar_cuadro(
         INSERT INTO cuadros (torneo_id, nombre, tamano, numero_jugadores, observaciones)
         VALUES (%s, %s, %s, %s, %s)
     """, (torneo_id, nombre, tamano, numero_jugadores, observaciones))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return RedirectResponse(url="/admin/cuadros", status_code=303)
+
+@app.get("/admin/cuadros/editar/{cuadro_id}", response_class=HTMLResponse)
+def editar_cuadro_form(
+    request: Request,
+    cuadro_id: int,
+    admin: str = Depends(comprobar_admin)
+):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT id, nombre, fecha_inicio, categoria, ubicacion
+        FROM torneos
+        ORDER BY fecha_inicio DESC, nombre
+    """)
+    torneos = cur.fetchall()
+
+    cur.execute("""
+        SELECT id, torneo_id, nombre, tamano, numero_jugadores, COALESCE(observaciones, '')
+        FROM cuadros
+        WHERE id = %s
+    """, (cuadro_id,))
+    cuadro = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    if not cuadro:
+        return RedirectResponse(url="/admin/cuadros", status_code=303)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="editar_cuadro.html",
+        context={
+            "request": request,
+            "cuadro": cuadro,
+            "torneos": torneos
+        }
+    )
+
+@app.post("/admin/cuadros/editar/{cuadro_id}")
+def actualizar_cuadro(
+    cuadro_id: int,
+    torneo_id: int = Form(...),
+    nombre: str = Form(...),
+    tamano: int = Form(...),
+    numero_jugadores: int = Form(...),
+    observaciones: str = Form(""),
+    admin: str = Depends(comprobar_admin)
+):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        UPDATE cuadros
+        SET torneo_id = %s,
+            nombre = %s,
+            tamano = %s,
+            numero_jugadores = %s,
+            observaciones = %s
+        WHERE id = %s
+    """, (torneo_id, nombre, tamano, numero_jugadores, observaciones, cuadro_id))
 
     conn.commit()
     cur.close()

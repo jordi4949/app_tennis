@@ -65,6 +65,7 @@
         <th>Fecha</th>
         <th>Categoría</th>
         <th>Ubicación</th>
+        <th>Acciones</th>
     </tr>
 
     {% for c in cuadros %}
@@ -77,6 +78,9 @@
         <td>{{ c[5] }}</td>
         <td>{{ c[6] }}</td>
         <td>{{ c[7] }}</td>
+        <td>
+            <a href="/admin/cuadros/editar/{{ c[0] }}">Editar</a>
+        </td>
     </tr>
     {% endfor %}
 </table>

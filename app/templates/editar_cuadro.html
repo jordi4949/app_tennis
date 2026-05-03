@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar cuadro</title>
+</head>
+<body>
+
+<h1>Editar cuadro</h1>
+
+<form method="post" action="/admin/cuadros/editar/{{ cuadro[0] }}">
+
+    <label>Torneo:</label>
+    <select name="torneo_id" required>
+        {% for torneo in torneos %}
+            <option value="{{ torneo[0] }}"
+                {% if torneo[0] == cuadro[1] %}selected{% endif %}>
+                {{ torneo[1] }} - {{ torneo[3] }} - {{ torneo[4] }} - {{ torneo[2] }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <br><br>
+
+    <label>Nombre del cuadro:</label>
+    <input type="text" name="nombre" value="{{ cuadro[2] }}" required>
+
+    <br><br>
+
+    <label>Tamaño:</label>
+    <select name="tamano" required>
+        <option value="8" {% if cuadro[3] == 8 %}selected{% endif %}>8</option>
+        <option value="16" {% if cuadro[3] == 16 %}selected{% endif %}>16</option>
+        <option value="32" {% if cuadro[3] == 32 %}selected{% endif %}>32</option>
+        <option value="64" {% if cuadro[3] == 64 %}selected{% endif %}>64</option>
+        <option value="128" {% if cuadro[3] == 128 %}selected{% endif %}>128</option>
+    </select>
+
+    <br><br>
+
+    <label>Número de jugadores:</label>
+    <input type="number" name="numero_jugadores" value="{{ cuadro[4] }}" min="0" required>
+
+    <br><br>
+
+    <label>Observaciones:</label>
+    <input type="text" name="observaciones" value="{{ cuadro[5] }}">
+
+    <br><br>
+
+    <button type="submit">Guardar cambios</button>
+</form>
+
+<br>
+
+<a href="/admin/cuadros">Volver a cuadros</a>
+
+</body>
+</html>
