@@ -716,10 +716,9 @@ def guardar_cuadro(
     cur = conn.cursor()
 
     cur.execute("""
-        cur.execute("""
-            INSERT INTO cuadros (torneo_id, nombre, tamano, numero_jugadores, observaciones)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (torneo_id, nombre, tamano, numero_jugadores, observaciones))
+        INSERT INTO cuadros (torneo_id, nombre, tamano, numero_jugadores, observaciones)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (torneo_id, nombre, tamano, numero_jugadores, observaciones))
 
     conn.commit()
     cur.close()
