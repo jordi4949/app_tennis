@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Cuadros</title>
+</head>
+<body>
+
+<h1>Cuadros</h1>
+
+<h2>Crear nuevo cuadro</h2>
+
+<form method="post" action="/admin/cuadros">
+
+    <label>Torneo:</label>
+    <select name="torneo_id" required>
+        {% for torneo in torneos %}
+            <option value="{{ torneo[0] }}">
+                {{ torneo[1] }} - {{ torneo[3] }} - {{ torneo[4] }} - {{ torneo[2] }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <br><br>
+
+    <label>Nombre del cuadro:</label>
+    <input type="text" name="nombre" placeholder="Cuadro 1" required>
+
+    <br><br>
+
+    <label>Tamaño:</label>
+    <select name="tamano" required>
+        <option value="8">8</option>
+        <option value="16">16</option>
+        <option value="32" selected>32</option>
+        <option value="64">64</option>
+        <option value="128">128</option>
+    </select>
+
+    <label>Número de jugadores:</label>
+    <input type="number" name="numero_jugadores" min="0" required>
+
+
+    <br><br>
+
+    <label>Observaciones:</label>
+    <input type="text" name="observaciones" placeholder="Ej: cuadro alevín masculino">
+
+    <br><br>
+
+    <button type="submit">Guardar cuadro</button>
+</form>
+
+<hr>
+
+<h2>Cuadros registrados</h2>
+
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>Cuadro</th>
+        <th>Tamaño</th>
+        <th>Observaciones</th>
+        <th>Torneo</th>
+        <th>Fecha</th>
+        <th>Categoría</th>
+        <th>Ubicación</th>
+    </tr>
+
+    {% for c in cuadros %}
+    <tr>
+        <td>{{ c[0] }}</td>
+        <td>{{ c[1] }}</td>
+        <td>{{ c[2] }}</td>
+        <td>{{ c[3] }}</td>
+        <td>{{ c[4] }}</td>
+        <td>{{ c[5] }}</td>
+        <td>{{ c[6] }}</td>
+        <td>{{ c[7] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<br>
+
+<a href="/admin">Volver al menú</a>
+
+</body>
+</html>

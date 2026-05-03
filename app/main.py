@@ -662,6 +662,71 @@ admin: str = Depends(comprobar_admin)
 
     return RedirectResponse(url="/admin/torneos", status_code=303)
 
+@app.get("/admin/cuadros", response_class=HTMLResponse)
+def ver_cuadros(request: Request, admin: str = Depends(comprobar_admin)):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT id, nombre, fecha_inicio, categoria, ubicacion
+        FROM torneos
+        ORDER BY fecha_inicio DESC, nombre
+    """)
+    torneos = cur.fetchall()
+
+    cur.execute("""
+        SELECT
+            c.id,
+            c.nombre,
+            c.tamano,
+            COALESCE(c.observaciones, ''),
+            t.nombre,
+            t.fecha_inicio,
+            t.categoria,
+            t.ubicacion
+        FROM cuadros c
+        JOIN torneos t ON c.torneo_id = t.id
+        ORDER BY t.fecha_inicio DESC, t.nombre, c.nombre
+    """)
+    cuadros = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return templates.TemplateResponse(
+        request=request,
+        name="cuadros.html",
+        context={
+            "request": request,
+            "torneos": torneos,
+            "cuadros": cuadros
+        }
+    )
+
+@app.post("/admin/cuadros")
+def guardar_cuadro(
+    torneo_id: int = Form(...),
+    nombre: str = Form(...),
+    tamano: int = Form(...),
+    numero_jugadores: int = Form(...),
+    observaciones: str = Form(""),
+    admin: str = Depends(comprobar_admin)
+):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        cur.execute("""
+            INSERT INTO cuadros (torneo_id, nombre, tamano, numero_jugadores, observaciones)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (torneo_id, nombre, tamano, numero_jugadores, observaciones))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return RedirectResponse(url="/admin/cuadros", status_code=303)
+
 @app.get("/admin/partidos", response_class=HTMLResponse)
 def ver_partidos(request: Request,admin: str = Depends(comprobar_admin)):
     conn = get_connection()
