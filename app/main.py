@@ -495,6 +495,52 @@ def guardar_importado(
 
     return RedirectResponse("/admin/importar-jugadores", status_code=303)
 
+@app.post("/admin/importar-jugadores/aprobar-seleccionados")
+def aprobar_seleccionados(
+    jugadores_ids: list[int] = Form(...),
+    admin: str = Depends(comprobar_admin)
+):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    for jugador_id in jugadores_ids:
+
+        cur.execute("""
+            SELECT nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia
+            FROM jugadores_importados
+            WHERE id = %s
+        """, (jugador_id,))
+
+        jugador = cur.fetchone()
+
+        if jugador:
+            # Insertar club
+            cur.execute("""
+                INSERT INTO clubs (nombre)
+                VALUES (%s)
+                ON CONFLICT (nombre) DO NOTHING
+            """, (jugador[3],))
+
+            # Insertar jugador
+            cur.execute("""
+                INSERT INTO jugadores
+                (nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                ON CONFLICT (numero_licencia) DO NOTHING
+            """, jugador)
+
+            # Borrar importado
+            cur.execute("""
+                DELETE FROM jugadores_importados
+                WHERE id = %s
+            """, (jugador_id,))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return RedirectResponse("/admin/importar-jugadores", status_code=303)
+
 @app.get("/admin/torneos", response_class=HTMLResponse)
 def ver_torneos(request: Request, admin: str = Depends(comprobar_admin)):
     conn = get_connection()

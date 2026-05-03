@@ -26,6 +26,8 @@
     Ordenar por club
 </a>
 
+|
+
 <a href="/admin/importar-jugadores?buscar={{ buscar }}&ordenar=licencia">
     Ordenar por licencia
 </a>
@@ -41,42 +43,79 @@
 
 <br>
 
-<table border="1">
-    <tr>
-        <th>Nombre</th>
-        <th>Apellido1</th>
-        <th>Apellido2</th>
-        <th>Club</th>
-        <th>Año</th>
-        <th>Licencia</th>
-        <th>Acciones</th>
-    </tr>
+<form method="post" action="/admin/importar-jugadores/aprobar-seleccionados">
+    <button type="submit"
+            onclick="return confirm('¿Quieres aprobar todos los jugadores seleccionados?')">
+        Aprobar seleccionados
+    </button>
 
-    {% for j in jugadores %}
-    <tr>
-        <td>{{ j[1] }}</td>
-        <td>{{ j[2] }}</td>
-        <td>{{ j[3] }}</td>
-        <td>{{ j[4] }}</td>
-        <td>{{ j[5] }}</td>
-        <td>{{ j[6] }}</td>
-        <td>
-            <a href="/admin/importar-jugadores/editar/{{ j[0] }}">Editar</a>
-            |
-            <a href="/admin/importar-jugadores/aprobar/{{ j[0] }}">Aprobar</a>
-            |
-            <a href="/admin/importar-jugadores/borrar/{{ j[0] }}"
-               onclick="return confirm('¿Seguro que quieres borrar este jugador?')">
-               Borrar
-            </a>
-        </td>
-    </tr>
-    {% endfor %}
+    <label style="margin-left: 20px;">
+        <input type="checkbox" onclick="toggleAll(this)">
+        Seleccionar todos
+    </label>
 
-</table>
+    <br><br>
+
+    <table border="1">
+        <tr>
+            <th>
+                <input type="checkbox" onclick="toggleAll(this)">
+            </th>
+            <th>Nombre</th>
+            <th>Apellido1</th>
+            <th>Apellido2</th>
+            <th>Club</th>
+            <th>Año</th>
+            <th>Licencia</th>
+            <th>Acciones</th>
+        </tr>
+
+        {% for j in jugadores %}
+        <tr>
+            <td>
+                <input type="checkbox" name="jugadores_ids" value="{{ j[0] }}">
+            </td>
+            <td>{{ j[1] }}</td>
+            <td>{{ j[2] }}</td>
+            <td>{{ j[3] }}</td>
+            <td>{{ j[4] }}</td>
+            <td>{{ j[5] }}</td>
+            <td>{{ j[6] }}</td>
+            <td>
+                <a href="/admin/importar-jugadores/editar/{{ j[0] }}">Editar</a>
+                |
+                <a href="/admin/importar-jugadores/aprobar/{{ j[0] }}">Aprobar</a>
+                |
+                <a href="/admin/importar-jugadores/borrar/{{ j[0] }}"
+                   onclick="return confirm('¿Seguro que quieres borrar este jugador?')">
+                   Borrar
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+
+    </table>
+</form>
 
 <br>
 <a href="/admin">Volver al menú</a>
+
+<script>
+function toggleAll(source) {
+    const checkboxes = document.getElementsByName('jugadores_ids');
+    for (let i = 0; i < checkboxes.length; i++) {
+        checkboxes[i].checked = source.checked;
+    }
+}
+</script>
+<script>
+function toggleAll(source) {
+    const checkboxes = document.getElementsByName('jugadores_ids');
+    for (let i = 0; i < checkboxes.length; i++) {
+        checkboxes[i].checked = source.checked;
+    }
+}
+</script>
 
 </body>
 </html>
