@@ -10,6 +10,8 @@ import re
 import os
 from dotenv import load_dotenv
 load_dotenv()
+from fastapi import UploadFile, File
+from openpyxl import load_workbook
 
 
 from app.database import get_connection
@@ -728,6 +730,86 @@ def ver_cuadros(
         }
     )
 
+@app.get("/admin/cuadros/{cuadro_id}/inscritos", response_class=HTMLResponse)
+def ver_inscritos(cuadro_id: int, request: Request):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT
+            ci.id,
+            ci.numero_licencia,
+            ci.nombre_excel,
+            j.id,
+            j.nombre,
+            j.apellido1,
+            j.apellido2,
+            ci.estado
+        FROM cuadro_inscritos ci
+        LEFT JOIN jugadores j ON ci.jugador_id = j.id
+        WHERE ci.cuadro_id = %s
+        ORDER BY ci.id
+    """, (cuadro_id,))
+
+    inscritos = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return templates.TemplateResponse(
+        request=request,
+        name="inscritos.html",
+        context={
+            "request": request,
+            "inscritos": inscritos,
+            "cuadro_id": cuadro_id
+        }
+    )
+@app.post("/admin/cuadros/{cuadro_id}/importar_excel")
+def importar_excel(cuadro_id: int, file: UploadFile = File(...)):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    wb = load_workbook(file.file)
+    ws = wb.active
+
+    for fila in ws.iter_rows(min_row=2):
+        licencia = fila[1].value
+        nombre_excel = fila[2].value
+
+        if not licencia:
+            continue
+
+        licencia = str(licencia).strip()
+
+        # Buscar jugador por licencia
+        cur.execute("""
+            SELECT id FROM jugadores
+            WHERE numero_licencia = %s
+        """, (licencia,))
+
+        jugador = cur.fetchone()
+
+        if jugador:
+            jugador_id = jugador[0]
+            estado = "encontrado"
+        else:
+            jugador_id = None
+            estado = "no_encontrado"
+
+        # Guardar en cuadro_inscritos
+        cur.execute("""
+            INSERT INTO cuadro_inscritos
+            (cuadro_id, jugador_id, numero_licencia, nombre_excel, estado)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (cuadro_id, jugador_id, licencia, nombre_excel, estado))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return {"mensaje": "Importación completada"}
+
 @app.post("/admin/cuadros")
 def guardar_cuadro(
     torneo_id: int = Form(...),
@@ -735,15 +817,16 @@ def guardar_cuadro(
     tamano: int = Form(...),
     numero_jugadores: int = Form(...),
     observaciones: str = Form(""),
+    ruta_excel: str = Form(""),
     admin: str = Depends(comprobar_admin)
 ):
     conn = get_connection()
     cur = conn.cursor()
 
     cur.execute("""
-        INSERT INTO cuadros (torneo_id, nombre, tamano, numero_jugadores, observaciones)
-        VALUES (%s, %s, %s, %s, %s)
-    """, (torneo_id, nombre, tamano, numero_jugadores, observaciones))
+    INSERT INTO cuadros (torneo_id, nombre, tamano, numero_jugadores, observaciones, ruta_excel)
+    VALUES (%s, %s, %s, %s, %s, %s)
+""", (torneo_id, nombre, tamano, numero_jugadores, observaciones, ruta_excel))
 
     conn.commit()
     cur.close()
@@ -768,10 +851,11 @@ def editar_cuadro_form(
     torneos = cur.fetchall()
 
     cur.execute("""
-        SELECT id, torneo_id, nombre, tamano, numero_jugadores, COALESCE(observaciones, '')
+        SELECT id, torneo_id, nombre, tamano, numero_jugadores, COALESCE(observaciones, ''), COALESCE(ruta_excel, '')
         FROM cuadros
         WHERE id = %s
     """, (cuadro_id,))
+
     cuadro = cur.fetchone()
 
     cur.close()
@@ -798,6 +882,7 @@ def actualizar_cuadro(
     tamano: int = Form(...),
     numero_jugadores: int = Form(...),
     observaciones: str = Form(""),
+    ruta_excel: str = Form(""),
     admin: str = Depends(comprobar_admin)
 ):
     conn = get_connection()
@@ -810,6 +895,7 @@ def actualizar_cuadro(
             tamano = %s,
             numero_jugadores = %s,
             observaciones = %s
+            ruta_excel = %s
         WHERE id = %s
     """, (torneo_id, nombre, tamano, numero_jugadores, observaciones, cuadro_id))
 

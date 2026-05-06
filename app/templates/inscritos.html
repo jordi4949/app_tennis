@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Inscritos</title>
+</head>
+<body>
+
+<h1>Inscritos del cuadro {{ cuadro_id }}</h1>
+
+<h2>Importar Excel</h2>
+
+<form action="/admin/cuadros/{{ cuadro_id }}/importar_excel" method="post" enctype="multipart/form-data">
+    <input type="file" name="file" required>
+    <button type="submit">Subir Excel</button>
+</form>
+
+<hr>
+
+<table border="1">
+    <tr>
+        <th>Licencia</th>
+        <th>Nombre Excel</th>
+        <th>Jugador oficial</th>
+        <th>Estado</th>
+        <th>Acción</th>
+    </tr>
+
+    {% for i in inscritos %}
+    <tr>
+        <td>{{ i[1] }}</td>
+        <td>{{ i[2] }}</td>
+
+        <td>
+            {% if i[3] %}
+                {{ i[4] }} {{ i[5] }} {{ i[6] }}
+            {% else %}
+                No encontrado
+            {% endif %}
+        </td>
+
+        <td>{{ i[7] }}</td>
+
+        <td>
+            {% if i[3] %}
+                <a href="/admin/jugadores/editar/{{ i[3] }}">Editar jugador</a>
+            {% else %}
+                Crear jugador
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<br>
+<a href="/admin/cuadros">Volver a cuadros</a>
+
+</body>
+</html>

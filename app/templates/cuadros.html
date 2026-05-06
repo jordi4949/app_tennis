@@ -67,9 +67,11 @@
 
     <label>Observaciones:</label>
     <input type="text" name="observaciones" placeholder="Ej: cuadro alevín masculino">
-
-    <br><br>
-
+    <label>Ruta Excel:</label>
+    <input type="text" name="ruta_excel" placeholder="Excels/copa_catalunya_1/cuadro_1.xlsx">
+    
+    <br><br><label>Ruta Excel:</label>
+    <input type="text" name="ruta_excel" placeholder="Excels/copa_catalunya_1/cuadro_1.xlsx">
     <button type="submit">Guardar cuadro</button>
 </form>
 
@@ -102,6 +104,7 @@
         <td>{{ c[7] }}</td>
         <td>
             <a href="/admin/cuadros/editar/{{ c[0] }}">Editar</a>
+            <a href="/admin/cuadros/{{ c[0] }}/inscritos">Ver inscritos</a>
         </td>
     </tr>
     {% endfor %}
