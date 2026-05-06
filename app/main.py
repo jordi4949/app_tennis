@@ -765,6 +765,85 @@ def ver_inscritos(cuadro_id: int, request: Request):
             "cuadro_id": cuadro_id
         }
     )
+
+@app.post("/admin/cuadros/{cuadro_id}/importar-inscritos")
+def importar_inscritos_desde_excel(
+    cuadro_id: int,
+    admin: str = Depends(comprobar_admin)
+):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # Buscar ruta_excel del cuadro
+    cur.execute("""
+        SELECT ruta_excel
+        FROM cuadros
+        WHERE id = %s
+    """, (cuadro_id,))
+    fila = cur.fetchone()
+
+    if not fila or not fila[0]:
+        cur.close()
+        conn.close()
+        return RedirectResponse(
+            url=f"/admin/cuadros/{cuadro_id}/inscritos",
+            status_code=303
+        )
+
+    ruta_excel = fila[0]
+
+    # Si la ruta es relativa, la convertimos a absoluta desde la raíz del proyecto
+    if not os.path.isabs(ruta_excel):
+        ruta_excel = os.path.join(os.getcwd(), ruta_excel)
+
+    wb = load_workbook(ruta_excel)
+    ws = wb.active
+
+    # Limpiar inscritos anteriores de ese cuadro para no duplicar
+    cur.execute("""
+        DELETE FROM cuadro_inscritos
+        WHERE cuadro_id = %s
+    """, (cuadro_id,))
+
+    for fila_excel in ws.iter_rows(min_row=2):
+        licencia = fila_excel[1].value  # Columna B
+        nombre_excel = fila_excel[2].value  # Columna C
+
+        if not licencia:
+            continue
+
+        licencia = str(licencia).strip()
+
+        cur.execute("""
+            SELECT id
+            FROM jugadores
+            WHERE numero_licencia = %s
+        """, (licencia,))
+
+        jugador = cur.fetchone()
+
+        if jugador:
+            jugador_id = jugador[0]
+            estado = "encontrado"
+        else:
+            jugador_id = None
+            estado = "no_encontrado"
+
+        cur.execute("""
+            INSERT INTO cuadro_inscritos
+            (cuadro_id, jugador_id, numero_licencia, nombre_excel, estado)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (cuadro_id, jugador_id, licencia, nombre_excel, estado))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return RedirectResponse(
+        url=f"/admin/cuadros/{cuadro_id}/inscritos",
+        status_code=303
+    )
+
 @app.post("/admin/cuadros/{cuadro_id}/importar_excel")
 def importar_excel(cuadro_id: int, file: UploadFile = File(...)):
     conn = get_connection()
@@ -897,7 +976,7 @@ def actualizar_cuadro(
             observaciones = %s
             ruta_excel = %s
         WHERE id = %s
-    """, (torneo_id, nombre, tamano, numero_jugadores, observaciones, cuadro_id))
+    """, (torneo_id, nombre, tamano, numero_jugadores, observaciones, ruta_excel, cuadro_id))
 
     conn.commit()
     cur.close()

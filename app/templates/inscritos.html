@@ -8,6 +8,15 @@
 
 <h1>Inscritos del cuadro {{ cuadro_id }}</h1>
 
+<form method="post" action="/admin/cuadros/{{ cuadro_id }}/importar-inscritos">
+    <button type="submit"
+            onclick="return confirm('¿Quieres importar los inscritos desde el Excel de este cuadro? Se borrarán los inscritos anteriores de este cuadro.')">
+        Importar inscritos desde Excel
+    </button>
+</form>
+
+<br>
+
 <h2>Importar Excel</h2>
 
 <form action="/admin/cuadros/{{ cuadro_id }}/importar_excel" method="post" enctype="multipart/form-data">
