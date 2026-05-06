@@ -973,7 +973,7 @@ def actualizar_cuadro(
             nombre = %s,
             tamano = %s,
             numero_jugadores = %s,
-            observaciones = %s
+            observaciones = %s,
             ruta_excel = %s
         WHERE id = %s
     """, (torneo_id, nombre, tamano, numero_jugadores, observaciones, ruta_excel, cuadro_id))
