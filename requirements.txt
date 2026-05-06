@@ -21,7 +21,6 @@ pillow==12.2.0
 psycopg2-binary==2.9.11
 pydantic==2.13.2
 pydantic_core==2.46.2
-pygame==2.6.1
 pytesseract==0.3.13
 python-dotenv==1.2.2
 python-multipart==0.0.26
