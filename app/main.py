@@ -844,51 +844,6 @@ def importar_inscritos_desde_excel(
         status_code=303
     )
 
-@app.post("/admin/cuadros/{cuadro_id}/importar_excel")
-def importar_excel(cuadro_id: int, file: UploadFile = File(...)):
-    conn = get_connection()
-    cur = conn.cursor()
-
-    wb = load_workbook(file.file)
-    ws = wb.active
-
-    for fila in ws.iter_rows(min_row=2):
-        licencia = fila[1].value
-        nombre_excel = fila[2].value
-
-        if not licencia:
-            continue
-
-        licencia = str(licencia).strip()
-
-        # Buscar jugador por licencia
-        cur.execute("""
-            SELECT id FROM jugadores
-            WHERE numero_licencia = %s
-        """, (licencia,))
-
-        jugador = cur.fetchone()
-
-        if jugador:
-            jugador_id = jugador[0]
-            estado = "encontrado"
-        else:
-            jugador_id = None
-            estado = "no_encontrado"
-
-        # Guardar en cuadro_inscritos
-        cur.execute("""
-            INSERT INTO cuadro_inscritos
-            (cuadro_id, jugador_id, numero_licencia, nombre_excel, estado)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (cuadro_id, jugador_id, licencia, nombre_excel, estado))
-
-    conn.commit()
-    cur.close()
-    conn.close()
-
-    return {"mensaje": "Importación completada"}
-
 @app.post("/admin/cuadros")
 def guardar_cuadro(
     torneo_id: int = Form(...),
