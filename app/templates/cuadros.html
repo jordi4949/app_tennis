@@ -14,7 +14,7 @@
     <label>Ver cuadros del torneo:</label>
 
     <select name="torneo_id">
-        <option value="">Todos los torneos</option>
+        <option value="0">Todos los torneos</option>
 
         {% for torneo in torneos %}
             <option value="{{ torneo[0] }}"
@@ -67,8 +67,6 @@
 
     <label>Observaciones:</label>
     <input type="text" name="observaciones" placeholder="Ej: cuadro alevín masculino">
-    <label>Ruta Excel:</label>
-    <input type="text" name="ruta_excel" placeholder="Excels/copa_catalunya_1/cuadro_1.xlsx">
     
     <br><br><label>Ruta Excel:</label>
     <input type="text" name="ruta_excel" placeholder="Excels/copa_catalunya_1/cuadro_1.xlsx">
@@ -84,6 +82,7 @@
         <th>ID</th>
         <th>Cuadro</th>
         <th>Tamaño</th>
+        <th>Nº jugadores</th>
         <th>Observaciones</th>
         <th>Torneo</th>
         <th>Fecha</th>
@@ -102,8 +101,10 @@
         <td>{{ c[5] }}</td>
         <td>{{ c[6] }}</td>
         <td>{{ c[7] }}</td>
+        <td>{{ c[8] }}</td>
         <td>
             <a href="/admin/cuadros/editar/{{ c[0] }}">Editar</a>
+            |
             <a href="/admin/cuadros/{{ c[0] }}/inscritos">Ver inscritos</a>
         </td>
     </tr>
