@@ -667,7 +667,7 @@ admin: str = Depends(comprobar_admin)
 @app.get("/admin/cuadros", response_class=HTMLResponse)
 def ver_cuadros(
     request: Request,
-    torneo_id: int | None = None,
+    torneo_id: int = 0
     admin: str = Depends(comprobar_admin)
 ):
     conn = get_connection()
@@ -680,7 +680,7 @@ def ver_cuadros(
     """)
     torneos = cur.fetchall()
 
-    if torneo_id:
+    if torneo_id != 0:
         cur.execute("""
             SELECT
                 c.id,
@@ -731,7 +731,11 @@ def ver_cuadros(
     )
 
 @app.get("/admin/cuadros/{cuadro_id}/inscritos", response_class=HTMLResponse)
-def ver_inscritos(cuadro_id: int, request: Request):
+def ver_inscritos(
+    cuadro_id: int,
+    request: Request,
+    admin: str = Depends(comprobar_admin)
+):
     conn = get_connection()
     cur = conn.cursor()
 
@@ -812,12 +816,12 @@ def importar_inscritos_desde_excel(
         if not licencia:
             continue
 
-        licencia = str(licencia).strip()
+        licencia = str(licencia).strip().replace(".0", "")
 
         cur.execute("""
             SELECT id
             FROM jugadores
-            WHERE numero_licencia = %s
+            WHERE TRIM(numero_licencia) = %s
         """, (licencia,))
 
         jugador = cur.fetchone()
