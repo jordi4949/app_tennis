@@ -8,17 +8,20 @@
 
 <h1>Inscritos del cuadro {{ cuadro_id }}</h1>
 
-<form method="post" action="/admin/cuadros/{{ cuadro_id }}/importar-inscritos">
+<form action="/admin/cuadros/{{ cuadro_id }}/importar-excel-archivo" method="post" enctype="multipart/form-data">
+    <label>Seleccionar Excel:</label>
+    <input type="file" name="file" accept=".xlsx" required>
+
     <button type="submit"
-            onclick="return confirm('¿Quieres importar los inscritos desde el Excel de este cuadro? Se borrarán los inscritos anteriores de este cuadro.')">
-        Importar inscritos desde Excel
+            onclick="return confirm('¿Quieres importar este Excel? Se borrarán los inscritos anteriores de este cuadro.')">
+        Importar Excel
     </button>
 </form>
 
 <br>
-
-
 <hr>
+
+
 
 <table border="1">
     <tr>

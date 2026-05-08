@@ -667,7 +667,7 @@ admin: str = Depends(comprobar_admin)
 @app.get("/admin/cuadros", response_class=HTMLResponse)
 def ver_cuadros(
     request: Request,
-    torneo_id: int = 0
+    torneo_id: int = 0,
     admin: str = Depends(comprobar_admin)
 ):
     conn = get_connection()
@@ -728,6 +728,63 @@ def ver_cuadros(
             "cuadros": cuadros,
             "torneo_id": torneo_id
         }
+    )
+
+@app.post("/admin/cuadros/{cuadro_id}/importar-excel-archivo")
+def importar_excel_archivo(
+    cuadro_id: int,
+    file: UploadFile = File(...),
+    admin: str = Depends(comprobar_admin)
+):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    wb = load_workbook(file.file)
+    ws = wb.active
+
+    # Borrar inscritos anteriores del cuadro para no duplicar
+    cur.execute("""
+        DELETE FROM cuadro_inscritos
+        WHERE cuadro_id = %s
+    """, (cuadro_id,))
+
+    for fila_excel in ws.iter_rows(min_row=2):
+        licencia = fila_excel[1].value  # columna B
+        nombre_excel = fila_excel[2].value  # columna C
+
+        if not licencia:
+            continue
+
+        licencia = str(licencia).strip().replace(".0", "")
+
+        cur.execute("""
+            SELECT id
+            FROM jugadores
+            WHERE TRIM(numero_licencia) = %s
+        """, (licencia,))
+
+        jugador = cur.fetchone()
+
+        if jugador:
+            jugador_id = jugador[0]
+            estado = "encontrado"
+        else:
+            jugador_id = None
+            estado = "no_encontrado"
+
+        cur.execute("""
+            INSERT INTO cuadro_inscritos
+            (cuadro_id, jugador_id, numero_licencia, nombre_excel, estado)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (cuadro_id, jugador_id, licencia, nombre_excel, estado))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return RedirectResponse(
+        url=f"/admin/cuadros/{cuadro_id}/inscritos",
+        status_code=303
     )
 
 @app.get("/admin/cuadros/{cuadro_id}/inscritos", response_class=HTMLResponse)
