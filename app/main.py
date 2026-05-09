@@ -812,8 +812,18 @@ def ver_inscritos(
         WHERE ci.cuadro_id = %s
         ORDER BY ci.nombre_excel
     """, (cuadro_id,))
-    
+
     inscritos = cur.fetchall()
+
+    cur.execute("""
+        SELECT tamano
+        FROM cuadros
+        WHERE id = %s
+    """, (cuadro_id,))
+
+    cuadro = cur.fetchone()
+    tamano_cuadro = cuadro[0] if cuadro else 32
+    posiciones = list(range(1, tamano_cuadro + 1))
 
     cur.close()
     conn.close()
@@ -824,9 +834,11 @@ def ver_inscritos(
         context={
             "request": request,
             "inscritos": inscritos,
-            "cuadro_id": cuadro_id
+            "cuadro_id": cuadro_id,
+            "posiciones": posiciones
         }
     )
+
 @app.post("/admin/inscritos/{inscrito_id}/posicion")
 def guardar_posicion_inscrito(
     inscrito_id: int,
@@ -1054,12 +1066,11 @@ async def guardar_posiciones_cuadro(
             inscrito_id = int(key.replace("posicion_", ""))
 
             if value:
-                posicion = int(value)
                 cur.execute("""
                     UPDATE cuadro_inscritos
                     SET posicion = %s
                     WHERE id = %s AND cuadro_id = %s
-                """, (posicion, inscrito_id, cuadro_id))
+                """, (int(value), inscrito_id, cuadro_id))
             else:
                 cur.execute("""
                     UPDATE cuadro_inscritos
