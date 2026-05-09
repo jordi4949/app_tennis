@@ -21,7 +21,7 @@
 <br>
 <hr>
 
-
+<form method="post" action="/admin/cuadros/{{ cuadro_id }}/guardar-posiciones">
 
 <table border="1">
     <tr>
@@ -33,14 +33,17 @@
         <th>Acción</th>
     </tr>
 
-
     {% for i in inscritos %}
     <tr>
         <td>
-    <form method="post" action="/admin/inscritos/{{ i[0] }}/posicion">
-        <input type="number" name="posicion" value="{{ i[8] or '' }}" min="1" style="width:60px;">
-        <button type="submit">Guardar</button>
-    </form>
+            <select name="posicion_{{ i[0] }}">
+                <option value="">--</option>
+                {% for p in posiciones %}
+                    <option value="{{ p }}" {% if i[8] == p %}selected{% endif %}>
+                        {{ p }}
+                    </option>
+                {% endfor %}
+            </select>
         </td>
 
         <td>{{ i[1] }}</td>
@@ -66,6 +69,11 @@
     </tr>
     {% endfor %}
 </table>
+
+<br>
+<button type="submit">Guardar posiciones</button>
+
+</form>
 
 <br>
 <a href="/admin/cuadros">Volver a cuadros</a>

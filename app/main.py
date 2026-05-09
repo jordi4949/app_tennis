@@ -812,7 +812,7 @@ def ver_inscritos(
         WHERE ci.cuadro_id = %s
         ORDER BY ci.nombre_excel
     """, (cuadro_id,))
-
+xº
     inscritos = cur.fetchall()
 
     cur.close()
@@ -1037,6 +1037,45 @@ def actualizar_cuadro(
     conn.close()
 
     return RedirectResponse(url="/admin/cuadros", status_code=303)
+
+@app.post("/admin/cuadros/{cuadro_id}/guardar-posiciones")
+async def guardar_posiciones_cuadro(
+    cuadro_id: int,
+    request: Request,
+    admin: str = Depends(comprobar_admin)
+):
+    form = await request.form()
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    for key, value in form.items():
+        if key.startswith("posicion_"):
+            inscrito_id = int(key.replace("posicion_", ""))
+
+            if value:
+                posicion = int(value)
+                cur.execute("""
+                    UPDATE cuadro_inscritos
+                    SET posicion = %s
+                    WHERE id = %s AND cuadro_id = %s
+                """, (posicion, inscrito_id, cuadro_id))
+            else:
+                cur.execute("""
+                    UPDATE cuadro_inscritos
+                    SET posicion = NULL
+                    WHERE id = %s AND cuadro_id = %s
+                """, (inscrito_id, cuadro_id))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return RedirectResponse(
+        url=f"/admin/cuadros/{cuadro_id}/inscritos",
+        status_code=303
+    )
+
 
 @app.get("/admin/partidos", response_class=HTMLResponse)
 def ver_partidos(request: Request,admin: str = Depends(comprobar_admin)):
