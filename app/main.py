@@ -810,7 +810,7 @@ def ver_inscritos(
         FROM cuadro_inscritos ci
         LEFT JOIN jugadores j ON ci.jugador_id = j.id
         WHERE ci.cuadro_id = %s
-        ORDER BY ci.posicion NULLS LAST, ci.id
+        ORDER BY ci.nombre_excel
     """, (cuadro_id,))
 
     inscritos = cur.fetchall()
