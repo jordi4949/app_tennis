@@ -806,10 +806,11 @@ def ver_inscritos(
             j.apellido1,
             j.apellido2,
             ci.estado
+            ci.posicion
         FROM cuadro_inscritos ci
         LEFT JOIN jugadores j ON ci.jugador_id = j.id
         WHERE ci.cuadro_id = %s
-        ORDER BY ci.id
+        ORDER BY ci.posicion NULLS LAST, ci.id
     """, (cuadro_id,))
 
     inscritos = cur.fetchall()
@@ -825,6 +826,43 @@ def ver_inscritos(
             "inscritos": inscritos,
             "cuadro_id": cuadro_id
         }
+    )
+@app.post("/admin/inscritos/{inscrito_id}/posicion")
+def guardar_posicion_inscrito(
+    inscrito_id: int,
+    posicion: int = Form(...),
+    admin: str = Depends(comprobar_admin)
+):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT cuadro_id
+        FROM cuadro_inscritos
+        WHERE id = %s
+    """, (inscrito_id,))
+    fila = cur.fetchone()
+
+    if not fila:
+        cur.close()
+        conn.close()
+        return RedirectResponse(url="/admin/cuadros", status_code=303)
+
+    cuadro_id = fila[0]
+
+    cur.execute("""
+        UPDATE cuadro_inscritos
+        SET posicion = %s
+        WHERE id = %s
+    """, (posicion, inscrito_id))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return RedirectResponse(
+        url=f"/admin/cuadros/{cuadro_id}/inscritos",
+        status_code=303
     )
 
 @app.post("/admin/cuadros/{cuadro_id}/importar-inscritos")

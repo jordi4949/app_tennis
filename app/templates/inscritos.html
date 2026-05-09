@@ -25,6 +25,7 @@
 
 <table border="1">
     <tr>
+        <th>Posición</th>
         <th>Licencia</th>
         <th>Nombre Excel</th>
         <th>Jugador oficial</th>
@@ -32,8 +33,16 @@
         <th>Acción</th>
     </tr>
 
+
     {% for i in inscritos %}
     <tr>
+        <td>
+    <form method="post" action="/admin/inscritos/{{ i[0] }}/posicion">
+        <input type="number" name="posicion" value="{{ i[8] or '' }}" min="1" style="width:60px;">
+        <button type="submit">Guardar</button>
+    </form>
+        </td>
+
         <td>{{ i[1] }}</td>
         <td>{{ i[2] }}</td>
 
