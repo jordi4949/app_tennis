@@ -805,7 +805,7 @@ def ver_inscritos(
             j.nombre,
             j.apellido1,
             j.apellido2,
-            ci.estado
+            ci.estado,
             ci.posicion
         FROM cuadro_inscritos ci
         LEFT JOIN jugadores j ON ci.jugador_id = j.id
