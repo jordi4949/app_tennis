@@ -812,7 +812,7 @@ def ver_inscritos(
         WHERE ci.cuadro_id = %s
         ORDER BY ci.nombre_excel
     """, (cuadro_id,))
-xº
+    
     inscritos = cur.fetchall()
 
     cur.close()
