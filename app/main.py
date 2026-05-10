@@ -825,6 +825,11 @@ def ver_inscritos(
     tamano_cuadro = cuadro[0] if cuadro else 32
     posiciones = list(range(1, tamano_cuadro + 1))
 
+    posiciones_ocupadas = [
+    i[8] for i in inscritos
+    if i[8] is not None
+    ]
+
     cur.close()
     conn.close()
 
@@ -835,7 +840,8 @@ def ver_inscritos(
             "request": request,
             "inscritos": inscritos,
             "cuadro_id": cuadro_id,
-            "posiciones": posiciones
+            "posiciones": posiciones,
+        "posiciones_ocupadas": posiciones_ocupadas    
         }
     )
 

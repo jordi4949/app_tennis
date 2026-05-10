@@ -38,10 +38,13 @@
         <td>
             <select name="posicion_{{ i[0] }}">
                 <option value="">--</option>
+
                 {% for p in posiciones %}
+                    {% if p == i[8] or p not in posiciones_ocupadas %}
                     <option value="{{ p }}" {% if i[8] == p %}selected{% endif %}>
                         {{ p }}
                     </option>
+                    {% endif %}
                 {% endfor %}
             </select>
         </td>
