@@ -582,7 +582,7 @@ def guardar_torneo(
 
     cur.execute("""
         INSERT INTO torneos (nombre, fecha_inicio, categoria, ubicacion)
-        VALUES (%s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s,)
     """, (nombre, fecha_inicio, categoria, ubicacion))
 
     conn.commit()
