@@ -76,7 +76,42 @@
 <br>
 <button type="submit">Guardar posiciones</button>
 
+
 </form>
+<hr>
+
+<h2>Vista del cuadro por posiciones</h2>
+
+<table border="1">
+    <tr>
+        <th>Posición</th>
+        <th>Jugador</th>
+        <th>Licencia</th>
+        <th>Estado</th>
+    </tr>
+
+    {% for item in cuadro_ordenado %}
+    <tr>
+        <td>{{ item.posicion }}</td>
+
+        {% if item.tipo == "jugador" %}
+            <td>
+                {% if item.inscrito[3] %}
+                    {{ item.inscrito[4] }} {{ item.inscrito[5] }} {{ item.inscrito[6] }}
+                {% else %}
+                    {{ item.inscrito[2] }}
+                {% endif %}
+            </td>
+            <td>{{ item.inscrito[1] }}</td>
+            <td>{{ item.inscrito[7] }}</td>
+        {% else %}
+            <td><strong>BYE / vacío</strong></td>
+            <td>-</td>
+            <td>sin jugador</td>
+        {% endif %}
+    </tr>
+    {% endfor %}
+</table>
 
 <br>
 <a href="/admin/cuadros">Volver a cuadros</a>

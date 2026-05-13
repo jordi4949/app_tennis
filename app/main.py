@@ -573,6 +573,7 @@ def guardar_torneo(
     nombre: str = Form(...),
     fecha_inicio: str = Form(...),
     categoria: str = Form(...),
+    genero: str = Form(...),
     ubicacion: str = Form(...),
     admin: str = Depends(comprobar_admin),
 ):
@@ -581,7 +582,7 @@ def guardar_torneo(
 
     cur.execute("""
         INSERT INTO torneos (nombre, fecha_inicio, categoria, ubicacion)
-        VALUES (%s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s)
     """, (nombre, fecha_inicio, categoria, ubicacion))
 
     conn.commit()
@@ -627,6 +628,7 @@ def actualizar_torneo(
     nombre: str = Form(...),
     fecha_inicio: str = Form(...),
     categoria: str = Form(...),
+    genero: str = Form(...),
     ubicacion: str = Form(...),
     admin: str = Depends(comprobar_admin)
 ):
@@ -810,7 +812,7 @@ def ver_inscritos(
         FROM cuadro_inscritos ci
         LEFT JOIN jugadores j ON ci.jugador_id = j.id
         WHERE ci.cuadro_id = %s
-        ORDER BY ci.nombre_excel
+        ORDER BY ci.posicion NULLS LAST, ci.nombre_excel
     """, (cuadro_id,))
 
     inscritos = cur.fetchall()
@@ -830,6 +832,30 @@ def ver_inscritos(
     if i[8] is not None
     ]
 
+        inscritos_por_posicion = {
+        i[8]: i
+        for i in inscritos
+        if i[8] is not None
+    }
+
+    cuadro_ordenado = []
+
+    for posicion in posiciones:
+        inscrito = inscritos_por_posicion.get(posicion)
+
+        if inscrito:
+            cuadro_ordenado.append({
+                "posicion": posicion,
+                "tipo": "jugador",
+                "inscrito": inscrito
+            })
+        else:
+            cuadro_ordenado.append({
+                "posicion": posicion,
+                "tipo": "bye",
+                "inscrito": None
+            })
+
     cur.close()
     conn.close()
 
@@ -841,7 +867,8 @@ def ver_inscritos(
             "inscritos": inscritos,
             "cuadro_id": cuadro_id,
             "posiciones": posiciones,
-        "posiciones_ocupadas": posiciones_ocupadas    
+        "posiciones_ocupadas": posiciones_ocupadas,
+        "cuadro_ordenado": cuadro_ordenado
         }
     )
 
