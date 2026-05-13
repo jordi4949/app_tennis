@@ -856,8 +856,40 @@ def ver_inscritos(
                 "inscrito": None
             })
 
+    emparejamientos_primera_ronda = []
+
+    numero_partido = 1
+
+    for i in range(0, len(cuadro_ordenado), 2):
+        lado1 = cuadro_ordenado[i]
+        lado2 = cuadro_ordenado[i + 1] if i + 1 < len(cuadro_ordenado) else {
+            "posicion": None,
+            "tipo": "bye",
+            "inscrito": None
+        }
+
+        if lado1["tipo"] == "jugador" and lado2["tipo"] == "jugador":
+            estado = "partido"
+        elif lado1["tipo"] == "jugador" and lado2["tipo"] == "bye":
+            estado = "bye_jugador1"
+        elif lado1["tipo"] == "bye" and lado2["tipo"] == "jugador":
+            estado = "bye_jugador2"
+        else:
+            estado = "vacio"
+
+        emparejamientos_primera_ronda.append({
+            "numero_partido": numero_partido,
+            "lado1": lado1,
+            "lado2": lado2,
+            "estado": estado
+        })
+
+        numero_partido += 1
+
     cur.close()
     conn.close()
+
+
 
     return templates.TemplateResponse(
         request=request,
@@ -868,9 +900,11 @@ def ver_inscritos(
             "cuadro_id": cuadro_id,
             "posiciones": posiciones,
         "posiciones_ocupadas": posiciones_ocupadas,
-        "cuadro_ordenado": cuadro_ordenado
+        "cuadro_ordenado": cuadro_ordenado,
+        "emparejamientos_primera_ronda": emparejamientos_primera_ronda
         }
     )
+
 
 @app.post("/admin/cuadros/{cuadro_id}/guardar-posiciones")
 async def guardar_posiciones_cuadro(
