@@ -573,16 +573,15 @@ def guardar_torneo(
     nombre: str = Form(...),
     fecha_inicio: str = Form(...),
     categoria: str = Form(...),
-    genero: str = Form(...),
     ubicacion: str = Form(...),
-    admin: str = Depends(comprobar_admin),
+    admin: str = Depends(comprobar_admin)
 ):
     conn = get_connection()
     cur = conn.cursor()
 
     cur.execute("""
         INSERT INTO torneos (nombre, fecha_inicio, categoria, ubicacion)
-        VALUES (%s, %s, %s, %s, %s,)
+        VALUES (%s, %s, %s, %s)
     """, (nombre, fecha_inicio, categoria, ubicacion))
 
     conn.commit()
@@ -628,7 +627,6 @@ def actualizar_torneo(
     nombre: str = Form(...),
     fecha_inicio: str = Form(...),
     categoria: str = Form(...),
-    genero: str = Form(...),
     ubicacion: str = Form(...),
     admin: str = Depends(comprobar_admin)
 ):
