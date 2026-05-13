@@ -50,6 +50,16 @@
 
     <br><br>
 
+    <label>Género:</label>
+    <select name="genero_id" required>
+        <option value="">-- Selecciona género --</option>
+        {% for genero in generos %}
+            <option value="{{ genero[0] }}">
+                {{ genero[1]|capitalize }}
+            </option>
+        {% endfor %}
+    </select>
+
     <label>Tamaño:</label>
     <select name="tamano" required>
         <option value="8">8</option>
@@ -87,6 +97,7 @@
         <th>Torneo</th>
         <th>Fecha</th>
         <th>Categoría</th>
+        <th>Género</th>
         <th>Ubicación</th>
         <th>Acciones</th>
     </tr>
@@ -102,6 +113,7 @@
         <td>{{ c[6] }}</td>
         <td>{{ c[7] }}</td>
         <td>{{ c[8] }}</td>
+        <td>{{ c[9] }}</td>
         <td>
             <a href="/admin/cuadros/editar/{{ c[0] }}">Editar</a>
             |

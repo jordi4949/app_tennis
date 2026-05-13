@@ -680,6 +680,13 @@ def ver_cuadros(
     """)
     torneos = cur.fetchall()
 
+    cur.execute("""
+        SELECT id, nombre
+        FROM generos
+        ORDER BY id
+    """)
+    generos = cur.fetchall()
+
     if torneo_id != 0:
         cur.execute("""
             SELECT
@@ -691,9 +698,11 @@ def ver_cuadros(
                 t.nombre,
                 t.fecha_inicio,
                 t.categoria,
+                COALESCE(g.nombre, ''),
                 t.ubicacion
             FROM cuadros c
             JOIN torneos t ON c.torneo_id = t.id
+            LEFT JOIN generos g ON c.genero_id = g.id
             WHERE c.torneo_id = %s
             ORDER BY c.nombre
         """, (torneo_id,))
@@ -708,11 +717,13 @@ def ver_cuadros(
                 t.nombre,
                 t.fecha_inicio,
                 t.categoria,
+                COALESCE(g.nombre, ''),
                 t.ubicacion
             FROM cuadros c
             JOIN torneos t ON c.torneo_id = t.id
+            LEFT JOIN generos g ON c.genero_id = g.id
             ORDER BY t.fecha_inicio DESC, t.nombre, c.nombre
-        """)
+        """)   
 
     cuadros = cur.fetchall()
 
@@ -726,7 +737,8 @@ def ver_cuadros(
             "request": request,
             "torneos": torneos,
             "cuadros": cuadros,
-            "torneo_id": torneo_id
+            "torneo_id": torneo_id,
+            "generos": generos
         }
     )
 
@@ -1063,6 +1075,7 @@ def importar_inscritos_desde_excel(
 def guardar_cuadro(
     torneo_id: int = Form(...),
     nombre: str = Form(...),
+    genero_id: int = Form(...),
     tamano: int = Form(...),
     numero_jugadores: int = Form(...),
     observaciones: str = Form(""),
@@ -1073,9 +1086,9 @@ def guardar_cuadro(
     cur = conn.cursor()
 
     cur.execute("""
-    INSERT INTO cuadros (torneo_id, nombre, tamano, numero_jugadores, observaciones, ruta_excel)
+    INSERT INTO cuadros (torneo_id, nombre, genero_id, tamano, numero_jugadores, observaciones, ruta_excel)
     VALUES (%s, %s, %s, %s, %s, %s)
-""", (torneo_id, nombre, tamano, numero_jugadores, observaciones, ruta_excel))
+""", (torneo_id, nombre, genero_id, tamano, numero_jugadores, observaciones, ruta_excel))
 
     conn.commit()
     cur.close()
