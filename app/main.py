@@ -582,7 +582,7 @@ def guardar_torneo(
 
     cur.execute("""
         INSERT INTO torneos (nombre, fecha_inicio, categoria, ubicacion)
-        VALUES (%s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s)
     """, (nombre, fecha_inicio, categoria, ubicacion))
 
     conn.commit()
@@ -832,7 +832,7 @@ def ver_inscritos(
     if i[8] is not None
     ]
 
-        inscritos_por_posicion = {
+    inscritos_por_posicion = {
         i[8]: i
         for i in inscritos
         if i[8] is not None
