@@ -1087,7 +1087,7 @@ def guardar_cuadro(
 
     cur.execute("""
     INSERT INTO cuadros (torneo_id, nombre, genero_id, tamano, numero_jugadores, observaciones, ruta_excel)
-    VALUES (%s, %s, %s, %s, %s, %s)
+    VALUES (%s, %s, %s, %s, %s, %s, %s)
 """, (torneo_id, nombre, genero_id, tamano, numero_jugadores, observaciones, ruta_excel))
 
     conn.commit()
