@@ -27,6 +27,32 @@
 
     <br><br>
 
+<label>Categoría:</label>
+<select name="categoria_id" required>
+    <option value="">-- Selecciona categoría --</option>
+    {% for categoria in categorias %}
+        <option value="{{ categoria[0] }}"
+            {% if categoria[0] == cuadro[7] %}selected{% endif %}>
+            {{ categoria[1]|capitalize }}
+        </option>
+    {% endfor %}
+</select>
+
+<br><br>
+
+<label>Género:</label>
+<select name="genero_id" required>
+    <option value="">-- Selecciona género --</option>
+    {% for genero in generos %}
+        <option value="{{ genero[0] }}"
+            {% if genero[0] == cuadro[8] %}selected{% endif %}>
+            {{ genero[1]|capitalize }}
+        </option>
+    {% endfor %}
+</select>
+
+    <br><br>
+
     <label>Tamaño:</label>
     <select name="tamano" required>
         <option value="8" {% if cuadro[3] == 8 %}selected{% endif %}>8</option>

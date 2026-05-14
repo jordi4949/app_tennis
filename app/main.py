@@ -1124,12 +1124,26 @@ def editar_cuadro_form(
     torneos = cur.fetchall()
 
     cur.execute("""
-        SELECT id, torneo_id, nombre, tamano, numero_jugadores, COALESCE(observaciones, ''), COALESCE(ruta_excel, '')
+        SELECT id, torneo_id, nombre, tamano, numero_jugadores, COALESCE(observaciones, ''), COALESCE(ruta_excel, ''), categoria_id, genero_id
         FROM cuadros
         WHERE id = %s
     """, (cuadro_id,))
 
     cuadro = cur.fetchone()
+
+    cur.execute("""
+        SELECT id, nombre
+        FROM categorias
+        ORDER BY id
+    """)
+    categorias = cur.fetchall()
+
+    cur.execute("""
+        SELECT id, nombre
+        FROM generos
+        ORDER BY id
+    """)
+    generos = cur.fetchall()
 
     cur.close()
     conn.close()
@@ -1143,7 +1157,9 @@ def editar_cuadro_form(
         context={
             "request": request,
             "cuadro": cuadro,
-            "torneos": torneos
+            "torneos": torneos,
+            "categorias": categorias,
+            "generos": generos
         }
     )
 
@@ -1152,6 +1168,8 @@ def actualizar_cuadro(
     cuadro_id: int,
     torneo_id: int = Form(...),
     nombre: str = Form(...),
+    categoria_id: int = Form(...),
+    genero_id: int = Form(...),
     tamano: int = Form(...),
     numero_jugadores: int = Form(...),
     observaciones: str = Form(""),
@@ -1165,12 +1183,14 @@ def actualizar_cuadro(
         UPDATE cuadros
         SET torneo_id = %s,
             nombre = %s,
+            categoria_id = %s,
+            genero_id = %s,
             tamano = %s,
             numero_jugadores = %s,
             observaciones = %s,
             ruta_excel = %s
         WHERE id = %s
-    """, (torneo_id, nombre, tamano, numero_jugadores, observaciones, ruta_excel, cuadro_id))
+    """, (torneo_id, nombre, categoria_id, genero_id, tamano, numero_jugadores, observaciones, ruta_excel, cuadro_id))
 
     conn.commit()
     cur.close()
