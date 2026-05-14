@@ -687,6 +687,13 @@ def ver_cuadros(
     """)
     generos = cur.fetchall()
 
+    cur.execute("""
+        SELECT id, nombre
+        FROM categorias
+        ORDER BY id
+    """)
+    categorias = cur.fetchall()
+
     if torneo_id != 0:
         cur.execute("""
             SELECT
@@ -697,11 +704,12 @@ def ver_cuadros(
                 COALESCE(c.observaciones, ''),
                 t.nombre,
                 t.fecha_inicio,
-                t.categoria,
+                COALESCE(cat.nombre, ''),
                 COALESCE(g.nombre, ''),
                 t.ubicacion
             FROM cuadros c
             JOIN torneos t ON c.torneo_id = t.id
+            LEFT JOIN categorias cat ON c.categoria_id = cat.id
             LEFT JOIN generos g ON c.genero_id = g.id
             WHERE c.torneo_id = %s
             ORDER BY c.nombre
@@ -716,11 +724,12 @@ def ver_cuadros(
                 COALESCE(c.observaciones, ''),
                 t.nombre,
                 t.fecha_inicio,
-                t.categoria,
+                COALESCE(cat.nombre, ''),
                 COALESCE(g.nombre, ''),
                 t.ubicacion
             FROM cuadros c
             JOIN torneos t ON c.torneo_id = t.id
+            LEFT JOIN categorias cat ON c.categoria_id = cat.id
             LEFT JOIN generos g ON c.genero_id = g.id
             ORDER BY t.fecha_inicio DESC, t.nombre, c.nombre
         """)   
@@ -738,7 +747,8 @@ def ver_cuadros(
             "torneos": torneos,
             "cuadros": cuadros,
             "torneo_id": torneo_id,
-            "generos": generos
+            "generos": generos,
+            "categorias": categorias
         }
     )
 
@@ -1075,6 +1085,7 @@ def importar_inscritos_desde_excel(
 def guardar_cuadro(
     torneo_id: int = Form(...),
     nombre: str = Form(...),
+    categoria_id: int = Form(...),
     genero_id: int = Form(...),
     tamano: int = Form(...),
     numero_jugadores: int = Form(...),
@@ -1086,9 +1097,9 @@ def guardar_cuadro(
     cur = conn.cursor()
 
     cur.execute("""
-    INSERT INTO cuadros (torneo_id, nombre, genero_id, tamano, numero_jugadores, observaciones, ruta_excel)
-    VALUES (%s, %s, %s, %s, %s, %s, %s)
-""", (torneo_id, nombre, genero_id, tamano, numero_jugadores, observaciones, ruta_excel))
+    INSERT INTO cuadros (torneo_id, nombre, categoria_id, genero_id, tamano, numero_jugadores, observaciones, ruta_excel)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+""", (torneo_id, nombre, categoria_id, genero_id, tamano, numero_jugadores, observaciones, ruta_excel))
 
     conn.commit()
     cur.close()

@@ -50,6 +50,18 @@
 
     <br><br>
 
+    <label>Categoría:</label>
+    <select name="categoria_id" required>
+        <option value="">-- Selecciona categoría --</option>
+        {% for categoria in categorias %}
+        <option value="{{ categoria[0] }}">
+            {{ categoria[1]|capitalize }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <br><br>
+
     <label>Género:</label>
     <select name="genero_id" required>
         <option value="">-- Selecciona género --</option>
