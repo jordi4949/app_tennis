@@ -104,13 +104,19 @@
 </head>
 <body>
 
+
 <h1>Resultados del cuadro</h1>
 
 <h2>Primera ronda</h2>
 
-<table>
+<form method="post" action="/admin/cuadros/{{ cuadro_id }}/guardar-resultados">
 
-<form method="post" action="/admin/cuadros/{{ cuadro_id }}/guardar-resultados"></form>    
+
+<table>
+ 
+<button type="submit">Guardar todos los resultados</button>
+
+</form>
 
     <tr>
         <th>Partido</th>
@@ -128,7 +134,7 @@
 {% for partido in emparejamientos if partido.estado == "partido" %}
 
 
-<tr>
+<tr class="fila-partido">
     <td class="partido-box">
         <div class="numero-partido">P{{ partido.numero_partido }}</div>
 
@@ -153,45 +159,13 @@
 
         <td>
             <div class="valores-set">
-                <select>
+                <select class="set1">
                     {% for n in range(0,8) %}
                         <option value="{{ n }}">{{ n }}</option>
                     {% endfor %}
                 </select>
 
-                <select>
-                    {% for n in range(0,8) %}
-                        <option value="{{ n }}">{{ n }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </td>
-
-        <td class="tb">
-            <div class="valores-set">
-                <select>
-    {% for n in range(0,13) %}
-        <option value="{{ n }}">{{ n }}</option>
-    {% endfor %}
-</select>
-
-<select>
-    {% for n in range(0,13) %}
-        <option value="{{ n }}">{{ n }}</option>
-    {% endfor %}
-</select>
-            </div>
-        </td>
-
-        <td>
-            <div class="valores-set">
-                <select>
-                    {% for n in range(0,8) %}
-                        <option value="{{ n }}">{{ n }}</option>
-                    {% endfor %}
-                </select>
-
-                <select>
+                <select class="set1">
                     {% for n in range(0,8) %}
                         <option value="{{ n }}">{{ n }}</option>
                     {% endfor %}
@@ -201,46 +175,76 @@
 
         <td class="tb">
             <div class="valores-set">
-
-                <select>
-                    {% for n in range(0,21) %}
-                <option value="{{ n }}">{{ n }}</option>
-                    {% endfor %}
-                </select>
-
-                <select>
-                    {% for n in range(0,21) %}
+                <select class="tb1">
+                    {% for n in range(0,13) %}
                         <option value="{{ n }}">{{ n }}</option>
                     {% endfor %}
                 </select>
+
+                <select class="tb1">
+                    {% for n in range(0,13) %}
+                        <option value="{{ n }}">{{ n }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </td>
+
+        <td>
+            <div class="valores-set">
+                <select class="set2">
+                    {% for n in range(0,8) %}
+                        <option value="{{ n }}">{{ n }}</option>
+                    {% endfor %}
+                </select>
+
+                <select class="set2">
+                    {% for n in range(0,8) %}
+                        <option value="{{ n }}">{{ n }}</option>
+                    {% endfor %}
+                </select>  
+            </div>
+        </td>
+
+        <td class="tb">
+            <div class="valores-set">
+                <select class="tb2">
+                    {% for n in range(0,13) %}
+                        <option value="{{ n }}">{{ n }}</option>
+                    {% endfor %}
+                </select>
+
+                <select class="tb2">
+                    {% for n in range(0,13) %}
+                        <option value="{{ n }}">{{ n }}</option>
+                    {% endfor %}
+                </select>
+                
 
             </div>
         </td>
 
         <td>
-            <select style="width:65px; font-size:11px;">
-                <option value="">No hay</option>
-                <option value="super">Super TB</option>
-                <option value="normal">3er set</option>
-            </select>
+                <select class="decisivo-tipo" style="width:65px; font-size:11px;">
+                    <option value="">No hay</option>
+                    <option value="super">Super TB</option>
+                    <option value="normal">3er set</option>
+                </select>
 
-            <br><br>
+                <br><br>
 
             <div class="valores-set">
-            
-                <select>
+                <select class="decisivo">
                     {% for n in range(0,21) %}
                         <option value="{{ n }}">{{ n }}</option>
                     {% endfor %}
                 </select>
 
-                <select>
+                <select class="decisivo">
                     {% for n in range(0,21) %}
                         <option value="{{ n }}">{{ n }}</option>
                     {% endfor %}
                 </select>
-
-            </div> 
+            </div>
                 
         </td>
 
@@ -287,6 +291,75 @@
 <a href="/admin/cuadros/{{ cuadro_id }}/inscritos">
     Volver a inscritos
 </a>
+
+<script>
+function ganadorSet(j1, j2) {
+    j1 = parseInt(j1);
+    j2 = parseInt(j2);
+
+    if ((j1 === 6 && j2 <= 4) || (j1 === 7 && (j2 === 5 || j2 === 6))) {
+        return 1;
+    }
+
+    if ((j2 === 6 && j1 <= 4) || (j2 === 7 && (j1 === 5 || j1 === 6))) {
+        return 2;
+    }
+
+    return 0;
+}
+
+function actualizarFila(fila) {
+    const set1 = fila.querySelectorAll(".set1");
+    const tb1 = fila.querySelectorAll(".tb1");
+
+    const set2 = fila.querySelectorAll(".set2");
+    const tb2 = fila.querySelectorAll(".tb2");
+
+    const decisivoTipo = fila.querySelector(".decisivo-tipo");
+    const decisivo = fila.querySelectorAll(".decisivo");
+
+    const s1j1 = set1[0].value;
+    const s1j2 = set1[1].value;
+    const s2j1 = set2[0].value;
+    const s2j2 = set2[1].value;
+
+    const hayTb1 = (s1j1 === "7" && s1j2 === "6") || (s1j1 === "6" && s1j2 === "7");
+    const hayTb2 = (s2j1 === "7" && s2j2 === "6") || (s2j1 === "6" && s2j2 === "7");
+
+    tb1.forEach(campo => {
+        campo.disabled = !hayTb1;
+        if (!hayTb1) campo.value = "0";
+    });
+
+    tb2.forEach(campo => {
+        campo.disabled = !hayTb2;
+        if (!hayTb2) campo.value = "0";
+    });
+
+    const ganador1 = ganadorSet(s1j1, s1j2);
+    const ganador2 = ganadorSet(s2j1, s2j2);
+
+    const hayEmpateSets = ganador1 !== 0 && ganador2 !== 0 && ganador1 !== ganador2;
+
+    decisivoTipo.disabled = !hayEmpateSets;
+    decisivo.forEach(campo => {
+        campo.disabled = !hayEmpateSets;
+        if (!hayEmpateSets) campo.value = "0";
+    });
+
+    if (!hayEmpateSets) {
+        decisivoTipo.value = "";
+    }
+}
+
+document.querySelectorAll("tr.fila-partido").forEach(fila => {
+    fila.querySelectorAll("select").forEach(campo => {
+        campo.addEventListener("change", () => actualizarFila(fila));
+    });
+
+    actualizarFila(fila);
+});
+</script>
 
 </body>
 </html>
