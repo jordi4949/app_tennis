@@ -50,6 +50,26 @@
             background-color: #fff5d6;
         }
 
+        .partido-box {
+            min-width: 95px;
+        }
+
+        .numero-partido {
+            font-size: 12px;
+            color: #555;
+            margin-bottom: 4px;
+        }
+
+        .jugador-linea {
+            border: 1px solid #aaa;
+            border-radius: 6px;
+            padding: 5px;
+            margin: 4px 0;
+            font-weight: bold;
+            background-color: #f8fafc;
+            text-align: center;
+        }
+
     </style>
 
 </head>
@@ -78,26 +98,26 @@
     {% for partido in emparejamientos %}
 
     <tr>
+        <td class="partido-box">
+            <div class="numero-partido">P{{ partido.numero_partido }}</div>
 
-        <td>
-            {{ partido.numero_partido }}
+            <div class="jugador-linea">
+                {% if partido.lado1.tipo == "jugador" %}
+                    {{ partido.lado1.inscrito[5] }}
+                {% else %}
+                    BYE
+                {% endif %}
+            </div>
+
+            <div class="jugador-linea">
+                {% if partido.lado2.tipo == "jugador" %}
+                    {{ partido.lado2.inscrito[5] }}
+                {% else %}
+                    BYE
+                {% endif %}
+            </div>
         </td>
-
-        {% if partido.lado1.tipo == "jugador" %}
-            <td class="jugadores">
-                {{ partido.lado1.inscrito[5] }}
-            </td>
-        {% else %}
-            <td>BYE</td>
-        {% endif %}
-
-        {% if partido.lado2.tipo == "jugador" %}
-            <td class="jugadores">
-                {{ partido.lado2.inscrito[5] }}
-            </td>
-        {% else %}
-            <td>BYE</td>
-        {% endif %}
+       
 
         {% if partido.estado == "partido" %}
 
