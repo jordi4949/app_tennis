@@ -8,6 +8,8 @@
 
 <h1>Inscritos del cuadro {{ cuadro_id }}</h1>
 
+<a href="/admin/cuadros"> Volver a cuadros </a>
+
 <form action="/admin/cuadros/{{ cuadro_id }}/importar-excel-archivo" method="post" enctype="multipart/form-data">
     <label>Seleccionar Excel:</label>
     <input type="file" name="file" accept=".xlsx" required>
@@ -82,6 +84,16 @@
 
 <h2>Vista del cuadro por posiciones</h2>
 
+<div style="margin-top:20px; margin-bottom:20px;">
+
+
+<a href="/admin/cuadros/{{ cuadro_id }}/resultados"
+    style="display:inline-block; padding:10px 15px; background:#2563eb; color:white; text-decoration:none; border-radius:8px; font-weight:bold;">
+    Introducir resultados del cuadro
+</a>
+
+</div>
+
 <table border="1">
     <tr>
         <th>Posición</th>
@@ -112,72 +124,16 @@
     </tr>
     {% endfor %}
 </table>
+
+<br>
+
+
 <hr>
 
-<h2>Emparejamientos teóricos de primera ronda</h2>
-
-<table border="1">
-    <tr>
-        <th>Partido</th>
-        <th>Posición 1</th>
-        <th>Jugador 1</th>
-        <th>Posición 2</th>
-        <th>Jugador 2</th>
-        <th>Estado</th>
-    </tr>
-
-    {% for partido in emparejamientos_primera_ronda %}
-    <tr>
-        <td>{{ partido.numero_partido }}</td>
-
-        <td>{{ partido.lado1.posicion }}</td>
-        <td>
-            {% if partido.lado1.tipo == "jugador" %}
-                {% if partido.lado1.inscrito[3] %}
-                    {{ partido.lado1.inscrito[4] }} {{ partido.lado1.inscrito[5] }} {{ partido.lado1.inscrito[6] }}
-                {% else %}
-                    {{ partido.lado1.inscrito[2] }}
-                {% endif %}
-            {% else %}
-                BYE
-            {% endif %}
-        </td>
-
-        <td>{{ partido.lado2.posicion }}</td>
-        <td>
-            {% if partido.lado2.tipo == "jugador" %}
-                {% if partido.lado2.inscrito[3] %}
-                    {{ partido.lado2.inscrito[4] }} {{ partido.lado2.inscrito[5] }} {{ partido.lado2.inscrito[6] }}
-                {% else %}
-                    {{ partido.lado2.inscrito[2] }}
-                {% endif %}
-            {% else %}
-                BYE
-            {% endif %}
-        </td>
-
-        <td>
-            {% if partido.estado == "partido" %}
-                Partido pendiente
-            {% elif partido.estado == "bye_jugador1" %}
-                Pasa jugador 1 por BYE
-            {% elif partido.estado == "bye_jugador2" %}
-                Pasa jugador 2 por BYE
-            {% else %}
-                Vacío
-            {% endif %}
-        </td>
-    </tr>
-    {% endfor %}
-</table>
 
 <br>
 <a href="/admin/cuadros">Volver a cuadros</a>
-<br><br>
-
-<a href="/admin/cuadros/{{ cuadro_id }}/resultados">
-    Introducir resultados del cuadro
-</a>
+<br>
 
 </body>
 </html>
