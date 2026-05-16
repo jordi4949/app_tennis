@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Resultados del cuadro</title>
+
+    <style>
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .bye {
+            background-color: #e8ffe8;
+            font-weight: bold;
+        }
+
+        .jugadores {
+            text-align: center;
+            min-width: 90px;
+            font-weight: bold;
+        }
+
+        select {
+            width: 45px;
+        }
+        
+        input {
+            width: 45px;
+        }
+
+        .tb {
+            background-color: #fff5d6;
+        }
+
+    </style>
+
+</head>
+<body>
+
+<h1>Resultados del cuadro</h1>
+
+<h2>Primera ronda</h2>
+
+<table>
+
+    <tr>
+        <th>Partido</th>
+        <th>Jugador 1</th>
+        <th>Jugador 2</th>
+
+        <th>Set 1</th>
+        <th>TB1</th>
+
+        <th>Set 2</th>
+        <th>TB2</th>
+
+        <th>Decisivo</th>
+
+        <th>Acción</th>
+    </tr>
+
+    {% for partido in emparejamientos %}
+
+    <tr>
+
+        <td>
+            {{ partido.numero_partido }}
+        </td>
+
+        {% if partido.lado1.tipo == "jugador" %}
+            <td class="jugadores">
+                {{ partido.lado1.inscrito[5] }}
+            </td>
+        {% else %}
+            <td>BYE</td>
+        {% endif %}
+
+        {% if partido.lado2.tipo == "jugador" %}
+            <td class="jugadores">
+                {{ partido.lado2.inscrito[5] }}
+            </td>
+        {% else %}
+            <td>BYE</td>
+        {% endif %}
+
+        {% if partido.estado == "partido" %}
+
+        <td>
+
+            <select>
+                {% for n in range(0,8) %}
+                    <option value="{{ n }}">{{ n }}</option>
+                {% endfor %}
+            </select>
+
+            -
+
+            <select>
+                {% for n in range(0,8) %}
+                    <option value="{{ n }}">{{ n }}</option>
+                {% endfor %}
+            </select>
+
+        </td>
+
+        <td class="tb">
+
+            <input type="number" min="0" max="30">
+
+            -
+
+            <input type="number" min="0" max="30">
+
+        </td>
+
+        <td>
+
+            <select>
+                {% for n in range(0,8) %}
+                    <option value="{{ n }}">{{ n }}</option>
+                {% endfor %}
+            </select>
+
+            -
+
+            <select>
+                {% for n in range(0,8) %}
+                    <option value="{{ n }}">{{ n }}</option>
+                {% endfor %}
+            </select>
+
+        </td>
+
+        <td class="tb">
+
+            <input type="number" min="0" max="30">
+
+            -
+
+            <input type="number" min="0" max="30">
+
+        </td>
+
+        <td>
+
+            <select>
+                <option value="">No hay</option>
+                <option value="super">Super TB</option>
+                <option value="normal">3er set</option>
+            </select>
+
+            <br><br>
+
+            <input type="number" min="0" max="30">
+
+            -
+
+            <input type="number" min="0" max="30">
+
+        </td>
+
+        <td>
+
+            <button>
+                Guardar
+            </button>
+
+        </td>
+
+        {% elif partido.estado == "bye_jugador1" %}
+
+            <td colspan="6" class="bye">
+                Pasa jugador 1 por BYE
+            </td>
+
+            <td>
+                Automático
+            </td>
+
+        {% elif partido.estado == "bye_jugador2" %}
+
+            <td colspan="6" class="bye">
+                Pasa jugador 2 por BYE
+            </td>
+
+            <td>
+                Automático
+            </td>
+
+        {% else %}
+
+            <td colspan="7">
+                Vacío
+            </td>
+
+        {% endif %}
+
+    </tr>
+
+    {% endfor %}
+
+</table>
+
+<br><br>
+
+<a href="/admin/cuadros/{{ cuadro_id }}/inscritos">
+    Volver a inscritos
+</a>
+
+</body>
+</html>

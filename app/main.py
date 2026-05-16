@@ -712,7 +712,7 @@ def ver_cuadros(
             LEFT JOIN categorias cat ON c.categoria_id = cat.id
             LEFT JOIN generos g ON c.genero_id = g.id
             WHERE c.torneo_id = %s
-            ORDER BY c.nombre
+            ORDER BY cat.nombre, g.nombre, c.nombre
         """, (torneo_id,))
     else:
         cur.execute("""
@@ -731,7 +731,7 @@ def ver_cuadros(
             JOIN torneos t ON c.torneo_id = t.id
             LEFT JOIN categorias cat ON c.categoria_id = cat.id
             LEFT JOIN generos g ON c.genero_id = g.id
-            ORDER BY t.fecha_inicio DESC, t.nombre, c.nombre
+            ORDER BY t.fecha_inicio DESC, t.nombre, cat.nombre, g.nombre, c.nombre
         """)   
 
     cuadros = cur.fetchall()
@@ -922,6 +922,110 @@ def ver_inscritos(
         "posiciones_ocupadas": posiciones_ocupadas,
         "cuadro_ordenado": cuadro_ordenado,
         "emparejamientos_primera_ronda": emparejamientos_primera_ronda
+        }
+    )
+
+@app.get("/admin/cuadros/{cuadro_id}/resultados", response_class=HTMLResponse)
+def resultados_cuadro(
+    cuadro_id: int,
+    request: Request,
+    admin: str = Depends(comprobar_admin)
+):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT
+            ci.id,
+            ci.numero_licencia,
+            ci.nombre_excel,
+            j.id,
+            j.nombre,
+            j.apellido1,
+            j.apellido2,
+            ci.estado,
+            ci.posicion
+        FROM cuadro_inscritos ci
+        LEFT JOIN jugadores j ON ci.jugador_id = j.id
+        WHERE ci.cuadro_id = %s
+        ORDER BY ci.posicion NULLS LAST, ci.nombre_excel
+    """, (cuadro_id,))
+
+    inscritos = cur.fetchall()
+
+    cur.execute("""
+        SELECT tamano
+        FROM cuadros
+        WHERE id = %s
+    """, (cuadro_id,))
+
+    cuadro = cur.fetchone()
+    tamano_cuadro = cuadro[0] if cuadro else 32
+    posiciones = list(range(1, tamano_cuadro + 1))
+
+    inscritos_por_posicion = {
+        i[8]: i
+        for i in inscritos
+        if i[8] is not None
+    }
+
+    cuadro_ordenado = []
+
+    for posicion in posiciones:
+        inscrito = inscritos_por_posicion.get(posicion)
+
+        if inscrito:
+            cuadro_ordenado.append({
+                "posicion": posicion,
+                "tipo": "jugador",
+                "inscrito": inscrito
+            })
+        else:
+            cuadro_ordenado.append({
+                "posicion": posicion,
+                "tipo": "bye",
+                "inscrito": None
+            })
+
+    emparejamientos = []
+    numero_partido = 1
+
+    for i in range(0, len(cuadro_ordenado), 2):
+        lado1 = cuadro_ordenado[i]
+        lado2 = cuadro_ordenado[i + 1] if i + 1 < len(cuadro_ordenado) else {
+            "posicion": None,
+            "tipo": "bye",
+            "inscrito": None
+        }
+
+        if lado1["tipo"] == "jugador" and lado2["tipo"] == "jugador":
+            estado = "partido"
+        elif lado1["tipo"] == "jugador" and lado2["tipo"] == "bye":
+            estado = "bye_jugador1"
+        elif lado1["tipo"] == "bye" and lado2["tipo"] == "jugador":
+            estado = "bye_jugador2"
+        else:
+            estado = "vacio"
+
+        emparejamientos.append({
+            "numero_partido": numero_partido,
+            "lado1": lado1,
+            "lado2": lado2,
+            "estado": estado
+        })
+
+        numero_partido += 1
+
+    cur.close()
+    conn.close()
+
+    return templates.TemplateResponse(
+        request=request,
+        name="resultados_cuadro.html",
+        context={
+            "request": request,
+            "cuadro_id": cuadro_id,
+            "emparejamientos": emparejamientos
         }
     )
 
