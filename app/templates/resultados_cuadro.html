@@ -70,6 +70,13 @@
             text-align: center;
         }
 
+        .valores-set {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
     </style>
 
 </head>
@@ -95,91 +102,80 @@
         <th>Acción</th>
     </tr>
 
-    {% for partido in emparejamientos %}
+{% for partido in emparejamientos if partido.estado == "partido" %}
 
-    <tr>
-        <td class="partido-box">
-            <div class="numero-partido">P{{ partido.numero_partido }}</div>
 
-            <div class="jugador-linea">
-                {% if partido.lado1.tipo == "jugador" %}
-                    {{ partido.lado1.inscrito[5] }}
-                {% else %}
-                    BYE
-                {% endif %}
-            </div>
+<tr>
+    <td class="partido-box">
+        <div class="numero-partido">P{{ partido.numero_partido }}</div>
 
-            <div class="jugador-linea">
-                {% if partido.lado2.tipo == "jugador" %}
-                    {{ partido.lado2.inscrito[5] }}
-                {% else %}
-                    BYE
-                {% endif %}
-            </div>
-        </td>
-       
+        <div class="jugador-linea">
+            {% if partido.lado1.tipo == "jugador" %}
+                {{ partido.lado1.inscrito[5] }}
+            {% else %}
+                BYE
+            {% endif %}
+        </div>
 
-        {% if partido.estado == "partido" %}
+        <div class="jugador-linea">
+            {% if partido.lado2.tipo == "jugador" %}
+                {{ partido.lado2.inscrito[5] }}
+            {% else %}
+                BYE
+            {% endif %}
+        </div>
+    </td>
+
+    {% if partido.estado == "partido" %}
 
         <td>
+            <div class="valores-set">
+                <select>
+                    {% for n in range(0,8) %}
+                        <option value="{{ n }}">{{ n }}</option>
+                    {% endfor %}
+                </select>
 
-            <select>
-                {% for n in range(0,8) %}
-                    <option value="{{ n }}">{{ n }}</option>
-                {% endfor %}
-            </select>
-
-            -
-
-            <select>
-                {% for n in range(0,8) %}
-                    <option value="{{ n }}">{{ n }}</option>
-                {% endfor %}
-            </select>
-
+                <select>
+                    {% for n in range(0,8) %}
+                        <option value="{{ n }}">{{ n }}</option>
+                    {% endfor %}
+                </select>
+            </div>
         </td>
 
         <td class="tb">
-
-            <input type="number" min="0" max="30">
-
-            -
-
-            <input type="number" min="0" max="30">
-
+            <div class="valores-set">
+                <input type="number" min="0" max="30">
+                <input type="number" min="0" max="30">
+            </div>
         </td>
 
         <td>
+            <div class="valores-set">
+                <select>
+                    {% for n in range(0,8) %}
+                        <option value="{{ n }}">{{ n }}</option>
+                    {% endfor %}
+                </select>
 
-            <select>
-                {% for n in range(0,8) %}
-                    <option value="{{ n }}">{{ n }}</option>
-                {% endfor %}
-            </select>
-
-            -
-
-            <select>
-                {% for n in range(0,8) %}
-                    <option value="{{ n }}">{{ n }}</option>
-                {% endfor %}
-            </select>
-
+                <select>
+                    {% for n in range(0,8) %}
+                        <option value="{{ n }}">{{ n }}</option>
+                    {% endfor %}
+                </select>
+            </div>
         </td>
 
         <td class="tb">
-
-            <input type="number" min="0" max="30">
-
-            -
-
-            <input type="number" min="0" max="30">
-
+            <div class="valores-set">
+                <input type="number" min="0" max="30">
+                <input type="number" min="0" max="30">
+            </div>
         </td>
 
         <td>
-
-            <select>
+            <select style="width:90px;">
                 <option value="">No hay</option>
                 <option value="super">Super TB</option>
                 <option value="normal">3er set</option>
@@ -187,53 +183,42 @@
 
             <br><br>
 
-            <input type="number" min="0" max="30">
-
-            -
-
-            <input type="number" min="0" max="30">
-
+            <div class="valores-set">
+                <input type="number" min="0" max="30">
+                <input type="number" min="0" max="30">
+            </div>
         </td>
 
         <td>
-
-            <button>
-                Guardar
-            </button>
-
+            <button>Guardar</button>
         </td>
 
-        {% elif partido.estado == "bye_jugador1" %}
+    {% elif partido.estado == "bye_jugador1" %}
 
-            <td colspan="6" class="bye">
-                Pasa jugador 1 por BYE
-            </td>
+        <td colspan="5" class="bye">
+            Pasa jugador 1 por BYE
+        </td>
 
-            <td>
-                Automático
-            </td>
+        <td>Automático</td>
 
-        {% elif partido.estado == "bye_jugador2" %}
+    {% elif partido.estado == "bye_jugador2" %}
 
-            <td colspan="6" class="bye">
-                Pasa jugador 2 por BYE
-            </td>
+        <td colspan="5" class="bye">
+            Pasa jugador 2 por BYE
+        </td>
 
-            <td>
-                Automático
-            </td>
+        <td>Automático</td>
 
-        {% else %}
+    {% else %}
 
-            <td colspan="7">
-                Vacío
-            </td>
+        <td colspan="6">
+            Vacío
+        </td>
 
-        {% endif %}
+    {% endif %}
+</tr>
 
-    </tr>
-
-    {% endfor %}
+{% endfor %}    
 
 </table>
 
