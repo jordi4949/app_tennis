@@ -159,13 +159,13 @@
 
         <td>
             <div class="valores-set">
-                <select class="set1">
+                <select class="set1" name="set1_j1_{{ partido.numero_partido }}">
                     {% for n in range(0,8) %}
                         <option value="{{ n }}">{{ n }}</option>
                     {% endfor %}
                 </select>
 
-                <select class="set1">
+                <select class="set1" name="set1_j2_{{ partido.numero_partido }}">
                     {% for n in range(0,8) %}
                         <option value="{{ n }}">{{ n }}</option>
                     {% endfor %}
@@ -175,13 +175,13 @@
 
         <td class="tb">
             <div class="valores-set">
-                <select class="tb1">
+                <select class="tb1" name="tb1_j1_{{ partido.numero_partido }}">
                     {% for n in range(0,13) %}
                         <option value="{{ n }}">{{ n }}</option>
                     {% endfor %}
                 </select>
 
-                <select class="tb1">
+                <select class="tb1" name="tb1_j2_{{ partido.numero_partido }}">
                     {% for n in range(0,13) %}
                         <option value="{{ n }}">{{ n }}</option>
                     {% endfor %}
@@ -191,13 +191,13 @@
 
         <td>
             <div class="valores-set">
-                <select class="set2">
+                <select class="set2" name="set2_j1_{{ partido.numero_partido }}">
                     {% for n in range(0,8) %}
                         <option value="{{ n }}">{{ n }}</option>
                     {% endfor %}
                 </select>
 
-                <select class="set2">
+                <select class="set2" name="set2_j2_{{ partido.numero_partido }}">
                     {% for n in range(0,8) %}
                         <option value="{{ n }}">{{ n }}</option>
                     {% endfor %}
@@ -206,14 +206,14 @@
         </td>
 
         <td class="tb">
-            <div class="valores-set">
-                <select class="tb2">
+            <div class="valores-set" >
+                <select class="tb2" name="tb2_j1_{{ partido.numero_partido }}">
                     {% for n in range(0,13) %}
                         <option value="{{ n }}">{{ n }}</option>
                     {% endfor %}
                 </select>
 
-                <select class="tb2">
+                <select class="tb2" name="tb2_j2_{{ partido.numero_partido }}">
                     {% for n in range(0,13) %}
                         <option value="{{ n }}">{{ n }}</option>
                     {% endfor %}
@@ -224,7 +224,7 @@
         </td>
 
         <td>
-                <select class="decisivo-tipo" style="width:65px; font-size:11px;">
+                <select class="decisivo-tipo" name="tipo_decisivo_{{ partido.numero_partido }}" style="width:65px; font-size:11px;">
                     <option value="">No hay</option>
                     <option value="super">Super TB</option>
                     <option value="normal">3er set</option>
@@ -233,13 +233,13 @@
                 <br><br>
 
             <div class="valores-set">
-                <select class="decisivo">
+                <select class="decisivo" name="decisivo_j1_{{ partido.numero_partido }}">
                     {% for n in range(0,21) %}
                         <option value="{{ n }}">{{ n }}</option>
                     {% endfor %}
                 </select>
 
-                <select class="decisivo">
+                <select class="decisivo" name="decisivo_j2_{{ partido.numero_partido }}">
                     {% for n in range(0,21) %}
                         <option value="{{ n }}">{{ n }}</option>
                     {% endfor %}
