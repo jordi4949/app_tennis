@@ -1050,6 +1050,7 @@ async def guardar_resultados_cuadro(
     admin: str = Depends(comprobar_admin)
 ):
     form = await request.form()
+    print("FORM:", dict(form))
 
     conn = get_connection()
     cur = conn.cursor()
@@ -1097,15 +1098,30 @@ async def guardar_resultados_cuadro(
         ganador1 = ganador_set(set1_j1, set1_j2)
         ganador2 = ganador_set(set2_j1, set2_j2)
 
+        print(
+            "PARTIDO",
+            numero_partido,
+            "SETS:",
+            set1_j1, set1_j2,
+            set2_j1, set2_j2,
+            "GANADORES:",
+            ganador1,
+            ganador2
+        )
+
         if ganador1 == 0 or ganador2 == 0:
+            print("SALTA POR SET INVALIDO")
             continue
+
 
         if (set1_j1, set1_j2) in [(7, 6), (6, 7)]:
             if not tiebreak_valido(tb1_j1, tb1_j2, 7):
+                print("SALTA POR TB1 INVALIDO")
                 continue
 
         if (set2_j1, set2_j2) in [(7, 6), (6, 7)]:
             if not tiebreak_valido(tb2_j1, tb2_j2, 7):
+                print("SALTA POR TB1 INVALIDO")
                 continue
 
         sets_j1 = 0
