@@ -116,7 +116,6 @@
  
 <button type="submit">Guardar todos los resultados</button>
 
-</form>
 
     <tr>
         <th>Partido</th>
@@ -135,7 +134,14 @@
 
 
 <tr class="fila-partido">
+
+    <input type="hidden" name="jugador1_id_{{ partido.numero_partido }}" value="{{ partido.lado1.inscrito[3] }}">
+    <input type="hidden" name="jugador2_id_{{ partido.numero_partido }}" value="{{ partido.lado2.inscrito[3] }}">
+    <input type="hidden" name="jugador1_pos_{{ partido.numero_partido }}" value="{{ partido.lado1.posicion }}">
+    <input type="hidden" name="jugador2_pos_{{ partido.numero_partido }}" value="{{ partido.lado2.posicion }}">
+    
     <td class="partido-box">
+
         <div class="numero-partido">P{{ partido.numero_partido }}</div>
 
         <div class="jugador-linea">
