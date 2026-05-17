@@ -1050,7 +1050,8 @@ async def guardar_resultados_cuadro(
     admin: str = Depends(comprobar_admin)
 ):
     form = await request.form()
-    print("FORM:", dict(form))
+    
+    print("FORM RECIBIDO:", dict(form))
 
     conn = get_connection()
     cur = conn.cursor()
@@ -1285,6 +1286,8 @@ async def guardar_posiciones_cuadro(
     admin: str = Depends(comprobar_admin)
 ):
     form = await request.form()
+
+    print("FORM RECIBIDO:", dict(form))
 
     conn = get_connection()
     cur = conn.cursor()
