@@ -1509,7 +1509,7 @@ async def guardar_resultados_cuadro(
 
             partido_id = cur.fetchone()[0]
 
-            cur.execute("""
+        cur.execute("""
             UPDATE rondas_cuadro
             SET partido_id = %s
             WHERE id = %s
