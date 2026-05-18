@@ -1181,6 +1181,9 @@ async def guardar_resultados_cuadro(
     fila_tamano = cur.fetchone()
     tamano_cuadro = fila_tamano[0] if fila_tamano else 32
 
+    print("JUGADORES POR POSICION:", jugadores_por_posicion)
+    print("TAMANO CUADRO:", tamano_cuadro)
+
     numero_partido_bye = 1
 
     for posicion in range(1, tamano_cuadro + 1, 2):
@@ -1191,6 +1194,7 @@ async def guardar_resultados_cuadro(
         jugador2_id = jugadores_por_posicion.get(pos2)
 
         if jugador1_id and not jugador2_id:
+            print("GUARDANDO BYE J1:", numero_partido_bye, pos1, pos2, jugador1_id)    
             guardar_o_actualizar_bye(
                 cur,
                 torneo_id,
@@ -1204,6 +1208,7 @@ async def guardar_resultados_cuadro(
             )
 
         elif jugador2_id and not jugador1_id:
+            print("GUARDANDO BYE J2:", numero_partido_bye, pos1, pos2, jugador2_id)
             guardar_o_actualizar_bye(
                 cur,
                 torneo_id,
