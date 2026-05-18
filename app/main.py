@@ -1042,6 +1042,89 @@ def tiebreak_valido(j1, j2, minimo):
     perdedor = min(j1, j2)
     return ganador >= minimo and ganador - perdedor >= 2
 
+def guardar_o_actualizar_bye(
+    cur,
+    torneo_id,
+    cuadro_id,
+    numero_partido,
+    jugador1_id,
+    jugador2_id,
+    ganador_id,
+    jugador1_pos,
+    jugador2_pos
+):
+    cur.execute("""
+        SELECT id
+        FROM partidos
+        WHERE cuadro_id = %s
+          AND ronda_numero = 1
+          AND posicion_ronda = %s
+    """, (cuadro_id, numero_partido))
+
+    partido_existente = cur.fetchone()
+
+    if partido_existente:
+        partido_id = partido_existente[0]
+
+        cur.execute("""
+            UPDATE partidos
+            SET jugador1_id = %s,
+                jugador2_id = %s,
+                ganador_id = %s,
+                ronda = %s,
+                resultado = %s,
+                jugador1_posicion = %s,
+                jugador2_posicion = %s,
+                estado = 'bye'
+            WHERE id = %s
+        """, (
+            jugador1_id,
+            jugador2_id,
+            ganador_id,
+            "Dieciseisavos",
+            "BYE",
+            jugador1_pos,
+            jugador2_pos,
+            partido_id
+        ))
+
+        cur.execute("""
+            DELETE FROM sets
+            WHERE partido_id = %s
+        """, (partido_id,))
+
+    else:
+        cur.execute("""
+            INSERT INTO partidos
+            (
+                torneo_id,
+                fecha_partido,
+                jugador1_id,
+                jugador2_id,
+                ganador_id,
+                ronda,
+                resultado,
+                cuadro_id,
+                ronda_numero,
+                posicion_ronda,
+                jugador1_posicion,
+                jugador2_posicion,
+                estado
+            )
+            VALUES (%s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, 1, %s, %s, %s, 'bye')
+        """, (
+            torneo_id,
+            jugador1_id,
+            jugador2_id,
+            ganador_id,
+            "Dieciseisavos",
+            "BYE",
+            cuadro_id,
+            numero_partido,
+            jugador1_pos,
+            jugador2_pos
+        ))
+
 
 @app.post("/admin/cuadros/{cuadro_id}/guardar-resultados")
 async def guardar_resultados_cuadro(
@@ -1070,6 +1153,71 @@ async def guardar_resultados_cuadro(
 
     torneo_id = fila_cuadro[0]
 
+    cur.execute("""
+        SELECT
+            ci.id,
+            j.id,
+            ci.posicion
+        FROM cuadro_inscritos ci
+        LEFT JOIN jugadores j ON ci.jugador_id = j.id
+        WHERE ci.cuadro_id = %s
+          AND ci.posicion IS NOT NULL
+        ORDER BY ci.posicion
+    """, (cuadro_id,))
+
+    inscritos_posiciones = cur.fetchall()
+
+    jugadores_por_posicion = {
+        fila[2]: fila[1]
+        for fila in inscritos_posiciones
+    }
+
+    cur.execute("""
+        SELECT tamano
+        FROM cuadros
+        WHERE id = %s
+    """, (cuadro_id,))
+
+    fila_tamano = cur.fetchone()
+    tamano_cuadro = fila_tamano[0] if fila_tamano else 32
+
+    numero_partido_bye = 1
+
+    for posicion in range(1, tamano_cuadro + 1, 2):
+        pos1 = posicion
+        pos2 = posicion + 1
+
+        jugador1_id = jugadores_por_posicion.get(pos1)
+        jugador2_id = jugadores_por_posicion.get(pos2)
+
+        if jugador1_id and not jugador2_id:
+            guardar_o_actualizar_bye(
+                cur,
+                torneo_id,
+                cuadro_id,
+                numero_partido_bye,
+                jugador1_id,
+                None,
+                jugador1_id,
+                pos1,
+                pos2
+            )
+
+        elif jugador2_id and not jugador1_id:
+            guardar_o_actualizar_bye(
+                cur,
+                torneo_id,
+                cuadro_id,
+                numero_partido_bye,
+                None,
+                jugador2_id,
+                jugador2_id,
+                pos1,
+                pos2
+            )
+
+        numero_partido_bye += 1
+
     numeros_partido = []
 
     for key in form.keys():
@@ -1095,6 +1243,8 @@ async def guardar_resultados_cuadro(
         tipo_decisivo = form.get(f"tipo_decisivo_{numero_partido}", "")
         decisivo_j1 = int(form.get(f"decisivo_j1_{numero_partido}", 0))
         decisivo_j2 = int(form.get(f"decisivo_j2_{numero_partido}", 0))
+
+
 
         ganador1 = ganador_set(set1_j1, set1_j2)
         ganador2 = ganador_set(set2_j1, set2_j2)
