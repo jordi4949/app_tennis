@@ -1028,6 +1028,66 @@ def resultados_cuadro(
             "emparejamientos": emparejamientos
         }
     )
+def guardar_o_actualizar_ronda_cuadro(
+    cur,
+    cuadro_id,
+    ronda_numero,
+    nombre_ronda,
+    posicion_ronda,
+    jugador1_id,
+    jugador2_id,
+    ganador_id,
+    jugador1_posicion,
+    jugador2_posicion,
+    estado,
+    resultado,
+    partido_id=None
+):
+    cur.execute("""
+        INSERT INTO rondas_cuadro
+        (
+            cuadro_id,
+            ronda_numero,
+            nombre_ronda,
+            posicion_ronda,
+            jugador1_id,
+            jugador2_id,
+            ganador_id,
+            jugador1_posicion,
+            jugador2_posicion,
+            estado,
+            resultado,
+            partido_id
+        )
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ON CONFLICT (cuadro_id, ronda_numero, posicion_ronda)
+        DO UPDATE SET
+            nombre_ronda = EXCLUDED.nombre_ronda,
+            jugador1_id = EXCLUDED.jugador1_id,
+            jugador2_id = EXCLUDED.jugador2_id,
+            ganador_id = EXCLUDED.ganador_id,
+            jugador1_posicion = EXCLUDED.jugador1_posicion,
+            jugador2_posicion = EXCLUDED.jugador2_posicion,
+            estado = EXCLUDED.estado,
+            resultado = EXCLUDED.resultado,
+            partido_id = EXCLUDED.partido_id
+        RETURNING id
+    """, (
+        cuadro_id,
+        ronda_numero,
+        nombre_ronda,
+        posicion_ronda,
+        jugador1_id,
+        jugador2_id,
+        ganador_id,
+        jugador1_posicion,
+        jugador2_posicion,
+        estado,
+        resultado,
+        partido_id
+    ))
+
+    return cur.fetchone()[0]
 
 def ganador_set(j1, j2):
     if (j1 == 6 and j2 <= 4) or (j1 == 7 and j2 in [5, 6]):
@@ -1053,6 +1113,22 @@ def guardar_o_actualizar_bye(
     jugador1_pos,
     jugador2_pos
 ):
+    ronda_cuadro_id = guardar_o_actualizar_ronda_cuadro(
+        cur,
+        cuadro_id,
+        1,
+        "Dieciseisavos",
+        numero_partido,
+        jugador1_id,
+        jugador2_id,
+        ganador_id,
+        jugador1_pos,
+        jugador2_pos,
+        "bye",
+        "BYE",
+        None
+    )
+
     cur.execute("""
         SELECT id
         FROM partidos
@@ -1075,7 +1151,8 @@ def guardar_o_actualizar_bye(
                 resultado = %s,
                 jugador1_posicion = %s,
                 jugador2_posicion = %s,
-                estado = 'bye'
+                estado = 'bye',
+                ronda_cuadro_id = %s
             WHERE id = %s
         """, (
             jugador1_id,
@@ -1085,6 +1162,7 @@ def guardar_o_actualizar_bye(
             "BYE",
             jugador1_pos,
             jugador2_pos,
+            ronda_cuadro_id,
             partido_id
         ))
 
@@ -1109,9 +1187,10 @@ def guardar_o_actualizar_bye(
                 posicion_ronda,
                 jugador1_posicion,
                 jugador2_posicion,
-                estado
+                estado,
+                ronda_cuadro_id
             )
-            VALUES (%s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, 1, %s, %s, %s, 'bye')
+            VALUES (%s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, 1, %s, %s, %s, 'bye', %s)
         """, (
             torneo_id,
             jugador1_id,
@@ -1122,8 +1201,16 @@ def guardar_o_actualizar_bye(
             cuadro_id,
             numero_partido,
             jugador1_pos,
-            jugador2_pos
+            jugador2_pos,
+            ronda_cuadro_id
         ))
+        partido_id = cur.fetchone()[0]
+
+    cur.execute("""
+        UPDATE rondas_cuadro
+        SET partido_id = %s
+        WHERE id = %s
+    """, (partido_id, ronda_cuadro_id))    
 
 
 @app.post("/admin/cuadros/{cuadro_id}/guardar-resultados")
@@ -1341,6 +1428,23 @@ async def guardar_resultados_cuadro(
                 partes_resultado.append(f"{j1}-{j2}")
 
         resultado = " ".join(partes_resultado)
+        
+        ronda_cuadro_id = guardar_o_actualizar_ronda_cuadro(
+            cur,
+            cuadro_id,
+            1,
+            "Dieciseisavos",
+            numero_partido,
+            jugador1_id,
+            jugador2_id,
+            ganador_id,
+            jugador1_pos,
+            jugador2_pos,
+            "jugado",
+            resultado,
+            None
+        )
+
 
         cur.execute("""
             SELECT id
@@ -1359,9 +1463,10 @@ async def guardar_resultados_cuadro(
                 UPDATE partidos
                 SET ganador_id = %s,
                     resultado = %s,
-                    estado = 'jugado'
+                    estado = 'jugado',
+                    ronda_cuadro_id = %s
                 WHERE id = %s
-            """, (ganador_id, resultado, partido_id))
+            """, (ganador_id, resultado, ronda_cuadro_id, partido_id))
 
             cur.execute("""
                 DELETE FROM sets
@@ -1383,9 +1488,10 @@ async def guardar_resultados_cuadro(
                     posicion_ronda,
                     jugador1_posicion,
                     jugador2_posicion,
-                    estado
+                    estado,
+                    ronda_cuadro_id
                 )
-                VALUES (%s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, 1, %s, %s, %s, 'jugado')
+                VALUES (%s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, 1, %s, %s, %s, 'jugado', %s)
                 RETURNING id
             """, (
                 torneo_id,
@@ -1397,10 +1503,17 @@ async def guardar_resultados_cuadro(
                 cuadro_id,
                 numero_partido,
                 jugador1_pos,
-                jugador2_pos
+                jugador2_pos,
+                ronda_cuadro_id
             ))
 
             partido_id = cur.fetchone()[0]
+
+            cur.execute("""
+            UPDATE rondas_cuadro
+            SET partido_id = %s
+            WHERE id = %s
+        """, (partido_id, ronda_cuadro_id))
 
         for numero_set, j1, j2, tbj1, tbj2, tipo_set in sets:
             cur.execute("""
