@@ -1640,6 +1640,47 @@ async def guardar_resultados_cuadro(
         status_code=303
     )
 
+@app.post("/admin/cuadros/{cuadro_id}/generar-siguiente-ronda")
+def generar_siguiente_ronda_cuadro(
+    cuadro_id: int,
+    ronda_actual: int = Form(...),
+    admin: str = Depends(comprobar_admin)
+):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    if ronda_actual == 1:
+        nombre_siguiente = "Octavos"
+
+    elif ronda_actual == 2:
+        nombre_siguiente = "Cuartos"
+
+    elif ronda_actual == 3:
+        nombre_siguiente = "Semifinal"
+
+    elif ronda_actual == 4:
+        nombre_siguiente = "Final"
+
+    else:
+        nombre_siguiente = "Siguiente"
+
+    generar_siguiente_ronda(
+        cur,
+        cuadro_id,
+        ronda_actual,
+        nombre_siguiente
+    )
+
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+    return RedirectResponse(
+        url=f"/admin/cuadros/{cuadro_id}/resultados",
+        status_code=303
+    )
+
 @app.post("/admin/cuadros/{cuadro_id}/guardar-posiciones")
 async def guardar_posiciones_cuadro(
     cuadro_id: int,
