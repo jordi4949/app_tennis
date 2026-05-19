@@ -1039,10 +1039,7 @@ def resultados_cuadro(
         })
 
         numero_partido += 1
-
-    cur.close()
-    conn.close()
-
+    
     cur.execute("""
         SELECT
             rc.id,
@@ -1064,6 +1061,10 @@ def resultados_cuadro(
     """, (cuadro_id,))
 
     emparejamientos_ronda_2 = cur.fetchall()
+    
+    
+    cur.close()
+    conn.close()
 
     
 
