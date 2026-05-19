@@ -109,12 +109,9 @@
 
 <h2>Primera ronda</h2>
 
-<form method="post" action="/admin/cuadros/{{ cuadro_id }}/guardar-resultados">
+<form action="/admin/cuadros/{{ cuadro_id }}/guardar-resultados-ronda/1" method="post">
 
-
-<table>
- 
-<button type="submit">Guardar todos los resultados</button>
+<table> 
 
 
     <tr>
@@ -291,6 +288,18 @@
 
 </table>
 
+<button type="submit">Guardar ronda 1</button>
+
+</form>
+
+<br>
+
+<form action="/admin/cuadros/{{ cuadro_id }}/generar-siguiente-ronda" method="post">
+    <input type="hidden" name="ronda_actual" value="1">
+    <button>Generar ronda 2</button>
+</form>
+
+
 <hr>
 
 <h2>Segunda ronda - Octavos</h2>
@@ -426,15 +435,9 @@
     {% endfor %}
 </table>
 
-<br>
-
-<button type="submit"
-        style="padding:10px 15px; background:#16a34a; color:white; border:none; border-radius:8px; font-weight:bold;">
-    Guardar todos los resultados
-</button>
-
-
+    <button>Guardar ronda 2</button>
 </form>
+
 
 <br><br>
 
@@ -454,7 +457,7 @@
                 border-radius:8px;
                 font-weight:bold;
             ">
-        Generar siguiente ronda
+        Generar ronda 2
     </button>
 
 </form>
