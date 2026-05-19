@@ -1422,7 +1422,7 @@ async def guardar_resultados_cuadro(
     numeros_partido = []
 
     for key in form.keys():
-        if key.startswith("jugador1_id_"):
+        if key.startswith("jugador1_id_") and not key.startswith("jugador1_id_r"):
             numeros_partido.append(int(key.replace("jugador1_id_", "")))
 
     for numero_partido in numeros_partido:
