@@ -1089,6 +1089,64 @@ def guardar_o_actualizar_ronda_cuadro(
 
     return cur.fetchone()[0]
 
+def generar_siguiente_ronda(
+    cur,
+    cuadro_id,
+    ronda_actual,
+    nombre_siguiente_ronda
+):
+    ronda_siguiente = ronda_actual + 1
+
+    cur.execute("""
+        SELECT
+            posicion_ronda,
+            ganador_id
+        FROM rondas_cuadro
+        WHERE cuadro_id = %s
+          AND ronda_numero = %s
+          AND ganador_id IS NOT NULL
+        ORDER BY posicion_ronda
+    """, (cuadro_id, ronda_actual))
+
+    ganadores = cur.fetchall()
+
+    numero_partido = 1
+
+    for i in range(0, len(ganadores), 2):
+
+        if i + 1 >= len(ganadores):
+            break
+
+        ganador1 = ganadores[i][1]
+        ganador2 = ganadores[i + 1][1]
+
+        cur.execute("""
+            INSERT INTO rondas_cuadro
+            (
+                cuadro_id,
+                ronda_numero,
+                nombre_ronda,
+                posicion_ronda,
+                jugador1_id,
+                jugador2_id,
+                estado
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, 'pendiente')
+            ON CONFLICT (cuadro_id, ronda_numero, posicion_ronda)
+            DO UPDATE SET
+                jugador1_id = EXCLUDED.jugador1_id,
+                jugador2_id = EXCLUDED.jugador2_id
+        """, (
+            cuadro_id,
+            ronda_siguiente,
+            nombre_siguiente_ronda,
+            numero_partido,
+            ganador1,
+            ganador2
+        ))
+
+        numero_partido += 1
+
 def ganador_set(j1, j2):
     if (j1 == 6 and j2 <= 4) or (j1 == 7 and j2 in [5, 6]):
         return 1
@@ -1538,6 +1596,14 @@ async def guardar_resultados_cuadro(
                 tbj2,
                 tipo_set
             ))
+            
+    generar_siguiente_ronda(
+        cur,
+        cuadro_id,
+        1,
+        "Octavos"
+    )
+
 
     conn.commit()
     cur.close()
