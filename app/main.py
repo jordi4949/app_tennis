@@ -1007,17 +1007,40 @@ def resultados_cuadro(
         else:
             estado = "vacio"
 
+        guardado = partidos_guardados.get(numero_partido)
+
         emparejamientos.append({
             "numero_partido": numero_partido,
             "lado1": lado1,
             "lado2": lado2,
-            "estado": estado
+            "estado": estado,
+            "guardado": guardado
         })
 
         numero_partido += 1
 
     cur.close()
     conn.close()
+
+    cur.execute("""
+        SELECT
+            p.posicion_ronda,
+            p.estado,
+            p.resultado,
+            p.id
+        FROM partidos p
+        WHERE p.cuadro_id = %s
+          AND p.ronda_numero = 1
+    """, (cuadro_id,))
+
+    partidos_guardados = {
+        fila[0]: {
+            "estado": fila[1],
+            "resultado": fila[2],
+            "partido_id": fila[3]
+        }
+        for fila in cur.fetchall()
+    }
 
     return templates.TemplateResponse(
         request=request,

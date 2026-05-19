@@ -144,6 +144,16 @@
 
         <div class="numero-partido">P{{ partido.numero_partido }}</div>
 
+        {% if partido.guardado %}
+            <div style="font-size:11px; color:green; font-weight:bold;">
+                Guardado: {{ partido.guardado.resultado }}
+            </div>
+        {% else %}
+            <div style="font-size:11px; color:#999;">
+                Pendiente
+            </div>
+        {% endif %}
+
         <div class="jugador-linea">
             {% if partido.lado1.tipo == "jugador" %}
                 {{ partido.lado1.inscrito[5] }}
