@@ -291,6 +291,141 @@
 
 </table>
 
+<hr>
+
+<h2>Segunda ronda - Octavos</h2>
+
+<table>
+    <tr>
+        <th>Partido</th>
+        <th>Set 1</th>
+        <th>TB1</th>
+        <th>Set 2</th>
+        <th>TB2</th>
+        <th>Decisivo</th>
+    </tr>
+
+    {% for partido in emparejamientos_ronda_2 %}
+    <tr class="fila-partido">
+
+        <input type="hidden" name="ronda_numero_{{ partido[2] }}" value="2">
+        <input type="hidden" name="jugador1_id_r2_{{ partido[2] }}" value="{{ partido[3] }}">
+        <input type="hidden" name="jugador2_id_r2_{{ partido[2] }}" value="{{ partido[5] }}">
+
+        <td class="partido-box">
+            <div class="numero-partido">P{{ partido[2] }}</div>
+
+            {% if partido[8] %}
+                <div style="font-size:11px; color:green; font-weight:bold;">
+                    Guardado: {{ partido[8] }}
+                </div>
+            {% else %}
+                <div style="font-size:11px; color:#999;">
+                    Pendiente
+                </div>
+            {% endif %}
+
+            <div class="jugador-linea">
+                {{ partido[4] }}
+            </div>
+
+            <div class="jugador-linea">
+                {{ partido[6] }}
+            </div>
+        </td>
+
+        <td>
+            <div class="valores-set">
+                <select class="set1" name="set1_j1_r2_{{ partido[2] }}">
+                    {% for n in range(0,8) %}
+                        <option value="{{ n }}">{{ n }}</option>
+                    {% endfor %}
+                </select>
+
+                <select class="set1" name="set1_j2_r2_{{ partido[2] }}">
+                    {% for n in range(0,8) %}
+                        <option value="{{ n }}">{{ n }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </td>
+
+        <td class="tb">
+            <div class="valores-set">
+                <select class="tb1" name="tb1_j1_r2_{{ partido[2] }}">
+                    {% for n in range(0,13) %}
+                        <option value="{{ n }}">{{ n }}</option>
+                    {% endfor %}
+                </select>
+
+                <select class="tb1" name="tb1_j2_r2_{{ partido[2] }}">
+                    {% for n in range(0,13) %}
+                        <option value="{{ n }}">{{ n }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </td>
+
+        <td>
+            <div class="valores-set">
+                <select class="set2" name="set2_j1_r2_{{ partido[2] }}">
+                    {% for n in range(0,8) %}
+                        <option value="{{ n }}">{{ n }}</option>
+                    {% endfor %}
+                </select>
+
+                <select class="set2" name="set2_j2_r2_{{ partido[2] }}">
+                    {% for n in range(0,8) %}
+                        <option value="{{ n }}">{{ n }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </td>
+
+        <td class="tb">
+            <div class="valores-set">
+                <select class="tb2" name="tb2_j1_r2_{{ partido[2] }}">
+                    {% for n in range(0,13) %}
+                        <option value="{{ n }}">{{ n }}</option>
+                    {% endfor %}
+                </select>
+
+                <select class="tb2" name="tb2_j2_r2_{{ partido[2] }}">
+                    {% for n in range(0,13) %}
+                        <option value="{{ n }}">{{ n }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </td>
+
+        <td>
+            <select class="decisivo-tipo" name="tipo_decisivo_r2_{{ partido[2] }}" style="width:65px; font-size:11px;">
+                <option value="">No hay</option>
+                <option value="super">Super TB</option>
+                <option value="normal">3er set</option>
+            </select>
+
+            <br><br>
+
+            <div class="valores-set">
+                <select class="decisivo" name="decisivo_j1_r2_{{ partido[2] }}">
+                    {% for n in range(0,21) %}
+                        <option value="{{ n }}">{{ n }}</option>
+                    {% endfor %}
+                </select>
+
+                <select class="decisivo" name="decisivo_j2_r2_{{ partido[2] }}">
+                    {% for n in range(0,21) %}
+                        <option value="{{ n }}">{{ n }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </td>
+
+    </tr>
+    {% endfor %}
+</table>
+
 <br>
 
 <button type="submit"

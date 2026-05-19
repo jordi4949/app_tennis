@@ -1043,6 +1043,28 @@ def resultados_cuadro(
     cur.close()
     conn.close()
 
+    cur.execute("""
+        SELECT
+            rc.id,
+            rc.ronda_numero,
+            rc.posicion_ronda,
+            rc.jugador1_id,
+            j1.apellido1,
+            rc.jugador2_id,
+            j2.apellido1,
+            rc.estado,
+            rc.resultado,
+            rc.partido_id
+        FROM rondas_cuadro rc
+        LEFT JOIN jugadores j1 ON rc.jugador1_id = j1.id
+        LEFT JOIN jugadores j2 ON rc.jugador2_id = j2.id
+        WHERE rc.cuadro_id = %s
+          AND rc.ronda_numero = 2
+        ORDER BY rc.posicion_ronda
+    """, (cuadro_id,))
+
+    emparejamientos_ronda_2 = cur.fetchall()
+
     
 
     return templates.TemplateResponse(
@@ -1051,7 +1073,8 @@ def resultados_cuadro(
         context={
             "request": request,
             "cuadro_id": cuadro_id,
-            "emparejamientos": emparejamientos
+            "emparejamientos": emparejamientos,
+            "emparejamientos_ronda_2": emparejamientos_ronda_2
         }
     )
 def guardar_o_actualizar_ronda_cuadro(
