@@ -1191,6 +1191,7 @@ def guardar_o_actualizar_bye(
                 ronda_cuadro_id
             )
             VALUES (%s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, 1, %s, %s, %s, 'bye', %s)
+            RETURNING id
         """, (
             torneo_id,
             jugador1_id,
