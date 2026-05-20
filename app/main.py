@@ -1653,9 +1653,9 @@ async def guardar_resultados_cuadro(
             if key.startswith("jugador1_id_r2_"):
                 numeros_partido_r2.append(int(key.replace("jugador1_id_r2_", "")))
 
-            for numero_partido in numeros_partido_r2:
-        jugador1_id = int(form.get(f"jugador1_id_r2_{numero_partido}"))
-        jugador2_id = int(form.get(f"jugador2_id_r2_{numero_partido}"))
+        for numero_partido in numeros_partido_r2:
+            jugador1_id = int(form.get(f"jugador1_id_r2_{numero_partido}"))
+            jugador2_id = int(form.get(f"jugador2_id_r2_{numero_partido}"))
 
         set1_j1 = int(form.get(f"set1_j1_r2_{numero_partido}", 0))
         set1_j2 = int(form.get(f"set1_j2_r2_{numero_partido}", 0))
