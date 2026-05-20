@@ -304,6 +304,8 @@
 
 <h2>Segunda ronda - Octavos</h2>
 
+<form action="/admin/cuadros/{{ cuadro_id }}/guardar-resultados-ronda/2" method="post"></form>
+
 <table>
     <tr>
         <th>Partido</th>
@@ -435,34 +437,9 @@
     {% endfor %}
 </table>
 
-    <button>Guardar ronda 2</button>
+<button type="submit">Guardar ronda 2</button>
 </form>
 
-
-<br><br>
-
-<form method="post"
-      action="/admin/cuadros/{{ cuadro_id }}/generar-siguiente-ronda">
-
-    <input type="hidden"
-           name="ronda_actual"
-           value="1">
-
-    <button type="submit"
-            style="
-                padding:10px 15px;
-                background:#2563eb;
-                color:white;
-                border:none;
-                border-radius:8px;
-                font-weight:bold;
-            ">
-        Generar ronda 2
-    </button>
-
-</form>
-
-<br><br>
 
 <a href="/admin/cuadros/{{ cuadro_id }}/inscritos">
     Volver a inscritos
