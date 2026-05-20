@@ -1523,10 +1523,11 @@ async def guardar_resultados_cuadro(
                 sets.append((3, decisivo_j1, decisivo_j2, 0, 0, 1))
             else:
                 continue
-        else:
-            ganador_id = jugador1_id if sets_j1 == 2 else jugador2_id
 
-        partes_resultado = []
+        else:
+                ganador_id = jugador1_id if sets_j1 == 2 else jugador2_id
+
+                partes_resultado = []
 
         for numero_set, j1, j2, tbj1, tbj2, tipo_set in sets:
             if tipo_set == 3:
@@ -1657,56 +1658,56 @@ async def guardar_resultados_cuadro(
             jugador1_id = int(form.get(f"jugador1_id_r2_{numero_partido}"))
             jugador2_id = int(form.get(f"jugador2_id_r2_{numero_partido}"))
 
-        set1_j1 = int(form.get(f"set1_j1_r2_{numero_partido}", 0))
-        set1_j2 = int(form.get(f"set1_j2_r2_{numero_partido}", 0))
-        tb1_j1 = int(form.get(f"tb1_j1_r2_{numero_partido}", 0))
-        tb1_j2 = int(form.get(f"tb1_j2_r2_{numero_partido}", 0))
+            set1_j1 = int(form.get(f"set1_j1_r2_{numero_partido}", 0))
+            set1_j2 = int(form.get(f"set1_j2_r2_{numero_partido}", 0))
+            tb1_j1 = int(form.get(f"tb1_j1_r2_{numero_partido}", 0))
+            tb1_j2 = int(form.get(f"tb1_j2_r2_{numero_partido}", 0))
 
-        set2_j1 = int(form.get(f"set2_j1_r2_{numero_partido}", 0))
-        set2_j2 = int(form.get(f"set2_j2_r2_{numero_partido}", 0))
-        tb2_j1 = int(form.get(f"tb2_j1_r2_{numero_partido}", 0))
-        tb2_j2 = int(form.get(f"tb2_j2_r2_{numero_partido}", 0))
+            set2_j1 = int(form.get(f"set2_j1_r2_{numero_partido}", 0))
+            set2_j2 = int(form.get(f"set2_j2_r2_{numero_partido}", 0))
+            tb2_j1 = int(form.get(f"tb2_j1_r2_{numero_partido}", 0))
+            tb2_j2 = int(form.get(f"tb2_j2_r2_{numero_partido}", 0))
 
-        tipo_decisivo = form.get(f"tipo_decisivo_r2_{numero_partido}", "")
-        decisivo_j1 = int(form.get(f"decisivo_j1_r2_{numero_partido}", 0))
-        decisivo_j2 = int(form.get(f"decisivo_j2_r2_{numero_partido}", 0))
+            tipo_decisivo = form.get(f"tipo_decisivo_r2_{numero_partido}", "")
+            decisivo_j1 = int(form.get(f"decisivo_j1_r2_{numero_partido}", 0))
+            decisivo_j2 = int(form.get(f"decisivo_j2_r2_{numero_partido}", 0))
 
-        ganador1 = ganador_set(set1_j1, set1_j2)
-        ganador2 = ganador_set(set2_j1, set2_j2)
+            ganador1 = ganador_set(set1_j1, set1_j2)
+            ganador2 = ganador_set(set2_j1, set2_j2)
 
-        if ganador1 == 0 or ganador2 == 0:
-            continue
-
-        if (set1_j1, set1_j2) in [(7, 6), (6, 7)]:
-            if not tiebreak_valido(tb1_j1, tb1_j2, 7):
+            if ganador1 == 0 or ganador2 == 0:
                 continue
 
-        if (set2_j1, set2_j2) in [(7, 6), (6, 7)]:
-            if not tiebreak_valido(tb2_j1, tb2_j2, 7):
-                continue
-
-        sets_j1 = 0
-        sets_j2 = 0
-
-        if ganador1 == 1:
-            sets_j1 += 1
-        else:
-            sets_j2 += 1
-
-        if ganador2 == 1:
-            sets_j1 += 1
-        else:
-            sets_j2 += 1
-
-        sets = [
-            (1, set1_j1, set1_j2, tb1_j1, tb1_j2, 1),
-            (2, set2_j1, set2_j2, tb2_j1, tb2_j2, 1)
-        ]
-
-        if sets_j1 == 1 and sets_j2 == 1:
-            if tipo_decisivo == "super":
-                if not tiebreak_valido(decisivo_j1, decisivo_j2, 10):
+            if (set1_j1, set1_j2) in [(7, 6), (6, 7)]:
+                if not tiebreak_valido(tb1_j1, tb1_j2, 7):
                     continue
+
+            if (set2_j1, set2_j2) in [(7, 6), (6, 7)]:
+                if not tiebreak_valido(tb2_j1, tb2_j2, 7):
+                    continue
+
+            sets_j1 = 0
+            sets_j2 = 0
+
+            if ganador1 == 1:
+                sets_j1 += 1
+            else:
+                sets_j2 += 1
+
+            if ganador2 == 1:
+                sets_j1 += 1
+            else:
+                sets_j2 += 1
+
+            sets = [
+                (1, set1_j1, set1_j2, tb1_j1, tb1_j2, 1),
+                (2, set2_j1, set2_j2, tb2_j1, tb2_j2, 1)
+            ]
+
+            if sets_j1 == 1 and sets_j2 == 1:
+                if tipo_decisivo == "super":
+                    if not tiebreak_valido(decisivo_j1, decisivo_j2, 10):
+                        continue
 
                 if decisivo_j1 > decisivo_j2:
                     ganador_id = jugador1_id
@@ -1715,7 +1716,7 @@ async def guardar_resultados_cuadro(
 
                 sets.append((3, decisivo_j1, decisivo_j2, 0, 0, 3))
 
-            elif tipo_decisivo == "normal":
+                elif tipo_decisivo == "normal":
                 ganador3 = ganador_set(decisivo_j1, decisivo_j2)
 
                 if ganador3 == 0:
@@ -1731,7 +1732,7 @@ async def guardar_resultados_cuadro(
             else:
                 continue
         else:
-            ganador_id = jugador1_id if sets_j1 == 2 else jugador2_id
+                ganador_id = jugador1_id if sets_j1 == 2 else jugador2_id
 
         partes_resultado = []
 
