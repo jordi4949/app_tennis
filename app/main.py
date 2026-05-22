@@ -1937,6 +1937,8 @@ def generar_siguiente_ronda_cuadro(
     else:
         nombre_siguiente = "Siguiente"
 
+    print("RONDA ACTUAL RECIBIDA:", ronda_actual)
+
     generar_siguiente_ronda(
         cur,
         cuadro_id,
