@@ -1346,6 +1346,8 @@ async def guardar_resultados_cuadro(
         cur.close()
         conn.close()
         return RedirectResponse(url="/admin/cuadros", status_code=303)
+    
+
 
     torneo_id = fila_cuadro[0]
 
@@ -1637,6 +1639,45 @@ async def guardar_resultados_cuadro(
                 tipo_set
             ))
 
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return RedirectResponse(
+        url=f"/admin/cuadros/{cuadro_id}/resultados",
+        status_code=303
+    )
+
+@app.post("/admin/cuadros/{cuadro_id}/guardar-resultados-ronda/{ronda_numero}")
+async def guardar_resultados_ronda(
+    cuadro_id: int,
+    ronda_numero: int,
+    request: Request,
+    admin: str = Depends(comprobar_admin)
+):
+    form = await request.form()
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT torneo_id
+        FROM cuadros
+        WHERE id = %s
+    """, (cuadro_id,))
+
+    fila_cuadro = cur.fetchone()
+
+    if not fila_cuadro:
+        cur.close()
+        conn.close()
+        return RedirectResponse(url="/admin/cuadros", status_code=303)
+
+    torneo_id = fila_cuadro[0]
+
+    if ronda_numero == 2:
+        # aquí va el bloque de guardar ronda 2
 
     conn.commit()
     cur.close()
