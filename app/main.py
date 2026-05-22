@@ -1648,7 +1648,6 @@ async def guardar_resultados_cuadro(
         url=f"/admin/cuadros/{cuadro_id}/resultados",
         status_code=303
     )
-
 @app.post("/admin/cuadros/{cuadro_id}/guardar-resultados-ronda/{ronda_numero}")
 async def guardar_resultados_ronda(
     cuadro_id: int,
@@ -1666,7 +1665,6 @@ async def guardar_resultados_ronda(
         FROM cuadros
         WHERE id = %s
     """, (cuadro_id,))
-
     fila_cuadro = cur.fetchone()
 
     if not fila_cuadro:
@@ -1677,11 +1675,237 @@ async def guardar_resultados_ronda(
     torneo_id = fila_cuadro[0]
 
     if ronda_numero == 2:
-        # aquí va el bloque de guardar ronda 2
+        nombre_ronda = "Octavos"
+        prefijo = "r2_"
 
-        conn.commit()
+    elif ronda_numero == 3:
+        nombre_ronda = "Cuartos"
+        prefijo = "r3_"
+
+    elif ronda_numero == 4:
+        nombre_ronda = "Semifinal"
+        prefijo = "r4_"
+
+    elif ronda_numero == 5:
+        nombre_ronda = "Final"
+        prefijo = "r5_"
+
+    else:
         cur.close()
         conn.close()
+        return RedirectResponse(
+            url=f"/admin/cuadros/{cuadro_id}/resultados",
+            status_code=303
+        )
+
+    numeros_partido = []
+
+    for key in form.keys():
+        patron = f"jugador1_id_{prefijo}"
+        if key.startswith(patron):
+            numeros_partido.append(int(key.replace(patron, "")))
+
+    for numero_partido in numeros_partido:
+        jugador1_id = int(form.get(f"jugador1_id_{prefijo}{numero_partido}"))
+        jugador2_id = int(form.get(f"jugador2_id_{prefijo}{numero_partido}"))
+
+        tipo_resultado = form.get(
+            f"tipo_resultado_{prefijo}{numero_partido}",
+            "normal"
+        )
+
+        sets = []
+
+        if tipo_resultado == "wo_j1":
+            ganador_id = jugador2_id
+            resultado = "WO J1"
+            estado = "wo_jugador1"
+
+        elif tipo_resultado == "wo_j2":
+            ganador_id = jugador1_id
+            resultado = "WO J2"
+            estado = "wo_jugador2"
+
+        else:
+            set1_j1 = int(form.get(f"set1_j1_{prefijo}{numero_partido}", 0))
+            set1_j2 = int(form.get(f"set1_j2_{prefijo}{numero_partido}", 0))
+            tb1_j1 = int(form.get(f"tb1_j1_{prefijo}{numero_partido}", 0))
+            tb1_j2 = int(form.get(f"tb1_j2_{prefijo}{numero_partido}", 0))
+
+            set2_j1 = int(form.get(f"set2_j1_{prefijo}{numero_partido}", 0))
+            set2_j2 = int(form.get(f"set2_j2_{prefijo}{numero_partido}", 0))
+            tb2_j1 = int(form.get(f"tb2_j1_{prefijo}{numero_partido}", 0))
+            tb2_j2 = int(form.get(f"tb2_j2_{prefijo}{numero_partido}", 0))
+
+            tipo_decisivo = form.get(f"tipo_decisivo_{prefijo}{numero_partido}", "")
+            decisivo_j1 = int(form.get(f"decisivo_j1_{prefijo}{numero_partido}", 0))
+            decisivo_j2 = int(form.get(f"decisivo_j2_{prefijo}{numero_partido}", 0))
+
+            if tipo_resultado == "ret_j1":
+                ganador_id = jugador2_id
+                resultado = f"{set1_j1}-{set1_j2} {set2_j1}-{set2_j2} RET J1"
+                estado = "ret_jugador1"
+                sets = [
+                    (1, set1_j1, set1_j2, tb1_j1, tb1_j2, 1),
+                    (2, set2_j1, set2_j2, tb2_j1, tb2_j2, 1)
+                ]
+
+            elif tipo_resultado == "ret_j2":
+                ganador_id = jugador1_id
+                resultado = f"{set1_j1}-{set1_j2} {set2_j1}-{set2_j2} RET J2"
+                estado = "ret_jugador2"
+                sets = [
+                    (1, set1_j1, set1_j2, tb1_j1, tb1_j2, 1),
+                    (2, set2_j1, set2_j2, tb2_j1, tb2_j2, 1)
+                ]
+
+            else:
+                ganador1 = ganador_set(set1_j1, set1_j2)
+                ganador2 = ganador_set(set2_j1, set2_j2)
+
+                if ganador1 == 0 or ganador2 == 0:
+                    continue
+
+                sets_j1 = 1 if ganador1 == 1 else 0
+                sets_j2 = 1 if ganador1 == 2 else 0
+
+                if ganador2 == 1:
+                    sets_j1 += 1
+                else:
+                    sets_j2 += 1
+
+                sets = [
+                    (1, set1_j1, set1_j2, tb1_j1, tb1_j2, 1),
+                    (2, set2_j1, set2_j2, tb2_j1, tb2_j2, 1)
+                ]
+
+                if sets_j1 == 1 and sets_j2 == 1:
+                    if tipo_decisivo == "super":
+                        ganador_id = jugador1_id if decisivo_j1 > decisivo_j2 else jugador2_id
+                        sets.append((3, decisivo_j1, decisivo_j2, 0, 0, 3))
+                    else:
+                        continue
+                else:
+                    ganador_id = jugador1_id if sets_j1 == 2 else jugador2_id
+
+                partes = []
+                for _, j1, j2, tbj1, tbj2, tipo_set in sets:
+                    if (j1, j2) in [(7, 6), (6, 7)]:
+                        partes.append(f"{j1}-{j2}({tbj1}-{tbj2})")
+                    else:
+                        partes.append(f"{j1}-{j2}")
+
+                resultado = " ".join(partes)
+                estado = "jugado"
+
+        ronda_cuadro_id = guardar_o_actualizar_ronda_cuadro(
+            cur,
+            cuadro_id,
+            ronda_numero,
+            nombre_ronda,
+            numero_partido,
+            jugador1_id,
+            jugador2_id,
+            ganador_id,
+            None,
+            None,
+            estado,
+            resultado,
+            None
+        )
+
+        cur.execute("""
+            SELECT id
+            FROM partidos
+            WHERE cuadro_id = %s
+              AND ronda_numero = %s
+              AND posicion_ronda = %s
+        """, (cuadro_id, ronda_numero, numero_partido))
+
+        partido_existente = cur.fetchone()
+
+        if partido_existente:
+            partido_id = partido_existente[0]
+
+            cur.execute("""
+                UPDATE partidos
+                SET jugador1_id = %s,
+                    jugador2_id = %s,
+                    ganador_id = %s,
+                    resultado = %s,
+                    ronda = %s,
+                    estado = %s,
+                    ronda_cuadro_id = %s
+                WHERE id = %s
+            """, (
+                jugador1_id,
+                jugador2_id,
+                ganador_id,
+                resultado,
+                nombre_ronda,
+                estado,
+                ronda_cuadro_id,
+                partido_id
+            ))
+
+            cur.execute("DELETE FROM sets WHERE partido_id = %s", (partido_id,))
+
+        else:
+            cur.execute("""
+                INSERT INTO partidos
+                (
+                    torneo_id, fecha_partido, jugador1_id, jugador2_id,
+                    ganador_id, ronda, resultado, cuadro_id,
+                    ronda_numero, posicion_ronda, estado, ronda_cuadro_id
+                )
+                VALUES (%s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+            """, (
+                torneo_id,
+                jugador1_id,
+                jugador2_id,
+                ganador_id,
+                nombre_ronda,
+                resultado,
+                cuadro_id,
+                ronda_numero,
+                numero_partido,
+                estado,
+                ronda_cuadro_id
+            ))
+
+            partido_id = cur.fetchone()[0]
+
+        cur.execute("""
+            UPDATE rondas_cuadro
+            SET partido_id = %s
+            WHERE id = %s
+        """, (partido_id, ronda_cuadro_id))
+
+        for numero_set, j1, j2, tbj1, tbj2, tipo_set in sets:
+            if j1 == 0 and j2 == 0:
+                continue
+
+            cur.execute("""
+                INSERT INTO sets
+                (
+                    partido_id, numero_set, juegos_jugador1, juegos_jugador2,
+                    tiebreak_jugador1, tiebreak_jugador2, tipo_set
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (
+                partido_id,
+                numero_set,
+                j1,
+                j2,
+                tbj1,
+                tbj2,
+                tipo_set
+            ))
+
+    conn.commit()
+    cur.close()
+    conn.close()
 
     return RedirectResponse(
         url=f"/admin/cuadros/{cuadro_id}/resultados",
