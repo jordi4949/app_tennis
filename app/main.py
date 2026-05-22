@@ -1679,9 +1679,9 @@ async def guardar_resultados_ronda(
     if ronda_numero == 2:
         # aquí va el bloque de guardar ronda 2
 
-    conn.commit()
-    cur.close()
-    conn.close()
+        conn.commit()
+        cur.close()
+        conn.close()
 
     return RedirectResponse(
         url=f"/admin/cuadros/{cuadro_id}/resultados",
