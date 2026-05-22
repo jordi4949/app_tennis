@@ -1149,13 +1149,14 @@ def generar_siguiente_ronda(
 
     cur.execute("""
         SELECT
-            posicion_ronda,
-            ganador_id
-        FROM rondas_cuadro
-        WHERE cuadro_id = %s
-          AND ronda_numero = %s
-          AND ganador_id IS NOT NULL
-        ORDER BY posicion_ronda
+            rc.posicion_ronda,
+            COALESCE(rc.ganador_id, p.ganador_id) AS ganador_id
+        FROM rondas_cuadro rc
+        LEFT JOIN partidos p ON p.id = rc.partido_id
+        WHERE rc.cuadro_id = %s
+            AND rc.ronda_numero = %s
+            AND COALESCE(rc.ganador_id, p.ganador_id) IS NOT NULL
+        ORDER BY rc.posicion_ronda
     """, (cuadro_id, ronda_actual))
 
     ganadores = cur.fetchall()
