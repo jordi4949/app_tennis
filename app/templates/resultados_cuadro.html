@@ -5,445 +5,438 @@
     <title>Resultados del cuadro</title>
 
     <style>
-
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
+            background: #f8fafc;
+        }
+
+        h1 {
+            margin-bottom: 6px;
+        }
+
+        .nota {
+            font-size: 13px;
+            color: #475569;
+            margin-bottom: 16px;
+        }
+
+        .bracket-contenedor {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            overflow-x: auto;
+            padding-bottom: 20px;
+        }
+
+        .columna-ronda {
+            min-width: 520px;
+            background: white;
+            border: 1px solid #dbe3ef;
+            border-radius: 12px;
+            padding: 14px;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+        }
+
+        .columna-ronda h2 {
+            margin-top: 0;
+            font-size: 18px;
+            color: #0f172a;
         }
 
         table {
             border-collapse: collapse;
-            width: auto;
+            width: 100%;
         }
 
         th, td {
-            border: 1px solid #ccc;
-            padding: 2px;
+            border: 1px solid #cbd5e1;
+            padding: 3px;
             text-align: center;
             vertical-align: middle;
-            font-size: 13px;
+            font-size: 12px;
         }
 
         th {
-            background-color: #f2f2f2;
-        }
-
-        .bye {
-            background-color: #e8ffe8;
+            background-color: #f1f5f9;
             font-weight: bold;
         }
 
-        .jugadores {
-            text-align: center;
-            min-width: 90px;
-            font-weight: bold;
-        }
-
-        select {
-            width: 32px;
+        select, input {
             font-size: 11px;
             padding: 1px;
-        }
-
-        input {
-            width: 32px;
-            font-size: 11px;
-            padding: 1px;
-        }
-
-        .tb {
-            background-color: #fff5d6;
-        }
-
-        .partido-box {
-            width: 72px;
-            min-width: 72px;
         }
 
         .numero-partido {
             font-size: 12px;
-            color: #555;
+            color: #475569;
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+
+        .estado-guardado {
+            font-size: 11px;
+            color: #15803d;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .estado-pendiente {
+            font-size: 11px;
+            color: #94a3b8;
             margin-bottom: 4px;
         }
 
         .jugador-linea {
-            border: 1px solid #aaa;
+            border: 1px solid #94a3b8;
             border-radius: 6px;
-            padding: 3px;
+            padding: 4px;
             margin: 4px 0;
             font-weight: bold;
             background-color: #f8fafc;
             text-align: center;
         }
 
+        .bye {
+            background-color: #dcfce7;
+            font-weight: bold;
+            color: #166534;
+        }
+
         .valores-set {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
         }
 
-        th:nth-child(2),
-        td:nth-child(2),
-        th:nth-child(3),
-        td:nth-child(3),
-        th:nth-child(4),
-        td:nth-child(4),
-        th:nth-child(5),
-        td:nth-child(5) {
-            width: 42px;
+        .valor-corto {
+            width: 34px;
         }
 
-        th:nth-child(6),
-        td:nth-child(6) {
-            width: 65px;
-        }  
+        .tipo-resultado {
+            width: 82px;
+            font-size: 11px;
+        }
 
+        .decisivo-tipo {
+            width: 74px;
+            font-size: 11px;
+        }
+
+        .tb {
+            background-color: #fff7ed;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 9px 13px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-guardar {
+            background: #16a34a;
+            color: white;
+        }
+
+        .btn-generar {
+            background: #2563eb;
+            color: white;
+        }
+
+        .acciones-ronda {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .bloque-final {
+            margin-top: 18px;
+        }
+
+        a {
+            color: #2563eb;
+            font-weight: bold;
+            text-decoration: none;
+        }
     </style>
-
 </head>
 <body>
 
-
 <h1>Resultados del cuadro</h1>
+<div class="nota">
+    Editor persistente del cuadro: puedes guardar una ronda, generar la siguiente y revisar visualmente el avance por columnas.
+</div>
 
-<h2>Primera ronda</h2>
+<div class="bracket-contenedor">
 
-<form action="/admin/cuadros/{{ cuadro_id }}/guardar-resultados-ronda/1" method="post">
+    <div class="columna-ronda">
+        <h2>Primera ronda</h2>
 
-<table> 
+        <form action="/admin/cuadros/{{ cuadro_id }}/guardar-resultados-ronda/1" method="post">
+            <table>
+                <tr>
+                    <th>Partido</th>
+                    <th>Tipo</th>
+                    <th>Set 1</th>
+                    <th>TB1</th>
+                    <th>Set 2</th>
+                    <th>TB2</th>
+                    <th>Decisivo</th>
+                </tr>
 
+                {% for partido in emparejamientos %}
+                <tr class="fila-partido">
+                    <input type="hidden" name="jugador1_id_{{ partido.numero_partido }}" value="{{ partido.lado1.inscrito[3] if partido.lado1.tipo == 'jugador' else '' }}">
+                    <input type="hidden" name="jugador2_id_{{ partido.numero_partido }}" value="{{ partido.lado2.inscrito[3] if partido.lado2.tipo == 'jugador' else '' }}">
+                    <input type="hidden" name="jugador1_pos_{{ partido.numero_partido }}" value="{{ partido.lado1.posicion }}">
+                    <input type="hidden" name="jugador2_pos_{{ partido.numero_partido }}" value="{{ partido.lado2.posicion }}">
 
-    <tr>
-        <th>Partido</th>
+                    <td>
+                        <div class="numero-partido">P{{ partido.numero_partido }}</div>
 
-        <th>Set 1</th>
-        <th>TB1</th>
+                        {% if partido.guardado %}
+                            <div class="estado-guardado">Guardado: {{ partido.guardado.resultado }}</div>
+                        {% else %}
+                            <div class="estado-pendiente">Pendiente</div>
+                        {% endif %}
 
-        <th>Set 2</th>
-        <th>TB2</th>
+                        <div class="jugador-linea">
+                            {% if partido.lado1.tipo == "jugador" %}
+                                {{ partido.lado1.posicion }} - {{ partido.lado1.inscrito[5] }}
+                            {% else %}
+                                {{ partido.lado1.posicion }} - BYE
+                            {% endif %}
+                        </div>
 
-        <th>Decisivo</th>
+                        <div class="jugador-linea">
+                            {% if partido.lado2.tipo == "jugador" %}
+                                {{ partido.lado2.posicion }} - {{ partido.lado2.inscrito[5] }}
+                            {% else %}
+                                {{ partido.lado2.posicion }} - BYE
+                            {% endif %}
+                        </div>
+                    </td>
 
-    </tr>
+                    {% if partido.estado == "partido" %}
+                        <td>
+                            <select class="tipo-resultado" name="tipo_resultado_{{ partido.numero_partido }}">
+                                <option value="normal">Normal</option>
+                                <option value="wo_j1">WO J1</option>
+                                <option value="wo_j2">WO J2</option>
+                                <option value="ret_j1">RET J1</option>
+                                <option value="ret_j2">RET J2</option>
+                            </select>
+                        </td>
 
-{% for partido in emparejamientos %}
+                        <td>
+                            <div class="valores-set">
+                                <select class="set1 valor-corto" name="set1_j1_{{ partido.numero_partido }}">
+                                    {% for n in range(0,8) %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+                                </select>
+                                <select class="set1 valor-corto" name="set1_j2_{{ partido.numero_partido }}">
+                                    {% for n in range(0,8) %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+                                </select>
+                            </div>
+                        </td>
 
+                        <td class="tb">
+                            <div class="valores-set">
+                                <select class="tb1 valor-corto" name="tb1_j1_{{ partido.numero_partido }}">
+                                    {% for n in range(0,13) %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+                                </select>
+                                <select class="tb1 valor-corto" name="tb1_j2_{{ partido.numero_partido }}">
+                                    {% for n in range(0,13) %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+                                </select>
+                            </div>
+                        </td>
 
-<tr class="fila-partido">
+                        <td>
+                            <div class="valores-set">
+                                <select class="set2 valor-corto" name="set2_j1_{{ partido.numero_partido }}">
+                                    {% for n in range(0,8) %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+                                </select>
+                                <select class="set2 valor-corto" name="set2_j2_{{ partido.numero_partido }}">
+                                    {% for n in range(0,8) %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+                                </select>
+                            </div>
+                        </td>
 
-    <input type="hidden" name="jugador1_id_{{ partido.numero_partido }}" value="{{ partido.lado1.inscrito[3] }}">
-    <input type="hidden" name="jugador2_id_{{ partido.numero_partido }}" value="{{ partido.lado2.inscrito[3] }}">
-    <input type="hidden" name="jugador1_pos_{{ partido.numero_partido }}" value="{{ partido.lado1.posicion }}">
-    <input type="hidden" name="jugador2_pos_{{ partido.numero_partido }}" value="{{ partido.lado2.posicion }}">
-    
-    <td class="partido-box">
+                        <td class="tb">
+                            <div class="valores-set">
+                                <select class="tb2 valor-corto" name="tb2_j1_{{ partido.numero_partido }}">
+                                    {% for n in range(0,13) %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+                                </select>
+                                <select class="tb2 valor-corto" name="tb2_j2_{{ partido.numero_partido }}">
+                                    {% for n in range(0,13) %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+                                </select>
+                            </div>
+                        </td>
 
-        <div class="numero-partido">P{{ partido.numero_partido }}</div>
+                        <td>
+                            <select class="decisivo-tipo" name="tipo_decisivo_{{ partido.numero_partido }}">
+                                <option value="">No hay</option>
+                                <option value="super">Super TB</option>
+                                <option value="normal">3er set</option>
+                            </select>
+                            <br><br>
+                            <div class="valores-set">
+                                <select class="decisivo valor-corto" name="decisivo_j1_{{ partido.numero_partido }}">
+                                    {% for n in range(0,21) %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+                                </select>
+                                <select class="decisivo valor-corto" name="decisivo_j2_{{ partido.numero_partido }}">
+                                    {% for n in range(0,21) %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+                                </select>
+                            </div>
+                        </td>
+                    {% elif partido.estado == "bye_jugador1" %}
+                        <td colspan="6" class="bye">Pasa jugador 1 por BYE</td>
+                    {% elif partido.estado == "bye_jugador2" %}
+                        <td colspan="6" class="bye">Pasa jugador 2 por BYE</td>
+                    {% else %}
+                        <td colspan="6">Vacío</td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </table>
 
-        {% if partido.guardado %}
-            <div style="font-size:11px; color:green; font-weight:bold;">
-                Guardado: {{ partido.guardado.resultado }}
+            <div class="acciones-ronda">
+                <button type="submit" class="btn-guardar">Guardar ronda 1</button>
             </div>
-        {% else %}
-            <div style="font-size:11px; color:#999;">
-                Pendiente
+        </form>
+
+        <form action="/admin/cuadros/{{ cuadro_id }}/generar-siguiente-ronda" method="post">
+            <input type="hidden" name="ronda_actual" value="1">
+            <button type="submit" class="btn-generar">Generar ronda 2</button>
+        </form>
+    </div>
+
+    <div class="columna-ronda">
+        <h2>Segunda ronda - Octavos</h2>
+
+        <form action="/admin/cuadros/{{ cuadro_id }}/guardar-resultados-ronda/2" method="post">
+            <table>
+                <tr>
+                    <th>Partido</th>
+                    <th>Tipo</th>
+                    <th>Set 1</th>
+                    <th>TB1</th>
+                    <th>Set 2</th>
+                    <th>TB2</th>
+                    <th>Decisivo</th>
+                </tr>
+
+                {% for partido in emparejamientos_ronda_2 %}
+                <tr class="fila-partido">
+                    <input type="hidden" name="ronda_numero_{{ partido[2] }}" value="2">
+                    <input type="hidden" name="jugador1_id_r2_{{ partido[2] }}" value="{{ partido[3] }}">
+                    <input type="hidden" name="jugador2_id_r2_{{ partido[2] }}" value="{{ partido[5] }}">
+
+                    <td>
+                        <div class="numero-partido">P{{ partido[2] }}</div>
+                        {% if partido[8] %}
+                            <div class="estado-guardado">Guardado: {{ partido[8] }}</div>
+                        {% else %}
+                            <div class="estado-pendiente">Pendiente</div>
+                        {% endif %}
+                        <div class="jugador-linea">{{ partido[4] }}</div>
+                        <div class="jugador-linea">{{ partido[6] }}</div>
+                    </td>
+
+                    <td>
+                        <select class="tipo-resultado" name="tipo_resultado_r2_{{ partido[2] }}">
+                            <option value="normal">Normal</option>
+                            <option value="wo_j1">WO J1</option>
+                            <option value="wo_j2">WO J2</option>
+                            <option value="ret_j1">RET J1</option>
+                            <option value="ret_j2">RET J2</option>
+                        </select>
+                    </td>
+
+                    <td>
+                        <div class="valores-set">
+                            <select class="set1 valor-corto" name="set1_j1_r2_{{ partido[2] }}">
+                                {% for n in range(0,8) %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+                            </select>
+                            <select class="set1 valor-corto" name="set1_j2_r2_{{ partido[2] }}">
+                                {% for n in range(0,8) %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+                            </select>
+                        </div>
+                    </td>
+
+                    <td class="tb">
+                        <div class="valores-set">
+                            <select class="tb1 valor-corto" name="tb1_j1_r2_{{ partido[2] }}">
+                                {% for n in range(0,13) %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+                            </select>
+                            <select class="tb1 valor-corto" name="tb1_j2_r2_{{ partido[2] }}">
+                                {% for n in range(0,13) %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+                            </select>
+                        </div>
+                    </td>
+
+                    <td>
+                        <div class="valores-set">
+                            <select class="set2 valor-corto" name="set2_j1_r2_{{ partido[2] }}">
+                                {% for n in range(0,8) %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+                            </select>
+                            <select class="set2 valor-corto" name="set2_j2_r2_{{ partido[2] }}">
+                                {% for n in range(0,8) %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+                            </select>
+                        </div>
+                    </td>
+
+                    <td class="tb">
+                        <div class="valores-set">
+                            <select class="tb2 valor-corto" name="tb2_j1_r2_{{ partido[2] }}">
+                                {% for n in range(0,13) %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+                            </select>
+                            <select class="tb2 valor-corto" name="tb2_j2_r2_{{ partido[2] }}">
+                                {% for n in range(0,13) %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+                            </select>
+                        </div>
+                    </td>
+
+                    <td>
+                        <select class="decisivo-tipo" name="tipo_decisivo_r2_{{ partido[2] }}">
+                            <option value="">No hay</option>
+                            <option value="super">Super TB</option>
+                            <option value="normal">3er set</option>
+                        </select>
+                        <br><br>
+                        <div class="valores-set">
+                            <select class="decisivo valor-corto" name="decisivo_j1_r2_{{ partido[2] }}">
+                                {% for n in range(0,21) %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+                            </select>
+                            <select class="decisivo valor-corto" name="decisivo_j2_r2_{{ partido[2] }}">
+                                {% for n in range(0,21) %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+                            </select>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+
+            <div class="acciones-ronda">
+                <button type="submit" class="btn-guardar">Guardar ronda 2</button>
             </div>
-        {% endif %}
+        </form>
 
-        <div class="jugador-linea">
-            {% if partido.lado1.tipo == "jugador" %}
-                {{ partido.lado1.inscrito[5] }}
-            {% else %}
-                BYE
-            {% endif %}
-        </div>
+        <form action="/admin/cuadros/{{ cuadro_id }}/generar-siguiente-ronda" method="post">
+            <input type="hidden" name="ronda_actual" value="2">
+            <button type="submit" class="btn-generar">Generar ronda 3</button>
+        </form>
+    </div>
 
-        <div class="jugador-linea">
-            {% if partido.lado2.tipo == "jugador" %}
-                {{ partido.lado2.inscrito[5] }}
-            {% else %}
-                BYE
-            {% endif %}
-        </div>
-    </td>
+</div>
 
-    {% if partido.estado == "partido" %}
-
-        <td>
-            <div class="valores-set">
-                <select class="set1" name="set1_j1_{{ partido.numero_partido }}">
-                    {% for n in range(0,8) %}
-                        <option value="{{ n }}">{{ n }}</option>
-                    {% endfor %}
-                </select>
-
-                <select class="set1" name="set1_j2_{{ partido.numero_partido }}">
-                    {% for n in range(0,8) %}
-                        <option value="{{ n }}">{{ n }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </td>
-
-        <td class="tb">
-            <div class="valores-set">
-                <select class="tb1" name="tb1_j1_{{ partido.numero_partido }}">
-                    {% for n in range(0,13) %}
-                        <option value="{{ n }}">{{ n }}</option>
-                    {% endfor %}
-                </select>
-
-                <select class="tb1" name="tb1_j2_{{ partido.numero_partido }}">
-                    {% for n in range(0,13) %}
-                        <option value="{{ n }}">{{ n }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </td>
-
-        <td>
-            <div class="valores-set">
-                <select class="set2" name="set2_j1_{{ partido.numero_partido }}">
-                    {% for n in range(0,8) %}
-                        <option value="{{ n }}">{{ n }}</option>
-                    {% endfor %}
-                </select>
-
-                <select class="set2" name="set2_j2_{{ partido.numero_partido }}">
-                    {% for n in range(0,8) %}
-                        <option value="{{ n }}">{{ n }}</option>
-                    {% endfor %}
-                </select>  
-            </div>
-        </td>
-
-        <td class="tb">
-            <div class="valores-set" >
-                <select class="tb2" name="tb2_j1_{{ partido.numero_partido }}">
-                    {% for n in range(0,13) %}
-                        <option value="{{ n }}">{{ n }}</option>
-                    {% endfor %}
-                </select>
-
-                <select class="tb2" name="tb2_j2_{{ partido.numero_partido }}">
-                    {% for n in range(0,13) %}
-                        <option value="{{ n }}">{{ n }}</option>
-                    {% endfor %}
-                </select>
-                
-
-            </div>
-        </td>
-
-        <td>
-                <select class="decisivo-tipo" name="tipo_decisivo_{{ partido.numero_partido }}" style="width:65px; font-size:11px;">
-                    <option value="">No hay</option>
-                    <option value="super">Super TB</option>
-                    <option value="normal">3er set</option>
-                </select>
-
-                <br><br>
-
-            <div class="valores-set">
-                <select class="decisivo" name="decisivo_j1_{{ partido.numero_partido }}">
-                    {% for n in range(0,21) %}
-                        <option value="{{ n }}">{{ n }}</option>
-                    {% endfor %}
-                </select>
-
-                <select class="decisivo" name="decisivo_j2_{{ partido.numero_partido }}">
-                    {% for n in range(0,21) %}
-                        <option value="{{ n }}">{{ n }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-                
-        </td>
-
-    {% elif partido.estado == "bye_jugador1" %}
-
-        <td colspan="6" class="bye">
-            Pasa jugador 1 por BYE
-        </td>
-
-
-    {% elif partido.estado == "bye_jugador2" %}
-
-        <td colspan="6" class="bye">
-            Pasa jugador 2 por BYE
-        </td>
-
-
-    {% else %}
-
-        <td colspan="6">
-            Vacío
-        </td>
-
-    {% endif %}
-</tr>
-
-{% endfor %}    
-
-</table>
-
-<button type="submit">Guardar ronda 1</button>
-
-</form>
-
-<br>
-
-<form action="/admin/cuadros/{{ cuadro_id }}/generar-siguiente-ronda" method="post">
-    <input type="hidden" name="ronda_actual" value="1">
-    <button>Generar ronda 2</button>
-</form>
-
-
-<hr>
-
-<h2>Segunda ronda - Octavos</h2>
-
-<form action="/admin/cuadros/{{ cuadro_id }}/guardar-resultados-ronda/2" method="post">
-
-<table>
-    <tr>
-        <th>Partido</th>
-        <th>Set 1</th>
-        <th>TB1</th>
-        <th>Set 2</th>
-        <th>TB2</th>
-        <th>Decisivo</th>
-    </tr>
-
-    {% for partido in emparejamientos_ronda_2 %}
-    <tr class="fila-partido">
-
-        <input type="hidden" name="ronda_numero_{{ partido[2] }}" value="2">
-        <input type="hidden" name="jugador1_id_r2_{{ partido[2] }}" value="{{ partido[3] }}">
-        <input type="hidden" name="jugador2_id_r2_{{ partido[2] }}" value="{{ partido[5] }}">
-
-        <td class="partido-box">
-            <div class="numero-partido">P{{ partido[2] }}</div>
-
-            {% if partido[8] %}
-                <div style="font-size:11px; color:green; font-weight:bold;">
-                    Guardado: {{ partido[8] }}
-                </div>
-            {% else %}
-                <div style="font-size:11px; color:#999;">
-                    Pendiente
-                </div>
-            {% endif %}
-
-            <div class="jugador-linea">
-                {{ partido[4] }}
-            </div>
-
-            <div class="jugador-linea">
-                {{ partido[6] }}
-            </div>
-        </td>
-
-        <td>
-            <div class="valores-set">
-                <select class="set1" name="set1_j1_r2_{{ partido[2] }}">
-                    {% for n in range(0,8) %}
-                        <option value="{{ n }}">{{ n }}</option>
-                    {% endfor %}
-                </select>
-
-                <select class="set1" name="set1_j2_r2_{{ partido[2] }}">
-                    {% for n in range(0,8) %}
-                        <option value="{{ n }}">{{ n }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </td>
-
-        <td class="tb">
-            <div class="valores-set">
-                <select class="tb1" name="tb1_j1_r2_{{ partido[2] }}">
-                    {% for n in range(0,13) %}
-                        <option value="{{ n }}">{{ n }}</option>
-                    {% endfor %}
-                </select>
-
-                <select class="tb1" name="tb1_j2_r2_{{ partido[2] }}">
-                    {% for n in range(0,13) %}
-                        <option value="{{ n }}">{{ n }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </td>
-
-        <td>
-            <div class="valores-set">
-                <select class="set2" name="set2_j1_r2_{{ partido[2] }}">
-                    {% for n in range(0,8) %}
-                        <option value="{{ n }}">{{ n }}</option>
-                    {% endfor %}
-                </select>
-
-                <select class="set2" name="set2_j2_r2_{{ partido[2] }}">
-                    {% for n in range(0,8) %}
-                        <option value="{{ n }}">{{ n }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </td>
-
-        <td class="tb">
-            <div class="valores-set">
-                <select class="tb2" name="tb2_j1_r2_{{ partido[2] }}">
-                    {% for n in range(0,13) %}
-                        <option value="{{ n }}">{{ n }}</option>
-                    {% endfor %}
-                </select>
-
-                <select class="tb2" name="tb2_j2_r2_{{ partido[2] }}">
-                    {% for n in range(0,13) %}
-                        <option value="{{ n }}">{{ n }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </td>
-
-        <td>
-            <select class="decisivo-tipo" name="tipo_decisivo_r2_{{ partido[2] }}" style="width:65px; font-size:11px;">
-                <option value="">No hay</option>
-                <option value="super">Super TB</option>
-                <option value="normal">3er set</option>
-            </select>
-
-            <br><br>
-
-            <div class="valores-set">
-                <select class="decisivo" name="decisivo_j1_r2_{{ partido[2] }}">
-                    {% for n in range(0,21) %}
-                        <option value="{{ n }}">{{ n }}</option>
-                    {% endfor %}
-                </select>
-
-                <select class="decisivo" name="decisivo_j2_r2_{{ partido[2] }}">
-                    {% for n in range(0,21) %}
-                        <option value="{{ n }}">{{ n }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </td>
-
-    </tr>
-    {% endfor %}
-</table>
-
-<button type="submit">Guardar ronda 2</button>
-</form>
-
-
-<a href="/admin/cuadros/{{ cuadro_id }}/inscritos">
-    Volver a inscritos
-</a>
+<div class="bloque-final">
+    <a href="/admin/cuadros/{{ cuadro_id }}/inscritos">Volver a inscritos</a>
+</div>
 
 <script>
 function ganadorSet(j1, j2) {
@@ -462,14 +455,35 @@ function ganadorSet(j1, j2) {
 }
 
 function actualizarFila(fila) {
+    const tipoResultado = fila.querySelector(".tipo-resultado");
     const set1 = fila.querySelectorAll(".set1");
     const tb1 = fila.querySelectorAll(".tb1");
-
     const set2 = fila.querySelectorAll(".set2");
     const tb2 = fila.querySelectorAll(".tb2");
-
     const decisivoTipo = fila.querySelector(".decisivo-tipo");
     const decisivo = fila.querySelectorAll(".decisivo");
+
+    if (set1.length < 2 || set2.length < 2) {
+        return;
+    }
+
+    const tipo = tipoResultado ? tipoResultado.value : "normal";
+    const esWO = tipo === "wo_j1" || tipo === "wo_j2";
+    const esRET = tipo === "ret_j1" || tipo === "ret_j2";
+
+    if (esWO) {
+        [...set1, ...set2, ...tb1, ...tb2, ...decisivo].forEach(campo => {
+            campo.disabled = true;
+            campo.value = "0";
+        });
+        if (decisivoTipo) {
+            decisivoTipo.disabled = true;
+            decisivoTipo.value = "";
+        }
+        return;
+    }
+
+    [...set1, ...set2].forEach(campo => campo.disabled = false);
 
     const s1j1 = set1[0].value;
     const s1j2 = set1[1].value;
@@ -489,20 +503,31 @@ function actualizarFila(fila) {
         if (!hayTb2) campo.value = "0";
     });
 
+    if (esRET) {
+        if (decisivoTipo) {
+            decisivoTipo.disabled = true;
+            decisivoTipo.value = "";
+        }
+        decisivo.forEach(campo => {
+            campo.disabled = true;
+            campo.value = "0";
+        });
+        return;
+    }
+
     const ganador1 = ganadorSet(s1j1, s1j2);
     const ganador2 = ganadorSet(s2j1, s2j2);
-
     const hayEmpateSets = ganador1 !== 0 && ganador2 !== 0 && ganador1 !== ganador2;
 
-    decisivoTipo.disabled = !hayEmpateSets;
+    if (decisivoTipo) {
+        decisivoTipo.disabled = !hayEmpateSets;
+        if (!hayEmpateSets) decisivoTipo.value = "";
+    }
+
     decisivo.forEach(campo => {
         campo.disabled = !hayEmpateSets;
         if (!hayEmpateSets) campo.value = "0";
     });
-
-    if (!hayEmpateSets) {
-        decisivoTipo.value = "";
-    }
 }
 
 document.querySelectorAll("tr.fila-partido").forEach(fila => {
