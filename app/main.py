@@ -1087,7 +1087,10 @@ def resultados_cuadro(
             "jugador2_id": fila[2],
             "ganador_id": fila[3],
             "resultado": fila[4],
-            "estado": fila[5]
+            "estado": fila[5],
+            "jugador1_nombre": fila[2],
+            "jugador2_nombre": fila[4]
+
         })
 
     
