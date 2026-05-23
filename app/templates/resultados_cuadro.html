@@ -432,6 +432,43 @@
         </form>
     </div>
 
+    
+    <div class="columna-ronda">
+        <h2>Cuartos</h2>
+
+        <form action="/admin/cuadros/{{ cuadro_id }}/guardar-resultados-ronda/3" method="post">
+            <table>
+                <tr>
+                    <th>Partido</th>
+                    <th>Jugador 1</th>
+                    <th>Jugador 2</th>
+                    <th>Resultado</th>
+                </tr>
+
+                {% for partido in emparejamientos_ronda_3 %}
+                <tr>
+                    <td>P{{ partido.numero_partido }}</td>
+                    <td>{{ partido.jugador1_id }}</td>
+                    <td>{{ partido.jugador2_id }}</td>
+                    <td>
+                        {% if partido.resultado %}
+                            {{ partido.resultado }}
+                        {% else %}
+                            Pendiente
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </table>
+
+            <button type="submit" class="btn-guardar">Guardar ronda 3</button>
+        </form>
+    </div>
+
+    <form action="/admin/cuadros/{{ cuadro_id }}/generar-siguiente-ronda" method="post">
+        <input type="hidden" name="ronda_actual" value="3">
+        <button type="submit" class="btn-generar">Generar ronda 4</button>
+    </form>
 </div>
 
 <div class="bloque-final">

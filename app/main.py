@@ -1061,6 +1061,35 @@ def resultados_cuadro(
     """, (cuadro_id,))
 
     emparejamientos_ronda_2 = cur.fetchall()
+
+    cur.execute("""
+        SELECT
+            posicion_ronda,
+            jugador1_id,
+            jugador2_id,
+            ganador_id,
+            resultado,
+            estado
+        FROM rondas_cuadro
+        WHERE cuadro_id = %s
+            AND ronda_numero = 3
+        ORDER BY posicion_ronda
+    """, (cuadro_id,))
+
+    filas_ronda_3 = cur.fetchall()
+
+    emparejamientos_ronda_3 = []
+
+    for fila in filas_ronda_3:
+        emparejamientos_ronda_3.append({
+            "numero_partido": fila[0],
+            "jugador1_id": fila[1],
+            "jugador2_id": fila[2],
+            "ganador_id": fila[3],
+            "resultado": fila[4],
+            "estado": fila[5]
+        })
+
     
     
     cur.close()
@@ -1075,7 +1104,8 @@ def resultados_cuadro(
             "request": request,
             "cuadro_id": cuadro_id,
             "emparejamientos": emparejamientos,
-            "emparejamientos_ronda_2": emparejamientos_ronda_2
+            "emparejamientos_ronda_2": emparejamientos_ronda_2,
+            "emparejamientos_ronda_3": emparejamientos_ronda_3
         }
     )
 def guardar_o_actualizar_ronda_cuadro(
