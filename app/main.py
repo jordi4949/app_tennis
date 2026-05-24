@@ -906,34 +906,6 @@ def ver_inscritos(
 
         numero_partido += 1
 
-    partidos_ronda_1 = []
-
-    for partido in emparejamientos_primera_ronda:
-
-        jugador1_id = None
-        jugador2_id = None
-
-        jugador1_nombre = "BYE"
-        jugador2_nombre = "BYE"
-
-        if partido["lado1"]["tipo"] == "jugador":
-            jugador1_id = partido["lado1"]["inscrito"][3]
-            jugador1_nombre = partido["lado1"]["inscrito"][5]
-
-        if partido["lado2"]["tipo"] == "jugador":
-            jugador2_id = partido["lado2"]["inscrito"][3]
-            jugador2_nombre = partido["lado2"]["inscrito"][5]
-
-    partidos_ronda_1.append({
-        "numero_partido": partido["numero_partido"],
-        "jugador1_id": jugador1_id,
-        "jugador1_nombre": jugador1_nombre,
-        "jugador2_id": jugador2_id,
-        "jugador2_nombre": jugador2_nombre,
-        "resultado": partido["guardado"]["resultado"] if partido["guardado"] else None,
-        "estado": partido["estado"]
-    })
-
 
     cur.close()
     conn.close()
@@ -1068,6 +1040,34 @@ def resultados_cuadro(
         })
 
         numero_partido += 1
+
+        partidos_ronda_1 = []
+
+        for partido in emparejamientos_primera_ronda:
+
+            jugador1_id = None
+            jugador2_id = None
+
+            jugador1_nombre = "BYE"
+            jugador2_nombre = "BYE"
+
+            if partido["lado1"]["tipo"] == "jugador":
+                jugador1_id = partido["lado1"]["inscrito"][3]
+                jugador1_nombre = partido["lado1"]["inscrito"][5]
+
+            if partido["lado2"]["tipo"] == "jugador":
+                jugador2_id = partido["lado2"]["inscrito"][3]
+                jugador2_nombre = partido["lado2"]["inscrito"][5]
+
+            partidos_ronda_1.append({
+                "numero_partido": partido["numero_partido"],
+                "jugador1_id": jugador1_id,
+                "jugador1_nombre": jugador1_nombre,
+                "jugador2_id": jugador2_id,
+                "jugador2_nombre": jugador2_nombre,
+                "resultado": partido["guardado"]["resultado"] if partido["guardado"] else None,
+                "estado": partido["estado"]
+            })
     
     cur.execute("""
         SELECT
