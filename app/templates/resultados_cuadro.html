@@ -195,9 +195,17 @@
                 {% for partido in ronda.partidos %}
                     <tr class="fila-partido">
                         <td>
-                            <div class="numero-partido">
-                                P{{ partido.numero_partido }}
-                            </div>
+                            <div class="numero-partido">P{{ partido.numero_partido }}</div>
+
+                            {% if partido.resultado %}
+                                <div class="estado-guardado">
+                                    Guardado: {{ partido.resultado }}
+                                </div>
+                            {% else %}
+                                <div class="estado-pendiente">
+                                    Pendiente
+                                </div>
+                            {% endif %}
 
                             <div class="jugador-linea">
                                 {{ partido.jugador1_nombre }}
