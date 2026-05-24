@@ -1172,6 +1172,56 @@ def guardar_o_actualizar_ronda_cuadro(
 
     return cur.fetchone()[0]
 
+def nombres_rondas_por_tamano(tamano):
+
+    if tamano == 8:
+        return [
+            "Cuartos",
+            "Semifinal",
+            "Final"
+        ]
+
+    elif tamano == 16:
+        return [
+            "Octavos",
+            "Cuartos",
+            "Semifinal",
+            "Final"
+        ]
+
+    elif tamano == 32:
+        return [
+            "Dieciseisavos",
+            "Octavos",
+            "Cuartos",
+            "Semifinal",
+            "Final"
+        ]
+
+    elif tamano == 64:
+        return [
+            "Treintaidosavos",
+            "Dieciseisavos",
+            "Octavos",
+            "Cuartos",
+            "Semifinal",
+            "Final"
+        ]
+
+    elif tamano == 128:
+        return [
+            "Sesentaicuatroavos",
+            "Treintaidosavos",
+            "Dieciseisavos",
+            "Octavos",
+            "Cuartos",
+            "Semifinal",
+            "Final"
+        ]
+
+    return []
+
+
 def generar_siguiente_ronda(
     cur,
     cuadro_id,
@@ -1955,20 +2005,21 @@ def generar_siguiente_ronda_cuadro(
     conn = get_connection()
     cur = conn.cursor()
 
-    if ronda_actual == 1:
-        nombre_siguiente = "Octavos"
+    cur.execute("""
+        SELECT tamano
+        FROM cuadros
+        WHERE id = %s
+    """, (cuadro_id,))
 
-    elif ronda_actual == 2:
-        nombre_siguiente = "Cuartos"
+    fila_tamano = cur.fetchone()
+    tamano_cuadro = fila_tamano[0]
 
-    elif ronda_actual == 3:
-        nombre_siguiente = "Semifinal"
+    nombres_rondas = nombres_rondas_por_tamano(tamano_cuadro)
 
-    elif ronda_actual == 4:
-        nombre_siguiente = "Final"
-
+    if ronda_actual < len(nombres_rondas):
+        nombre_siguiente = nombres_rondas[ronda_actual]
     else:
-        nombre_siguiente = "Siguiente"
+        nombre_siguiente = "Final"
 
     print("RONDA ACTUAL RECIBIDA:", ronda_actual)
 
