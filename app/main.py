@@ -2016,12 +2016,16 @@ def generar_siguiente_ronda_cuadro(
 
     nombres_rondas = nombres_rondas_por_tamano(tamano_cuadro)
 
+    print("TAMAÑO CUADRO:", tamano_cuadro)
+    print("RONDAS CALCULADAS:", nombres_rondas)
+    print("RONDA ACTUAL:", ronda_actual)
+
     if ronda_actual < len(nombres_rondas):
         nombre_siguiente = nombres_rondas[ronda_actual]
     else:
         nombre_siguiente = "Final"
 
-    print("RONDA ACTUAL RECIBIDA:", ronda_actual)
+    print("NOMBRE SIGUIENTE:", nombre_siguiente)
 
     generar_siguiente_ronda(
         cur,
