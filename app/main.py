@@ -93,7 +93,7 @@ def jugadores(
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute(f"""
+    cur.execute("""
         SELECT id, nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia
         FROM jugadores
         WHERE
@@ -1094,7 +1094,7 @@ def resultados_cuadro(
                 WHERE rc.cuadro_id = %s
                     AND rc.ronda_numero = %s
                 ORDER BY rc.posicion_ronda
-            "", (cuadro_id, numero_ronda))
+            """, (cuadro_id, numero_ronda))
 
             partidos = []
 
