@@ -1060,6 +1060,65 @@ def resultados_cuadro(
         ORDER BY rc.posicion_ronda
     """, (cuadro_id,))
 
+    nombres_rondas = nombres_rondas_por_tamano(tamano_cuadro)
+
+    rondas = []
+
+    for numero_ronda, nombre_ronda in enumerate(nombres_rondas, start=1):
+        prefijo = "" if numero_ronda == 1 else f"r{numero_ronda}_"
+
+        if numero_ronda == 1:
+            # De momento usamos la ronda 1 que ya tienes construida
+            rondas.append({
+                "numero": 1,
+                "nombre": nombre_ronda,
+                "prefijo": prefijo,
+                "es_final": len(nombres_rondas) == 1,
+                "partidos": emparejamientos
+            })
+
+        else:
+            cur.execute("""
+                SELECT
+                    rc.posicion_ronda,
+                    rc.jugador1_id,
+                    j1.apellido1,
+                    rc.jugador2_id,
+                    j2.apellido1,
+                    rc.ganador_id,
+                    rc.resultado,
+                    rc.estado
+                FROM rondas_cuadro rc
+                LEFT JOIN jugadores j1 ON rc.jugador1_id = j1.id
+                LEFT JOIN jugadores j2 ON rc.jugador2_id = j2.id
+                WHERE rc.cuadro_id = %s
+                    AND rc.ronda_numero = %s
+                ORDER BY rc.posicion_ronda
+            "", (cuadro_id, numero_ronda))
+
+            partidos = []
+
+            for fila in cur.fetchall():
+                partidos.append({
+                    "numero_partido": fila[0],
+                    "jugador1_id": fila[1],
+                    "jugador1_nombre": fila[2],
+                    "jugador2_id": fila[3],
+                    "jugador2_nombre": fila[4],
+                    "ganador_id": fila[5],
+                    "resultado": fila[6],
+                    "estado": fila[7]
+                })
+
+            if partidos:
+                rondas.append({
+                    "numero": numero_ronda,
+                    "nombre": nombre_ronda,
+                    "prefijo": prefijo,
+                    "es_final": numero_ronda == len(nombres_rondas),
+                    "partidos": partidos
+                })
+
     emparejamientos_ronda_2 = cur.fetchall()
 
     cur.execute("""
@@ -1108,7 +1167,8 @@ def resultados_cuadro(
             "cuadro_id": cuadro_id,
             "emparejamientos": emparejamientos,
             "emparejamientos_ronda_2": emparejamientos_ronda_2,
-            "emparejamientos_ronda_3": emparejamientos_ronda_3
+            "emparejamientos_ronda_3": emparejamientos_ronda_3,
+            "rondas": rondas
         }
     )
 def guardar_o_actualizar_ronda_cuadro(

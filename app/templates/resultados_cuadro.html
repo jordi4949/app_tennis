@@ -174,6 +174,37 @@
 
 <div class="bracket-contenedor">
 
+{% for ronda in rondas %}
+    <div class="columna-ronda">
+        <h2>{{ ronda.nombre }}</h2>
+
+        <form action="/admin/cuadros/{{ cuadro_id }}/guardar-resultados-ronda/{{ ronda.numero }}" method="post">
+
+            <table>
+                <tr>
+                    <th>Partido</th>
+                    <th>Tipo</th>
+                    <th>Set 1</th>
+                    <th>TB1</th>
+                    <th>Set 2</th>
+                    <th>TB2</th>
+                    <th>Decisivo</th>
+                </tr>
+
+                {% for partido in ronda.partidos %}
+                    <tr class="fila-partido">
+                        <td>
+                            P{{ partido.numero_partido }}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </table>
+
+        </form>
+    </div>
+{% endfor %}
+
+
     <div class="columna-ronda">
         <h2>Primera ronda</h2>
 
