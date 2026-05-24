@@ -168,11 +168,17 @@
 <body>
 
 <h1>Resultados del cuadro</h1>
+
 <div class="nota">
     Editor persistente del cuadro: puedes guardar una ronda, generar la siguiente y revisar visualmente el avance por columnas.
 </div>
 
 <div class="bracket-contenedor">
+    <h1 style="color:red;">PRUEBA BUCLE RONDAS</h1>
+
+{% for ronda in rondas %}
+    <h2 style="color:blue;">{{ ronda.nombre }}</h2>
+{% endfor %}
 
 {% for ronda in rondas %}
     <div class="columna-ronda">
