@@ -200,7 +200,17 @@
                 {% for partido in ronda.partidos %}
                     <tr class="fila-partido">
                         <td>
-                            P{{ partido.numero_partido }}
+                            <div class="numero-partido">
+                                P{{ partido.numero_partido }}
+                            </div>
+
+                            <div class="jugador-linea">
+                                {{ partido.jugador1_nombre }}
+                            </div>
+
+                            <div class="jugador-linea">
+                                {{ partido.jugador2_nombre }}
+                            </div>
                         </td>
                     </tr>
                 {% endfor %}
