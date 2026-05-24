@@ -219,7 +219,20 @@
                 {% endfor %}
             </table>
 
+            <div class="acciones-ronda">
+                <button type="submit" class="btn-guardar">
+                    Guardar {{ ronda.nombre }}
+                </button>
+            </div>
         </form>
+        {% if not ronda.es_final %}
+        <form action="/admin/cuadros/{{ cuadro_id }}/generar-siguiente-ronda" method="post">
+            <input type="hidden" name="ronda_actual" value="{{ ronda.numero }}">
+            <button type="submit" class="btn-generar">
+                Generar siguiente ronda
+            </button>
+        </form>
+        {% endif %}    
     </div>
 {% endfor %}
 
