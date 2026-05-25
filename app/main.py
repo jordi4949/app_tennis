@@ -1013,13 +1013,29 @@ def resultados_cuadro(
         jugador1_nombre = "BYE"
         jugador2_nombre = "BYE"
 
+
         if partido["lado1"]["tipo"] == "jugador":
-            jugador1_id = partido["lado1"]["inscrito"][3]
-            jugador1_nombre = partido["lado1"]["inscrito"][5]
+            inscrito1 = partido["lado1"]["inscrito"]
+
+            jugador1_id = inscrito1[3]
+
+            jugador1_nombre = (
+                f"{inscrito1[4]} "
+                f"{inscrito1[5]} "
+                f"{inscrito1[6] or ''}"
+            ).strip()
 
         if partido["lado2"]["tipo"] == "jugador":
-            jugador2_id = partido["lado2"]["inscrito"][3]
-            jugador2_nombre = partido["lado2"]["inscrito"][5]
+            inscrito2 = partido["lado2"]["inscrito"]
+
+            jugador2_id = inscrito2[3]
+
+            jugador2_nombre = (
+                f"{inscrito2[4]} "
+                f"{inscrito2[5]} "
+                f"{inscrito2[6] or ''}"
+            ).strip()
+
 
         partidos_ronda_1.append({
             "numero_partido": partido["numero_partido"],
