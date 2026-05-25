@@ -1290,6 +1290,7 @@ def guardar_o_actualizar_bye(
     cur,
     torneo_id,
     cuadro_id,
+    nombre_primera_ronda,
     numero_partido,
     jugador1_id,
     jugador2_id,
@@ -1301,7 +1302,7 @@ def guardar_o_actualizar_bye(
         cur,
         cuadro_id,
         1,
-        "Dieciseisavos",
+        nombre_primera_ronda,
         numero_partido,
         jugador1_id,
         jugador2_id,
@@ -1342,7 +1343,7 @@ def guardar_o_actualizar_bye(
             jugador1_id,
             jugador2_id,
             ganador_id,
-            "Dieciseisavos",
+            nombre_primera_ronda,
             "BYE",
             jugador1_pos,
             jugador2_pos,
@@ -1381,7 +1382,7 @@ def guardar_o_actualizar_bye(
             jugador1_id,
             jugador2_id,
             ganador_id,
-            "Dieciseisavos",
+            nombre_primera_ronda,
             "BYE",
             cuadro_id,
             numero_partido,
@@ -1454,10 +1455,9 @@ async def guardar_resultados_cuadro(
 
     fila_tamano = cur.fetchone()
     tamano_cuadro = fila_tamano[0] if fila_tamano else 32
+    nombres_rondas = nombres_rondas_por_tamano(tamano_cuadro)
 
-    print("JUGADORES POR POSICION:", jugadores_por_posicion)
-    print("TAMANO CUADRO:", tamano_cuadro)
-
+    nombre_primera_ronda = nombres_rondas[0] if nombres_rondas else "Primera ronda"
     numero_partido_bye = 1
 
     for posicion in range(1, tamano_cuadro + 1, 2):
@@ -1473,6 +1473,7 @@ async def guardar_resultados_cuadro(
                 cur,
                 torneo_id,
                 cuadro_id,
+                nombre_primera_ronda,
                 numero_partido_bye,
                 jugador1_id,
                 None,
@@ -1487,6 +1488,7 @@ async def guardar_resultados_cuadro(
                 cur,
                 torneo_id,
                 cuadro_id,
+                nombre_primera_ronda,
                 numero_partido_bye,
                 None,
                 jugador2_id,
@@ -1610,7 +1612,7 @@ async def guardar_resultados_cuadro(
             cur,
             cuadro_id,
             1,
-            "Dieciseisavos",
+            "nombre_primera_ronda",
             numero_partido,
             jugador1_id,
             jugador2_id,
@@ -1675,7 +1677,7 @@ async def guardar_resultados_cuadro(
                 jugador1_id,
                 jugador2_id,
                 ganador_id,
-                "Dieciseisavos",
+                "nombre_primera_ronda",
                 resultado,
                 cuadro_id,
                 numero_partido,
@@ -1737,7 +1739,7 @@ async def guardar_resultados_ronda(
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT torneo_id
+        SELECT torneo_id, tamano
         FROM cuadros
         WHERE id = %s
     """, (cuadro_id,))
@@ -1749,23 +1751,12 @@ async def guardar_resultados_ronda(
         return RedirectResponse(url="/admin/cuadros", status_code=303)
 
     torneo_id = fila_cuadro[0]
+    tamano_cuadro = fila_cuadro[1]
 
-    if ronda_numero == 2:
-        nombre_ronda = "Octavos"
-        prefijo = "r2_"
+    nombres_rondas = nombres_rondas_por_tamano(tamano_cuadro)
 
-    elif ronda_numero == 3:
-        nombre_ronda = "Cuartos"
-        prefijo = "r3_"
-
-    elif ronda_numero == 4:
-        nombre_ronda = "Semifinal"
-        prefijo = "r4_"
-
-    elif ronda_numero == 5:
-        nombre_ronda = "Final"
-        prefijo = "r5_"
-
+    if ronda_numero <= len(nombres_rondas):
+        nombre_ronda = nombres_rondas[ronda_numero - 1]
     else:
         cur.close()
         conn.close()
@@ -1773,6 +1764,10 @@ async def guardar_resultados_ronda(
             url=f"/admin/cuadros/{cuadro_id}/resultados",
             status_code=303
         )
+
+    prefijo = f"r{ronda_numero}_"
+
+    
 
     numeros_partido = []
 
