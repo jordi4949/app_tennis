@@ -808,7 +808,6 @@ def importar_excel_archivo(
         url=f"/admin/cuadros/{cuadro_id}/inscritos",
         status_code=303
     )
-
 @app.get("/admin/cuadros/{cuadro_id}/inscritos", response_class=HTMLResponse)
 def ver_inscritos(
     cuadro_id: int,
@@ -848,8 +847,8 @@ def ver_inscritos(
     posiciones = list(range(1, tamano_cuadro + 1))
 
     posiciones_ocupadas = [
-    i[8] for i in inscritos
-    if i[8] is not None
+        i[8] for i in inscritos
+        if i[8] is not None
     ]
 
     inscritos_por_posicion = {
@@ -876,41 +875,8 @@ def ver_inscritos(
                 "inscrito": None
             })
 
-    emparejamientos_primera_ronda = []
-
-    numero_partido = 1
-
-    for i in range(0, len(cuadro_ordenado), 2):
-        lado1 = cuadro_ordenado[i]
-        lado2 = cuadro_ordenado[i + 1] if i + 1 < len(cuadro_ordenado) else {
-            "posicion": None,
-            "tipo": "bye",
-            "inscrito": None
-        }
-
-        if lado1["tipo"] == "jugador" and lado2["tipo"] == "jugador":
-            estado = "partido"
-        elif lado1["tipo"] == "jugador" and lado2["tipo"] == "bye":
-            estado = "bye_jugador1"
-        elif lado1["tipo"] == "bye" and lado2["tipo"] == "jugador":
-            estado = "bye_jugador2"
-        else:
-            estado = "vacio"
-
-        emparejamientos_primera_ronda.append({
-            "numero_partido": numero_partido,
-            "lado1": lado1,
-            "lado2": lado2,
-            "estado": estado
-        })
-
-        numero_partido += 1
-
-
     cur.close()
     conn.close()
-
-
 
     return templates.TemplateResponse(
         request=request,
@@ -920,9 +886,8 @@ def ver_inscritos(
             "inscritos": inscritos,
             "cuadro_id": cuadro_id,
             "posiciones": posiciones,
-        "posiciones_ocupadas": posiciones_ocupadas,
-        "cuadro_ordenado": cuadro_ordenado,
-        "emparejamientos_primera_ronda": emparejamientos_primera_ronda
+            "posiciones_ocupadas": posiciones_ocupadas,
+            "cuadro_ordenado": cuadro_ordenado
         }
     )
 
@@ -1030,7 +995,6 @@ def resultados_cuadro(
 
         guardado = partidos_guardados.get(numero_partido)
 
-        
         emparejamientos.append({
             "numero_partido": numero_partido,
             "lado1": lado1,
@@ -1041,63 +1005,40 @@ def resultados_cuadro(
 
         numero_partido += 1
 
-        partidos_ronda_1 = []
+    partidos_ronda_1 = []
 
-        for partido in emparejamientos_primera_ronda:
+    for partido in emparejamientos:
+        jugador1_id = None
+        jugador2_id = None
+        jugador1_nombre = "BYE"
+        jugador2_nombre = "BYE"
 
-            jugador1_id = None
-            jugador2_id = None
+        if partido["lado1"]["tipo"] == "jugador":
+            jugador1_id = partido["lado1"]["inscrito"][3]
+            jugador1_nombre = partido["lado1"]["inscrito"][5]
 
-            jugador1_nombre = "BYE"
-            jugador2_nombre = "BYE"
+        if partido["lado2"]["tipo"] == "jugador":
+            jugador2_id = partido["lado2"]["inscrito"][3]
+            jugador2_nombre = partido["lado2"]["inscrito"][5]
 
-            if partido["lado1"]["tipo"] == "jugador":
-                jugador1_id = partido["lado1"]["inscrito"][3]
-                jugador1_nombre = partido["lado1"]["inscrito"][5]
-
-            if partido["lado2"]["tipo"] == "jugador":
-                jugador2_id = partido["lado2"]["inscrito"][3]
-                jugador2_nombre = partido["lado2"]["inscrito"][5]
-
-            partidos_ronda_1.append({
-                "numero_partido": partido["numero_partido"],
-                "jugador1_id": jugador1_id,
-                "jugador1_nombre": jugador1_nombre,
-                "jugador2_id": jugador2_id,
-                "jugador2_nombre": jugador2_nombre,
-                "resultado": partido["guardado"]["resultado"] if partido["guardado"] else None,
-                "estado": partido["estado"]
-            })
-    
-    cur.execute("""
-        SELECT
-            rc.id,
-            rc.ronda_numero,
-            rc.posicion_ronda,
-            rc.jugador1_id,
-            j1.apellido1,
-            rc.jugador2_id,
-            j2.apellido1,
-            rc.estado,
-            rc.resultado,
-            rc.partido_id
-        FROM rondas_cuadro rc
-        LEFT JOIN jugadores j1 ON rc.jugador1_id = j1.id
-        LEFT JOIN jugadores j2 ON rc.jugador2_id = j2.id
-        WHERE rc.cuadro_id = %s
-          AND rc.ronda_numero = 2
-        ORDER BY rc.posicion_ronda
-    """, (cuadro_id,))
+        partidos_ronda_1.append({
+            "numero_partido": partido["numero_partido"],
+            "jugador1_id": jugador1_id,
+            "jugador1_nombre": jugador1_nombre,
+            "jugador2_id": jugador2_id,
+            "jugador2_nombre": jugador2_nombre,
+            "ganador_id": None,
+            "resultado": partido["guardado"]["resultado"] if partido["guardado"] else None,
+            "estado": partido["estado"]
+        })
 
     nombres_rondas = nombres_rondas_por_tamano(tamano_cuadro)
-
     rondas = []
 
     for numero_ronda, nombre_ronda in enumerate(nombres_rondas, start=1):
         prefijo = "" if numero_ronda == 1 else f"r{numero_ronda}_"
 
         if numero_ronda == 1:
-            # De momento usamos la ronda 1 que ya tienes construida
             rondas.append({
                 "numero": 1,
                 "nombre": nombre_ronda,
@@ -1105,88 +1046,51 @@ def resultados_cuadro(
                 "es_final": len(nombres_rondas) == 1,
                 "partidos": partidos_ronda_1
             })
+            continue
 
-        else:
-            cur.execute("""
-                SELECT
-                    rc.posicion_ronda,
-                    rc.jugador1_id,
-                    j1.apellido1,
-                    rc.jugador2_id,
-                    j2.apellido1,
-                    rc.ganador_id,
-                    rc.resultado,
-                    rc.estado
-                FROM rondas_cuadro rc
-                LEFT JOIN jugadores j1 ON rc.jugador1_id = j1.id
-                LEFT JOIN jugadores j2 ON rc.jugador2_id = j2.id
-                WHERE rc.cuadro_id = %s
-                    AND rc.ronda_numero = %s
-                ORDER BY rc.posicion_ronda
-            """, (cuadro_id, numero_ronda))
+        cur.execute("""
+            SELECT
+                rc.posicion_ronda,
+                rc.jugador1_id,
+                TRIM(j1.nombre || ' ' || j1.apellido1 || ' ' || COALESCE(j1.apellido2, '')) AS jugador1_nombre,
+                rc.jugador2_id,
+                TRIM(j2.nombre || ' ' || j2.apellido1 || ' ' || COALESCE(j2.apellido2, '')) AS jugador2_nombre,
+                rc.ganador_id,
+                rc.resultado,
+                rc.estado
+            FROM rondas_cuadro rc
+            LEFT JOIN jugadores j1 ON rc.jugador1_id = j1.id
+            LEFT JOIN jugadores j2 ON rc.jugador2_id = j2.id
+            WHERE rc.cuadro_id = %s
+              AND rc.ronda_numero = %s
+            ORDER BY rc.posicion_ronda
+        """, (cuadro_id, numero_ronda))
 
-            partidos = []
+        partidos = []
 
-            for fila in cur.fetchall():
-                partidos.append({
-                    "numero_partido": fila[0],
-                    "jugador1_id": fila[1],
-                    "jugador1_nombre": fila[2],
-                    "jugador2_id": fila[3],
-                    "jugador2_nombre": fila[4],
-                    "ganador_id": fila[5],
-                    "resultado": fila[6],
-                    "estado": fila[7]
-                })
+        for fila in cur.fetchall():
+            partidos.append({
+                "numero_partido": fila[0],
+                "jugador1_id": fila[1],
+                "jugador1_nombre": fila[2],
+                "jugador2_id": fila[3],
+                "jugador2_nombre": fila[4],
+                "ganador_id": fila[5],
+                "resultado": fila[6],
+                "estado": fila[7]
+            })
 
-            if partidos:
-                rondas.append({
-                    "numero": numero_ronda,
-                    "nombre": nombre_ronda,
-                    "prefijo": prefijo,
-                    "es_final": numero_ronda == len(nombres_rondas),
-                    "partidos": partidos
-                })
+        if partidos:
+            rondas.append({
+                "numero": numero_ronda,
+                "nombre": nombre_ronda,
+                "prefijo": prefijo,
+                "es_final": numero_ronda == len(nombres_rondas),
+                "partidos": partidos
+            })
 
-    emparejamientos_ronda_2 = cur.fetchall()
-
-    cur.execute("""
-        SELECT
-            posicion_ronda,
-            jugador1_id,
-            jugador2_id,
-            ganador_id,
-            resultado,
-            estado
-        FROM rondas_cuadro
-        WHERE cuadro_id = %s
-            AND ronda_numero = 3
-        ORDER BY posicion_ronda
-    """, (cuadro_id,))
-
-    filas_ronda_3 = cur.fetchall()
-
-    emparejamientos_ronda_3 = []
-
-    for fila in filas_ronda_3:
-        emparejamientos_ronda_3.append({
-            "numero_partido": fila[0],
-            "jugador1_id": fila[1],
-            "jugador2_id": fila[2],
-            "ganador_id": fila[3],
-            "resultado": fila[4],
-            "estado": fila[5],
-            "jugador1_nombre": fila[2],
-            "jugador2_nombre": fila[4]
-
-        })
-
-    
-    
     cur.close()
     conn.close()
-
-    
 
     return templates.TemplateResponse(
         request=request,
@@ -1195,11 +1099,10 @@ def resultados_cuadro(
             "request": request,
             "cuadro_id": cuadro_id,
             "emparejamientos": emparejamientos,
-            "emparejamientos_ronda_2": emparejamientos_ronda_2,
-            "emparejamientos_ronda_3": emparejamientos_ronda_3,
             "rondas": rondas
         }
     )
+
 def guardar_o_actualizar_ronda_cuadro(
     cur,
     cuadro_id,
