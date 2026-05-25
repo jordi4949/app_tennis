@@ -158,6 +158,30 @@
             margin-top: 18px;
         }
 
+        .ronda-1 {
+            margin-top: 0;
+        }
+
+        .ronda-2 {
+            margin-top: 80px;
+        }
+
+        .ronda-3 {
+            margin-top: 160px;
+        }
+
+        .ronda-4 {
+            margin-top: 240px;
+        }
+
+        .ronda-5 {
+            margin-top: 320px;
+        }
+
+        .ronda-6 {
+            margin-top: 400px;
+        }
+
         a {
             color: #2563eb;
             font-weight: bold;
@@ -176,7 +200,7 @@
 <div class="bracket-contenedor">
 
 {% for ronda in rondas %}
-    <div class="columna-ronda">
+    <div class="columna-ronda ronda-{{ ronda.numero }}">
         <h2>{{ ronda.nombre }}</h2>
 
         <form action="/admin/cuadros/{{ cuadro_id }}/guardar-resultados-ronda/{{ ronda.numero }}" method="post">
