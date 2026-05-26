@@ -1771,6 +1771,63 @@ async def guardar_resultados_ronda(
     tamano_cuadro = fila_cuadro[1]
 
     nombres_rondas = nombres_rondas_por_tamano(tamano_cuadro)
+    nombre_primera_ronda = nombres_rondas[0] if nombres_rondas else "Primera ronda"
+
+    if ronda_numero == 1:
+        cur.execute("""
+            SELECT
+                ci.posicion,
+                j.id
+            FROM cuadro_inscritos ci
+            LEFT JOIN jugadores j ON ci.jugador_id = j.id
+            WHERE ci.cuadro_id = %s
+                AND ci.posicion IS NOT NULL
+            ORDER BY ci.posicion
+        """, (cuadro_id,))
+
+        jugadores_por_posicion = {
+            fila[0]: fila[1]
+            for fila in cur.fetchall()
+        }
+
+        numero_partido_bye = 1
+
+        for posicion in range(1, tamano_cuadro + 1, 2):
+            pos1 = posicion
+            pos2 = posicion + 1
+
+            jugador1_id = jugadores_por_posicion.get(pos1)
+            jugador2_id = jugadores_por_posicion.get(pos2)
+
+            if jugador1_id and not jugador2_id:
+                guardar_o_actualizar_bye(
+                    cur,
+                    torneo_id,
+                    cuadro_id,
+                    nombre_primera_ronda,
+                    numero_partido_bye,
+                    jugador1_id,
+                    None,
+                    jugador1_id,
+                    pos1,
+                    pos2
+                )
+
+            elif jugador2_id and not jugador1_id:
+                guardar_o_actualizar_bye(
+                    cur,
+                    torneo_id,
+                    cuadro_id,
+                    nombre_primera_ronda,
+                    numero_partido_bye,
+                    None,
+                    jugador2_id,
+                    jugador2_id,
+                    pos1,
+                    pos2
+                )
+
+            numero_partido_bye += 1
 
     if ronda_numero <= len(nombres_rondas):
         nombre_ronda = nombres_rondas[ronda_numero - 1]
