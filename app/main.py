@@ -1229,7 +1229,6 @@ def nombres_rondas_por_tamano(tamano):
 
     return []
 
-
 def generar_siguiente_ronda(
     cur,
     cuadro_id,
@@ -1245,22 +1244,24 @@ def generar_siguiente_ronda(
         FROM rondas_cuadro rc
         LEFT JOIN partidos p ON p.id = rc.partido_id
         WHERE rc.cuadro_id = %s
-            AND rc.ronda_numero = %s
-            AND COALESCE(rc.ganador_id, p.ganador_id) IS NOT NULL
+          AND rc.ronda_numero = %s
         ORDER BY rc.posicion_ronda
     """, (cuadro_id, ronda_actual))
 
-    ganadores = cur.fetchall()
+    partidos_ronda = cur.fetchall()
 
-    numero_partido = 1
+    for i in range(0, len(partidos_ronda), 2):
 
-    for i in range(0, len(ganadores), 2):
-
-        if i + 1 >= len(ganadores):
+        if i + 1 >= len(partidos_ronda):
             break
 
-        ganador1 = ganadores[i][1]
-        ganador2 = ganadores[i + 1][1]
+        ganador1 = partidos_ronda[i][1]
+        ganador2 = partidos_ronda[i + 1][1]
+
+        if not ganador1 or not ganador2:
+            continue
+
+        numero_partido = (i // 2) + 1
 
         cur.execute("""
             INSERT INTO rondas_cuadro
@@ -1277,7 +1278,8 @@ def generar_siguiente_ronda(
             ON CONFLICT (cuadro_id, ronda_numero, posicion_ronda)
             DO UPDATE SET
                 jugador1_id = EXCLUDED.jugador1_id,
-                jugador2_id = EXCLUDED.jugador2_id
+                jugador2_id = EXCLUDED.jugador2_id,
+                estado = 'pendiente'
         """, (
             cuadro_id,
             ronda_siguiente,
@@ -1287,7 +1289,6 @@ def generar_siguiente_ronda(
             ganador2
         ))
 
-        numero_partido += 1
 
 def ganador_set(j1, j2):
     if (j1 == 6 and j2 <= 4) or (j1 == 7 and j2 in [5, 6]):
@@ -2027,16 +2028,11 @@ def generar_siguiente_ronda_cuadro(
 
     nombres_rondas = nombres_rondas_por_tamano(tamano_cuadro)
 
-    print("TAMAÑO CUADRO:", tamano_cuadro)
-    print("RONDAS CALCULADAS:", nombres_rondas)
-    print("RONDA ACTUAL:", ronda_actual)
-
     if ronda_actual < len(nombres_rondas):
         nombre_siguiente = nombres_rondas[ronda_actual]
     else:
         nombre_siguiente = "Final"
 
-    print("NOMBRE SIGUIENTE:", nombre_siguiente)
 
     generar_siguiente_ronda(
         cur,
