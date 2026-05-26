@@ -1781,7 +1781,10 @@ async def guardar_resultados_ronda(
             status_code=303
         )
 
-    prefijo = f"r{ronda_numero}_"
+    if ronda_numero == 1:
+        prefijo = ""
+    else:
+        prefijo = f"r{ronda_numero}_"
 
     
 
