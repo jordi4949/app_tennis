@@ -1787,7 +1787,6 @@ async def guardar_resultados_ronda(
         prefijo = f"r{ronda_numero}_"
 
     
-
     numeros_partido = []
 
     for key in form.keys():
@@ -1796,8 +1795,14 @@ async def guardar_resultados_ronda(
             numeros_partido.append(int(key.replace(patron, "")))
 
     for numero_partido in numeros_partido:
-        jugador1_id = int(form.get(f"jugador1_id_{prefijo}{numero_partido}"))
-        jugador2_id = int(form.get(f"jugador2_id_{prefijo}{numero_partido}"))
+        jugador1_raw = form.get(f"jugador1_id_{prefijo}{numero_partido}", "")
+        jugador2_raw = form.get(f"jugador2_id_{prefijo}{numero_partido}", "")
+
+        if not jugador1_raw or not jugador2_raw:
+            continue
+
+        jugador1_id = int(jugador1_raw)
+        jugador2_id = int(jugador2_raw)
 
         tipo_resultado = form.get(
             f"tipo_resultado_{prefijo}{numero_partido}",

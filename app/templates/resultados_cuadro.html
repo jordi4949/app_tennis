@@ -218,8 +218,8 @@
 
                 {% for partido in ronda.partidos %}
                     <tr class="fila-partido">
-                        <input type="hidden" name="jugador1_id_{{ ronda.prefijo }}{{ partido.numero_partido }}" value="{{ partido.jugador1_id }}">
-                        <input type="hidden" name="jugador2_id_{{ ronda.prefijo }}{{ partido.numero_partido }}" value="{{ partido.jugador2_id }}">
+                        <input type="hidden" name="jugador1_id_{{ ronda.prefijo }}{{ partido.numero_partido }}" value="{{ partido.jugador1_id or '' }}">
+                        <input type="hidden" name="jugador2_id_{{ ronda.prefijo }}{{ partido.numero_partido }}" value="{{ partido.jugador2_id or '' }}">
 
                         <td>
                             <div class="numero-partido">P{{ partido.numero_partido }}</div>
