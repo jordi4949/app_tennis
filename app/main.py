@@ -93,7 +93,7 @@ def jugadores(
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute("""
+    cur.execute(f"""
         SELECT id, nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia
         FROM jugadores
         WHERE
