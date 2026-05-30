@@ -228,37 +228,73 @@ def ver_importados(
     request: Request,
     buscar: str = "",
     ordenar: str = "apellido",
+    genero_id: int = 0,
     admin: str = Depends(comprobar_admin)
 ):
     if ordenar == "club":
         order_by = "club, apellido1, apellido2, nombre"
     elif ordenar == "licencia":
         order_by = "NULLIF(numero_licencia, '') NULLS LAST, apellido1, apellido2, nombre"
+    elif ordenar == "genero":
+        order_by = "genero_id, apellido1, apellido2, nombre"
     else:
         order_by = "apellido1, apellido2, nombre"
 
     conn = get_connection()
     cur = conn.cursor()
 
+    cur.execute("""
+        SELECT id, nombre
+        FROM generos
+        ORDER BY id
+    """)
+    generos = cur.fetchall()
+
+    condiciones = []
+    parametros = []
+
     if buscar:
         texto_busqueda = f"%{buscar.strip()}%"
-
-        cur.execute(f"""
-            SELECT id, nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia
-            FROM jugadores_importados
-            WHERE nombre ILIKE %s
-               OR apellido1 ILIKE %s
-               OR COALESCE(apellido2, '') ILIKE %s
-               OR club ILIKE %s
-               OR COALESCE(numero_licencia, '') ILIKE %s
-            ORDER BY {order_by}
-        """, (texto_busqueda, texto_busqueda, texto_busqueda, texto_busqueda, texto_busqueda))
-    else:
-        cur.execute(f"""
-            SELECT id, nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia
-            FROM jugadores_importados
-            ORDER BY {order_by}
+        condiciones.append("""
+            (
+                nombre ILIKE %s
+                OR apellido1 ILIKE %s
+                OR COALESCE(apellido2, '') ILIKE %s
+                OR club ILIKE %s
+                OR COALESCE(numero_licencia, '') ILIKE %s
+            )
         """)
+        parametros.extend([
+            texto_busqueda,
+            texto_busqueda,
+            texto_busqueda,
+            texto_busqueda,
+            texto_busqueda
+        ])
+
+    if genero_id != 0:
+        condiciones.append("genero_id = %s")
+        parametros.append(genero_id)
+
+    where_sql = ""
+
+    if condiciones:
+        where_sql = "WHERE " + " AND ".join(condiciones)
+
+    cur.execute(f"""
+        SELECT
+            id,
+            nombre,
+            apellido1,
+            apellido2,
+            club,
+            ano_nacimiento,
+            numero_licencia,
+            genero_id
+        FROM jugadores_importados
+        {where_sql}
+        ORDER BY {order_by}
+    """, parametros)
 
     jugadores = cur.fetchall()
 
@@ -272,7 +308,9 @@ def ver_importados(
             "request": request,
             "jugadores": jugadores,
             "buscar": buscar,
-            "ordenar": ordenar
+            "ordenar": ordenar,
+            "genero_id": genero_id,
+            "generos": generos
         }
     )
 

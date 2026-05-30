@@ -10,8 +10,24 @@
 
 <form method="get" action="/admin/importar-jugadores">
     <input type="text" name="buscar" placeholder="Buscar jugador..." value="{{ buscar }}">
-    <input type="hidden" name="ordenar" value="{{ ordenar }}">
-    <button type="submit">Buscar</button>
+
+    <select name="ordenar">
+        <option value="apellido" {% if ordenar == "apellido" %}selected{% endif %}>Apellido</option>
+        <option value="club" {% if ordenar == "club" %}selected{% endif %}>Club</option>
+        <option value="licencia" {% if ordenar == "licencia" %}selected{% endif %}>Licencia</option>
+        <option value="genero" {% if ordenar == "genero" %}selected{% endif %}>Género</option>
+    </select>
+
+    <select name="genero_id">
+        <option value="0">Todos los géneros</option>
+        {% for genero in generos %}
+            <option value="{{ genero[0] }}" {% if genero_id == genero[0] %}selected{% endif %}>
+                {{ genero[1]|capitalize }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <button type="submit">Filtrar</button>
 </form>
 
 <br>
@@ -67,6 +83,7 @@
             <th>Club</th>
             <th>Año</th>
             <th>Licencia</th>
+            <th>Género</th>
             <th>Acciones</th>
         </tr>
 
@@ -81,6 +98,15 @@
             <td>{{ j[4] }}</td>
             <td>{{ j[5] }}</td>
             <td>{{ j[6] }}</td>
+            <td>
+                {% if j[7] == 1 %}
+                    Masculino
+                {% elif j[7] == 2 %}
+                    Femenino
+                {% else %}
+        -
+                {% endif %}
+            </td>
             <td>
                 <a href="/admin/importar-jugadores/editar/{{ j[0] }}">Editar</a>
                 |
@@ -108,14 +134,7 @@ function toggleAll(source) {
     }
 }
 </script>
-<script>
-function toggleAll(source) {
-    const checkboxes = document.getElementsByName('jugadores_ids');
-    for (let i = 0; i < checkboxes.length; i++) {
-        checkboxes[i].checked = source.checked;
-    }
-}
-</script>
+
 
 </body>
 </html>
