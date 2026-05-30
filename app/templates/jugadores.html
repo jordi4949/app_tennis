@@ -244,6 +244,7 @@
                             <th>Club</th>
                             <th>Año</th>
                             <th>Licencia</th>
+                            <th>Género</th>
                             <th>Acciones</th>
                         </tr>
 
@@ -255,6 +256,15 @@
                             <td>{{ jugador[4] }}</td>
                             <td>{{ jugador[5] }}</td>
                             <td>{{ jugador[6] }}</td>
+                            <td>
+                                {% if jugador[7] == 1 %}
+                                    Masculino
+                                {% elif jugador[7] == 2 %}
+                                    Femenino
+                                {% else %}
+        -
+                                {% endif %}
+                            </td>
                             <td>
                                 <div class="acciones">
                                     <a href="/admin/jugadores/editar/{{ jugador[0] }}" class="btn-editar">
