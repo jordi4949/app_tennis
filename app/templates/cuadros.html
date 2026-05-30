@@ -112,6 +112,8 @@
         <th>Género</th>
         <th>Ubicación</th>
         <th>Acciones</th>
+        <th>Estado</th>
+        <th>Ganador</th>
     </tr>
 
     {% for c in cuadros %}
@@ -131,6 +133,21 @@
             |
             <a href="/admin/cuadros/{{ c[0] }}/inscritos">Ver inscritos</a>
         </td>
+
+        <td>
+            {% if c[11] %}
+                🏆 Finalizado
+            {% elif c[10] > 0 %}
+                ⏳ En progreso
+            {% else %}
+                ❌ Sin empezar
+            {% endif %}
+        </td>
+
+        <td>
+            {{ c[11] or "" }}
+        </td>
+        
     </tr>
     {% endfor %}
 </table>
