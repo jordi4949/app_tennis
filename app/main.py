@@ -706,7 +706,33 @@ def ver_cuadros(
                 t.fecha_inicio,
                 COALESCE(cat.nombre, ''),
                 COALESCE(g.nombre, ''),
-                t.ubicacion
+                t.ubicacion,
+                
+                (
+                    SELECT COUNT(*)
+                    FROM rondas_cuadro rc
+                    WHERE rc.cuadro_id = c.id
+                        AND rc.ganador_id IS NOT NULL
+                ) AS resultados_guardados,
+
+                (
+                    SELECT TRIM(
+                        j.nombre || ' ' ||
+                        j.apellido1 || ' ' ||
+                        COALESCE(j.apellido2, '')
+                    )
+                
+                    FROM rondas_cuadro rc
+                    JOIN jugadores j ON j.id = rc.ganador_id
+                    WHERE rc.cuadro_id = c.id
+                    ORDER BY rc.ronda_numero DESC,
+                            rc.posicion_ronda DESC
+                    LIMIT 1
+
+                ) AS ganador    
+
+                    
+
             FROM cuadros c
             JOIN torneos t ON c.torneo_id = t.id
             LEFT JOIN categorias cat ON c.categoria_id = cat.id
@@ -726,7 +752,31 @@ def ver_cuadros(
                 t.fecha_inicio,
                 COALESCE(cat.nombre, ''),
                 COALESCE(g.nombre, ''),
-                t.ubicacion
+                t.ubicacion,
+
+                (
+                    SELECT COUNT(*)
+                    FROM rondas_cuadro rc
+                    WHERE rc.cuadro_id = c.id
+                        AND rc.ganador_id IS NOT NULL
+                ) AS resultados_guardados,
+
+                (
+                    SELECT TRIM(
+                        j.nombre || ' ' ||
+                        j.apellido1 || ' ' ||
+                        COALESCE(j.apellido2, '')
+                    )
+                
+                    FROM rondas_cuadro rc
+                    JOIN jugadores j ON j.id = rc.ganador_id
+                    WHERE rc.cuadro_id = c.id
+                    ORDER BY rc.ronda_numero DESC,
+                            rc.posicion_ronda DESC
+                    LIMIT 1
+
+                ) AS ganador
+                    
             FROM cuadros c
             JOIN torneos t ON c.torneo_id = t.id
             LEFT JOIN categorias cat ON c.categoria_id = cat.id
