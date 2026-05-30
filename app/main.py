@@ -254,67 +254,56 @@ def obtener_ano_nacimiento(fecha):
 
 
 @app.post("/admin/importar-jugadores/excel-federacion")
-def importar_excel_federacion(
-    carpeta_excel: str = Form(...),
+async def importar_excel_federacion(
+    archivo_excel: UploadFile = File(...),
     genero_id: int = Form(...),
     admin: str = Depends(comprobar_admin)
 ):
     conn = get_connection()
     cur = conn.cursor()
 
-    archivos = [
-        archivo for archivo in os.listdir(carpeta_excel)
-        if archivo.lower().endswith(".xlsx")
-    ]
+    wb = load_workbook(archivo_excel.file, data_only=True)
+    ws = wb.active
 
-    for archivo in archivos:
-        ruta_excel = os.path.join(carpeta_excel, archivo)
+    for fila in ws.iter_rows(min_row=2):
+        licencia = fila[1].value
+        nombre_completo = fila[2].value
+        club = fila[9].value if len(fila) > 9 else ""
+        fecha_nacimiento = fila[14].value if len(fila) > 14 else None
 
-        wb = load_workbook(ruta_excel, data_only=True)
-        ws = wb.active
+        if not licencia or not nombre_completo:
+            continue
 
-        for fila in ws.iter_rows(min_row=2):
-            licencia = fila[1].value          # B
-            nombre_completo = fila[2].value   # C
-            club = fila[9].value if len(fila) > 9 else ""
-            fecha_nacimiento = fila[14].value if len(fila) > 14 else None
+        nombre, apellido1, apellido2 = separar_nombre_federacion(nombre_completo)
+        ano_nacimiento = obtener_ano_nacimiento(fecha_nacimiento)
 
-            if not licencia or not nombre_completo:
-                continue
-
-            nombre, apellido1, apellido2 = separar_nombre_federacion(nombre_completo)
-            ano_nacimiento = obtener_ano_nacimiento(fecha_nacimiento)
-
-            cur.execute("""
-                INSERT INTO jugadores_importados
-                (
-                    nombre,
-                    apellido1,
-                    apellido2,
-                    club,
-                    ano_nacimiento,
-                    numero_licencia,
-                    genero_id
-                )
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-            """, (
+        cur.execute("""
+            INSERT INTO jugadores_importados
+            (
                 nombre,
                 apellido1,
                 apellido2,
                 club,
                 ano_nacimiento,
-                str(licencia).strip(),
+                numero_licencia,
                 genero_id
-            ))
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (
+            nombre,
+            apellido1,
+            apellido2,
+            club,
+            ano_nacimiento,
+            str(licencia).strip(),
+            genero_id
+        ))
 
     conn.commit()
     cur.close()
     conn.close()
 
-    return RedirectResponse(
-        url="/admin/importar-jugadores",
-        status_code=303
-    )
+    return RedirectResponse(url="/admin/importar-jugadores", status_code=303)
 
 
 

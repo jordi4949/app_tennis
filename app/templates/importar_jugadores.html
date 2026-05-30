@@ -10,9 +10,9 @@
 
 <h2>Importar Excel Federación</h2>
 
-<form method="post" action="/admin/importar-jugadores/excel-federacion">
+<form method="post" action="/admin/importar-jugadores/excel-federacion" enctype="multipart/form-data"></form>
     <label>Carpeta Excel:</label>
-    <input type="text" name="carpeta_excel"
+    <input type="file" name="archivo_excel" accept=".xlsx" required>
            placeholder="C:\Users\Jordi\Excels\jugadores\alevin_femenino"
            style="width: 450px;" required>
 
