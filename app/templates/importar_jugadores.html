@@ -6,7 +6,32 @@
 </head>
 <body>
 
-<h1>Jugadores Importados (OCR)</h1>
+<h1>Jugadores Importados</h1>
+
+<h2>Importar Excel Federación</h2>
+
+<form method="post" action="/admin/importar-jugadores/excel-federacion">
+    <label>Carpeta Excel:</label>
+    <input type="text" name="carpeta_excel"
+           placeholder="C:\Users\Jordi\Excels\jugadores\alevin_femenino"
+           style="width: 450px;" required>
+
+    <label>Género:</label>
+    <select name="genero_id" required>
+        {% for genero in generos %}
+            <option value="{{ genero[0] }}">
+                {{ genero[1]|capitalize }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <button type="submit">Importar carpeta</button>
+</form>
+
+<hr>
+
+<h1>Jugadores Importados</h1>
+
 
 <form method="get" action="/admin/importar-jugadores">
     <input type="text" name="buscar" placeholder="Buscar jugador..." value="{{ buscar }}">

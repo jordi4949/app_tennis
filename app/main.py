@@ -276,8 +276,8 @@ def importar_excel_federacion(
         for fila in ws.iter_rows(min_row=2):
             licencia = fila[1].value          # B
             nombre_completo = fila[2].value   # C
-            club = fila[9].value              # J
-            fecha_nacimiento = fila[14].value # O
+            club = fila[9].value if len(fila) > 9 else ""
+            fecha_nacimiento = fila[14].value if len(fila) > 14 else None
 
             if not licencia or not nombre_completo:
                 continue
