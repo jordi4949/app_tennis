@@ -94,7 +94,7 @@ def jugadores(
     cur = conn.cursor()
 
     cur.execute(f"""
-        SELECT id, nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia
+        SELECT id, nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia, genero_id
         FROM jugadores
         WHERE
             nombre ILIKE %s
