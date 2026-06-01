@@ -259,7 +259,10 @@
                         <thead>
                             <tr>
                                 <th>Torneo</th>
-                                <th class="no-wrap">Fecha</th>
+                                <th>Cuadro</th>
+                                <th>Categoría</th>
+                                <th>Género</th>
+                                <th>Fecha</th>
                                 <th>Jugador 1</th>
                                 <th>Jugador 2</th>
                                 <th>Ganador</th>
@@ -272,13 +275,15 @@
                             {% for partido in partidos %}
                             <tr>
                                 <td>{{ partido[1] }}</td>
-                                <td class="no-wrap">{{ partido[6] }}</td>
                                 <td>{{ partido[2] }}</td>
                                 <td>{{ partido[3] }}</td>
-                                <td>{{ partido[4] if partido[4] else '' }}</td>
+                                <td>{{ partido[4] }}</td>
+                                <td class="no-wrap">{{ partido[9] }}</td>
                                 <td>{{ partido[5] }}</td>
-                                <td>{{ partido[7] if partido[7] else '' }}</td>
-                                <td>
+                                <td>{{ partido[6] }}</td>
+                                <td>{{ partido[7] }}</td>
+                                <td>{{ partido[8] }}</td>
+                                <td>{{ partido[10] or "" }}</td>
                                     <div class="acciones">
                                         <a href="/admin/partidos/editar/{{ partido[0] }}" class="btn-editar">Editar</a>
 

@@ -8,13 +8,19 @@
 
 <h1>Jugadores Importados</h1>
 
-<h2>Importar Excel Federación</h2>
+<h2>Importar jugadores desde Excel Federación</h2>
 
-<form method="post" action="/admin/importar-jugadores/excel-federacion" enctype="multipart/form-data"></form>
-    <label>Carpeta Excel:</label>
-    <input type="file" name="archivo_excel" accept=".xlsx" required>
-           placeholder="C:\Users\Jordi\Excels\jugadores\alevin_femenino"
-           style="width: 450px;" required>
+<form method="post"
+      action="/admin/importar-jugadores/excel-federacion"
+      enctype="multipart/form-data">
+
+    <label>Archivo Excel:</label>
+    <input type="file"
+           name="archivo_excel"
+           accept=".xlsx"
+           required>
+
+    <br><br>
 
     <label>Género:</label>
     <select name="genero_id" required>
@@ -25,7 +31,12 @@
         {% endfor %}
     </select>
 
-    <button type="submit">Importar carpeta</button>
+    <br><br>
+
+    <button type="submit">
+        Importar archivo
+    </button>
+
 </form>
 
 <hr>

@@ -2564,21 +2564,37 @@ def ver_partidos(request: Request,admin: str = Depends(comprobar_admin)):
     jugadores = cur.fetchall()
 
     cur.execute("""
+        
         SELECT
             p.id,
             t.nombre AS torneo,
+            c.nombre AS cuadro,
+            COALESCE(cat.nombre, '') AS categoria,
+            COALESCE(gen.nombre, '') AS genero,
             j1.nombre || ' ' || j1.apellido1 || ' ' || COALESCE(j1.apellido2, '') AS jugador1,
             j2.nombre || ' ' || j2.apellido1 || ' ' || COALESCE(j2.apellido2, '') AS jugador2,
             COALESCE(g.nombre || ' ' || g.apellido1 || ' ' || COALESCE(g.apellido2, ''),'') AS ganador,
-            p.ronda,
+            CASE
+                WHEN p.ronda = 'Treintaidosavos' THEN '1/32'
+                WHEN p.ronda = 'Dieciseisavos' THEN '1/16'
+                WHEN p.ronda = 'Octavos' THEN '1/8'
+                WHEN p.ronda = 'Cuartos' THEN '1/4'
+                WHEN p.ronda = 'Semifinal' THEN 'SF'
+                WHEN p.ronda = 'Final' THEN 'F'
+                ELSE p.ronda
+            END AS ronda_corta,
             p.fecha_partido,
             p.resultado
         FROM partidos p
         JOIN torneos t ON p.torneo_id = t.id
+        LEFT JOIN cuadros c ON p.cuadro_id = c.id
+        LEFT JOIN categorias cat ON c.categoria_id = cat.id
+        LEFT JOIN generos gen ON c.genero_id = gen.id
         JOIN jugadores j1 ON p.jugador1_id = j1.id
         JOIN jugadores j2 ON p.jugador2_id = j2.id
         LEFT JOIN jugadores g ON p.ganador_id = g.id
-        ORDER BY p.fecha_partido, p.id
+        ORDER BY p.fecha_partido DESC, t.nombre, c.nombre, p.ronda_numero, p.posicion_ronda
+                
     """)
     partidos = cur.fetchall()
 
