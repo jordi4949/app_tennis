@@ -47,6 +47,16 @@ def normalizar_club_para_comparar(texto: str) -> str:
     texto = unicodedata.normalize("NFD", texto)
     texto = "".join(c for c in texto if unicodedata.category(c) != "Mn")
 
+    # Quitar palabras largas que vienen en el Excel federativo
+    texto = texto.replace("CLUB DE TENNIS", "")
+    texto = texto.replace("CLUB DE TENIS", "")
+    texto = texto.replace("CLUB TENNIS", "")
+    texto = texto.replace("CLUB TENIS", "")
+    texto = texto.replace("CLUB ESPORTIU", "")
+    texto = texto.replace("CLUB", "")
+    texto = texto.replace("TENNIS", "")
+    texto = texto.replace("TENIS", "")
+
     # Errores típicos OCR
     texto = texto.replace("0", "O")
     texto = texto.replace("1", "I")
@@ -61,10 +71,18 @@ def normalizar_club_para_comparar(texto: str) -> str:
     texto = re.sub(r"\bC T\b", "CT", texto)
     texto = re.sub(r"\bT\b", "CT", texto)
 
+    # Quitar siglas finales habituales para comparar por nombre real
+    texto = re.sub(r"\bCT\b", "", texto)
+    texto = re.sub(r"\bTC\b", "", texto)
+    texto = re.sub(r"\bRC\b", "", texto)
+    texto = re.sub(r"\bCE\b", "", texto)
+
     # Espacios repetidos
     texto = re.sub(r"\s+", " ", texto).strip()
 
     return texto
+
+
 
 @app.get("/admin", response_class=HTMLResponse)
 def inicio(request: Request, admin: str = Depends(comprobar_admin)):
@@ -462,7 +480,7 @@ def corregir_clubs_importados(admin: str = Depends(comprobar_admin)):
 
         # Umbral alto para evitar cambios peligrosos.
         # Si corrige poco, luego bajamos a 85.
-        if puntuacion >= 88 and club_importado != club_bueno:
+        if puntuacion >= 80 and club_importado != club_bueno:
             cur.execute("""
                 UPDATE jugadores_importados
                 SET club = %s
@@ -2545,9 +2563,15 @@ def actualizar_cuadro(
 
 
 @app.get("/admin/partidos", response_class=HTMLResponse)
-def ver_partidos(request: Request,admin: str = Depends(comprobar_admin)):
+def ver_partidos(
+    request: Request,
+    buscar: str = "",
+    admin: str = Depends(comprobar_admin)
+):
     conn = get_connection()
     cur = conn.cursor()
+
+    texto_busqueda = f"%{buscar.strip()}%"
 
     cur.execute("""
         SELECT id, nombre, fecha_inicio, categoria, ubicacion
@@ -2564,23 +2588,22 @@ def ver_partidos(request: Request,admin: str = Depends(comprobar_admin)):
     jugadores = cur.fetchall()
 
     cur.execute("""
-        
         SELECT
             p.id,
             t.nombre AS torneo,
-            c.nombre AS cuadro,
+            COALESCE(c.nombre, '') AS cuadro,
             COALESCE(cat.nombre, '') AS categoria,
             COALESCE(gen.nombre, '') AS genero,
             j1.nombre || ' ' || j1.apellido1 || ' ' || COALESCE(j1.apellido2, '') AS jugador1,
             j2.nombre || ' ' || j2.apellido1 || ' ' || COALESCE(j2.apellido2, '') AS jugador2,
             COALESCE(g.nombre || ' ' || g.apellido1 || ' ' || COALESCE(g.apellido2, ''),'') AS ganador,
             CASE
-                WHEN p.ronda = 'Treintaidosavos' THEN '1/32'
-                WHEN p.ronda = 'Dieciseisavos' THEN '1/16'
-                WHEN p.ronda = 'Octavos' THEN '1/8'
-                WHEN p.ronda = 'Cuartos' THEN '1/4'
-                WHEN p.ronda = 'Semifinal' THEN 'SF'
-                WHEN p.ronda = 'Final' THEN 'F'
+                WHEN p.ronda ILIKE 'Treintaidosavos' THEN '1/32'
+                WHEN p.ronda ILIKE 'Dieciseisavos' THEN '1/16'
+                WHEN p.ronda ILIKE 'Octavos' THEN '1/8'
+                WHEN p.ronda ILIKE 'Cuartos' THEN '1/4'
+                WHEN p.ronda ILIKE 'Semifinal' THEN 'SF'
+                WHEN p.ronda ILIKE 'Final' THEN 'F'
                 ELSE p.ronda
             END AS ronda_corta,
             p.fecha_partido,
@@ -2593,7 +2616,42 @@ def ver_partidos(request: Request,admin: str = Depends(comprobar_admin)):
         JOIN jugadores j1 ON p.jugador1_id = j1.id
         JOIN jugadores j2 ON p.jugador2_id = j2.id
         LEFT JOIN jugadores g ON p.ganador_id = g.id
+        WHERE
+            %s = '%%'
+            OR t.nombre ILIKE %s
+            OR COALESCE(c.nombre, '') ILIKE %s
+            OR COALESCE(cat.nombre, '') ILIKE %s
+            OR COALESCE(gen.nombre, '') ILIKE %s
+            OR j1.nombre ILIKE %s
+            OR j1.apellido1 ILIKE %s
+            OR COALESCE(j1.apellido2, '') ILIKE %s
+            OR j2.nombre ILIKE %s
+            OR j2.apellido1 ILIKE %s
+            OR COALESCE(j2.apellido2, '') ILIKE %s
+            OR COALESCE(g.nombre, '') ILIKE %s
+            OR COALESCE(g.apellido1, '') ILIKE %s
+            OR COALESCE(g.apellido2, '') ILIKE %s
+            OR COALESCE(p.ronda, '') ILIKE %s
+            OR COALESCE(p.resultado, '') ILIKE %s
         ORDER BY p.fecha_partido DESC, t.nombre, c.nombre, p.ronda_numero, p.posicion_ronda
+    """, (
+        texto_busqueda,
+        texto_busqueda,
+        texto_busqueda,
+        texto_busqueda,
+        texto_busqueda,
+        texto_busqueda,
+        texto_busqueda,
+        texto_busqueda,
+        texto_busqueda,
+        texto_busqueda,
+        texto_busqueda,
+        texto_busqueda,
+        texto_busqueda,
+        texto_busqueda,
+        texto_busqueda,
+        texto_busqueda
+    ))
                 
     """)
     partidos = cur.fetchall()
@@ -2610,6 +2668,7 @@ def ver_partidos(request: Request,admin: str = Depends(comprobar_admin)):
             "torneos": torneos,
             "jugadores": jugadores,
             "partidos": partidos
+            "buscar": buscar
         }
     )
 

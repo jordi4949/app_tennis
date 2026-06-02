@@ -171,88 +171,23 @@
     <div class="overlay">
         <div class="contenedor">
 
-            <div class="tarjeta">
-                <h1>Partidos</h1>
-                <p class="texto-suave">Añadir nuevo partido</p>
-
-                <form action="/admin/partidos" method="post">
-                    <div class="grid-form">
-
-                        <div class="campo">
-                            <label for="torneo_id">Torneo:</label>
-                            <select name="torneo_id" id="torneo_id" required>
-                                <option value="">-- Selecciona un torneo --</option>
-                                {% for torneo in torneos %}
-                                    <option value="{{ torneo[0] }}">
-                                        {{ torneo[1] }} - {{ torneo[2] }} - {{ torneo[3] }} - {{ torneo[4] }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="campo">
-                            <label for="fecha_partido">Fecha del partido:</label>
-                            <input type="date" id="fecha_partido" name="fecha_partido" required>
-                        </div>
-
-                        <div class="campo">
-                            <label for="jugador1_id">Jugador 1:</label>
-                            <select name="jugador1_id" id="jugador1_id" required>
-                                <option value="">-- Selecciona jugador 1 --</option>
-                                {% for jugador in jugadores %}
-                                    <option value="{{ jugador[0] }}">
-                                        {{ jugador[1] }} {{ jugador[2] }} {{ jugador[3] or '' }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="campo">
-                            <label for="jugador2_id">Jugador 2:</label>
-                            <select name="jugador2_id" id="jugador2_id" required>
-                                <option value="">-- Selecciona jugador 2 --</option>
-                                {% for jugador in jugadores %}
-                                    <option value="{{ jugador[0] }}">
-                                        {{ jugador[1] }} {{ jugador[2] }} {{ jugador[3] or '' }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="campo">
-                            <label for="ganador_id">Ganador:</label>
-                            <select name="ganador_id" id="ganador_id" required>
-                                <option value="">-- Selecciona ganador --</option>
-                                {% for jugador in jugadores %}
-                                    <option value="{{ jugador[0] }}">
-                                        {{ jugador[1] }} {{ jugador[2] }} {{ jugador[3] or '' }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="campo">
-                            <label for="ronda">Ronda:</label>
-                            <input type="text" id="ronda" name="ronda" placeholder="Ej: Cuartos, Semifinal, Final" required>
-                        </div>
-
-                        <div class="campo">
-                            <label for="resultado">Resultado:</label>
-                            <input type="text" id="resultado" name="resultado" placeholder="Ej: 6-4 6-3" required>
-                        </div>
-
-                    </div>
-
-                    <div class="fila-botones">
-                        <button type="submit" class="btn">Guardar partido</button>
-                        <a href="/admin" class="btn btn-secundario">Volver</a>
-                    </div>
-                </form>
-            </div>
 
             <div class="tarjeta">
                 <h2>Lista de partidos</h2>
                 <p class="texto-suave">Partidos registrados actualmente.</p>
+
+                <form method="get" action="/admin/partidos">
+                    <input type="text"
+                        name="buscar"
+                        value="{{ buscar }}"
+                        placeholder="Buscar jugador, torneo, cuadro, categoría...">
+
+                    <button type="submit" class="btn">Buscar</button>
+
+                    <a href="/admin/partidos" class="btn btn-secundario">Limpiar</a>
+                </form>
+
+                <br>
 
                 <div class="tabla-contenedor">
                     <table>
