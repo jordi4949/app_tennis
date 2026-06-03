@@ -1577,13 +1577,30 @@ def generar_siguiente_ronda(
             ganador2
         ))
 
-
 def ganador_set(j1, j2):
-    if (j1 == 6 and j2 <= 4) or (j1 == 7 and j2 in [5, 6]):
+    # 6-0, 6-1, 6-2, 6-3, 6-4
+    if j1 == 6 and j2 <= 4:
         return 1
-    if (j2 == 6 and j1 <= 4) or (j2 == 7 and j1 in [5, 6]):
+
+    if j2 == 6 and j1 <= 4:
         return 2
+
+    # 7-5
+    if j1 == 7 and j2 == 5:
+        return 1
+
+    if j2 == 7 and j1 == 5:
+        return 2
+
+    # 7-6 / 6-7
+    if j1 == 7 and j2 == 6:
+        return 1
+
+    if j2 == 7 and j1 == 6:
+        return 2
+
     return 0
+
 
 
 def tiebreak_valido(j1, j2, minimo):
