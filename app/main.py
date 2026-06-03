@@ -125,8 +125,16 @@ def jugadores(
 
     jugadores = cur.fetchall()
 
+    cur.execute("""
+        SELECT id, nombre
+        FROM generos
+        ORDER BY id
+    """)
+    generos = cur.fetchall()
+
     cur.close()
     conn.close()
+
 
     return templates.TemplateResponse(
         request=request,
@@ -135,7 +143,8 @@ def jugadores(
             "request": request,
             "jugadores": jugadores,
             "buscar": buscar,
-            "ordenar": ordenar
+            "ordenar": ordenar,
+            "generos": generos
         }
     )
 
@@ -153,9 +162,9 @@ def guardar_jugador(
     cur = conn.cursor()
 
     cur.execute("""
-        INSERT INTO jugadores (nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia)
-        VALUES (%s, %s, %s, %s, %s, %s)
-    """, (nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia))
+        INSERT INTO jugadores (nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia, genero_id)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+    """, (nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia, genero_id))
 
     conn.commit()
 
@@ -172,11 +181,18 @@ admin: str = Depends(comprobar_admin)
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT id, nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia
+        SELECT id, nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia, genero_id
         FROM jugadores
         WHERE id = %s
     """, (jugador_id,))
     jugador = cur.fetchone()
+
+    cur.execute("""
+        SELECT id, nombre
+        FROM generos
+        ORDER BY id
+    """)
+    generos = cur.fetchall()
 
     cur.close()
     conn.close()
@@ -189,7 +205,8 @@ admin: str = Depends(comprobar_admin)
         name="editar_jugador.html",
         context={
             "request": request,
-            "jugador": jugador
+            "jugador": jugador,
+            "generos": generos
         }
     )
 
@@ -203,6 +220,7 @@ def actualizar_jugador(
     club: str = Form(""),
     ano_nacimiento: int = Form(...),
     numero_licencia: str = Form(""),
+    genero_id: int = Form(...),
     admin: str = Depends(comprobar_admin)
 ):
     conn = get_connection()
@@ -215,9 +233,11 @@ def actualizar_jugador(
             apellido2 = %s,
             club = %s,
             ano_nacimiento = %s,
-            numero_licencia = %s
+            numero_licencia = %s,
+            genero_id = %s
+            
         WHERE id = %s
-    """, (nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia, jugador_id))
+    """, (nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia, genero_id, jugador_id))
 
     conn.commit()
     cur.close()
@@ -416,6 +436,70 @@ def ver_importados(
         }
     )
 
+def corregir_club_alias_manual(club: str) -> str:
+    if not club:
+        return club
+
+    clave = normalizar_club_para_comparar(club)
+
+    alias = {
+        "ANDRES GIMENO": "Andrés Gimeno, CT",
+        "BARA": "Barà, CT",
+        "BLANES": "Blanes, CT",
+        "CARDEDEU": "Cardedeu, CT",
+        "DARO": "D'Aro, CT",
+        "EL ROMANI": "El Romaní, CT",
+        "LLAFRANC": "Llafranc, CT",
+        "MANLLEU": "Manlleu, CT",
+        "MATARO": "Mataró, CT",
+        "MONTBLANC": "Montblanc, CT",
+        "OLESA": "Olesa, CT",
+        "PINEDA GAVA": "Pineda Gavà, CT",
+        "RIPOLLET": "Ripollet, CT",
+        "ROSES": "Roses, CT",
+        "SABADELL": "Sabadell, CT",
+        "SANT CELONI": "Sant Celoni, CT",
+        "SERRAMAR": "Serramar, CT",
+        "TARREGA": "Tàrrega, CT",
+        "CERDANYOLA": "Cerdanyola, CT",
+        "GIRONA": "Girona, CT",
+        "BISBAL EMPORDA": "La Bisbal d'Empordà, CT",
+        "PALLEJA": "Pallejà, CT",
+        "SANT BOI": "Sant Boi, CT",
+        "URGELL": "Urgell, CT",
+        "COSTA BRAVA": "Costa Brava, CT",
+        "ELS GORCHS": "Els Gorchs, CT",
+        "POBLA CLARAMUNT": "La Pobla de Claramunt, CT",
+        "VIC": "Vic, CT",
+        "VILANOVA": "Vilanova, CT",
+        "BARCINO": "Barcino, CT",
+        "SALUT 1902": "La Salut 1902, CT",
+        "FIGUERES": "Figueres, CT",
+        "METLLA MAR": "L'Ametlla de Mar, CT",
+        "LLEIDA": "Lleida, CT",
+        "NATACIO SANT CUGAT": "Natació Sant Cugat, CT",
+        "PINEDA": "Pineda, CT",
+        "PORQUERES": "Porqueres, CT",
+        "REUS MONTEROLS": "Reus Monterols, CT",
+        "SITGES": "Sitges, CT",
+        "TARRAGONA": "Tarragona, CT",
+        "TORELLO": "Torelló, CT",
+        "TORREDEMBARRA": "Torredembarra, CT",
+        "TORTOSA": "Tortosa, CT",
+        "BERGA": "Berga, TC",
+        "BADALONA": "Badalona, TC",
+        "BARCELONA 1899": "Barcelona-1899, RCT",
+        "POLO": "Real Club de Polo",
+        "TOPTEN": "Topten Tennis Club",
+        "VALL HEBRON": "Vall d'Hebron",
+        "EGARA": "Egara, Club",
+        "FARNERS": "Farners Tennis Club",
+        "FEDERACIO CATALANA": "Federació Catalana de Tennis",
+    }
+
+    return alias.get(clave, club)
+
+
 @app.post("/admin/importar-jugadores/corregir-clubs")
 def corregir_clubs_importados(admin: str = Depends(comprobar_admin)):
     conn = get_connection()
@@ -464,7 +548,20 @@ def corregir_clubs_importados(admin: str = Depends(comprobar_admin)):
     }
 
     for club_importado in clubs_importados:
+
+        club_alias = corregir_club_alias_manual(club_importado)
+
+        if club_alias != club_importado:
+            cur.execute("""
+                UPDATE jugadores_importados
+                SET club = %s
+                WHERE club = %s
+            """, (club_alias, club_importado))
+            continue
+
         club_importado_norm = normalizar_club_para_comparar(club_importado)
+    
+    
 
         mejor = process.extractOne(
             club_importado_norm,
