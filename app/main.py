@@ -37,47 +37,42 @@ def comprobar_admin(credentials: HTTPBasicCredentials = Depends(security)):
 
     return credentials.username
 
+
 def normalizar_club_para_comparar(texto: str) -> str:
     if not texto:
         return ""
 
     texto = texto.upper().strip()
 
-    # Quitar acentos
     texto = unicodedata.normalize("NFD", texto)
     texto = "".join(c for c in texto if unicodedata.category(c) != "Mn")
 
-    # Quitar palabras largas que vienen en el Excel federativo
+    texto = texto.replace("REAL CLUB DE TENIS", "")
+    texto = texto.replace("REAL CLUB DE TENNIS", "")
     texto = texto.replace("CLUB DE TENNIS", "")
     texto = texto.replace("CLUB DE TENIS", "")
     texto = texto.replace("CLUB TENNIS", "")
     texto = texto.replace("CLUB TENIS", "")
     texto = texto.replace("CLUB ESPORTIU", "")
+    texto = texto.replace("CLUB DEPORTIVO", "")
+    texto = texto.replace("CLUB NATACIO", "")
+    texto = texto.replace("CLUB NATACION", "")
     texto = texto.replace("CLUB", "")
     texto = texto.replace("TENNIS", "")
     texto = texto.replace("TENIS", "")
 
-    # Errores típicos OCR
-    texto = texto.replace("0", "O")
-    texto = texto.replace("1", "I")
-
-    # Separar comas pegadas: "BARCINO,CT" -> "BARCINO CT"
     texto = texto.replace(",", " ")
+    texto = texto.replace("-", " ")
 
-    # Quitar símbolos raros: puntos, guiones, apóstrofes, etc.
     texto = re.sub(r"[^A-Z0-9 ]", " ", texto)
 
-    # Normalizar abreviaturas frecuentes
-    texto = re.sub(r"\bC T\b", "CT", texto)
-    texto = re.sub(r"\bT\b", "CT", texto)
-
-    # Quitar siglas finales habituales para comparar por nombre real
+    texto = re.sub(r"\bRCT\b", "", texto)
     texto = re.sub(r"\bCT\b", "", texto)
     texto = re.sub(r"\bTC\b", "", texto)
     texto = re.sub(r"\bRC\b", "", texto)
     texto = re.sub(r"\bCE\b", "", texto)
+    texto = re.sub(r"\bC T\b", "", texto)
 
-    # Espacios repetidos
     texto = re.sub(r"\s+", " ", texto).strip()
 
     return texto
