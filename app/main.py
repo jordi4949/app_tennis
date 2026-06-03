@@ -469,8 +469,9 @@ def corregir_clubs_importados(admin: str = Depends(comprobar_admin)):
         mejor = process.extractOne(
             club_importado_norm,
             list(clubs_buenos_normalizados.keys()),
-            scorer=fuzz.WRatio
+            scorer=fuzz.token_set_ratio
         )
+
 
         if not mejor:
             continue
@@ -478,9 +479,13 @@ def corregir_clubs_importados(admin: str = Depends(comprobar_admin)):
         club_bueno_norm, puntuacion, _ = mejor
         club_bueno = clubs_buenos_normalizados[club_bueno_norm]
 
+        print("CLUB IMPORTADO:", club_importado, "=>", club_importado_norm)
+        print("MEJOR:", club_bueno, "=>", club_bueno_norm, "PUNTOS:", puntuacion)
+
+
         # Umbral alto para evitar cambios peligrosos.
         # Si corrige poco, luego bajamos a 85.
-        if puntuacion >= 80 and club_importado != club_bueno:
+        if puntuacion >= 75 and club_importado != club_bueno:
             cur.execute("""
                 UPDATE jugadores_importados
                 SET club = %s
