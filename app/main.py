@@ -151,6 +151,7 @@ def guardar_jugador(
     club: str = Form(""),
     ano_nacimiento: int = Form(...),
     numero_licencia: str = Form(""),
+    genero_id: int = Form(...),
     admin: str = Depends(comprobar_admin)
 ):
     conn = get_connection()

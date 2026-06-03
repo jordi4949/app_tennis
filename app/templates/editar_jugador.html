@@ -50,7 +50,8 @@
             color: #374151;
         }
 
-        .campo input {
+        .campo input,
+        .campo select {
             width: 100%;
             padding: 10px 12px;
             border: 1px solid #cbd5e1;
@@ -126,6 +127,18 @@
                         <div class="campo">
                             <label>Número licencia:</label>
                             <input type="text" name="numero_licencia" value="{{ jugador[6] or '' }}">
+                        </div>
+
+                        <div class="campo">
+                            <label>Género:</label>
+                            <select name="genero_id" required>
+                                {% for genero in generos %}
+                                    <option value="{{ genero[0] }}"
+                                        {% if jugador[7] == genero[0] %}selected{% endif %}>
+                                        {{ genero[1]|capitalize }}
+                                    </option>
+                                {% endfor %}
+                            </select>
                         </div>
 
                     </div>
