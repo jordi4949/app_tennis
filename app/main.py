@@ -2751,7 +2751,6 @@ def ver_partidos(
         texto_busqueda
     ))
                 
-    """)
     partidos = cur.fetchall()
 
     cur.close()
@@ -2765,7 +2764,7 @@ def ver_partidos(
             "request": request,
             "torneos": torneos,
             "jugadores": jugadores,
-            "partidos": partidos
+            "partidos": partidos,
             "buscar": buscar
         }
     )
