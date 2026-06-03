@@ -2211,12 +2211,26 @@ async def guardar_resultados_ronda(
 
                 if sets_j1 == 1 and sets_j2 == 1:
                     if tipo_decisivo == "super":
+                        if decisivo_j1 == decisivo_j2:
+                            continue
+
                         ganador_id = jugador1_id if decisivo_j1 > decisivo_j2 else jugador2_id
                         sets.append((3, decisivo_j1, decisivo_j2, 0, 0, 3))
+
+                    elif tipo_decisivo == "normal":
+                        ganador3 = ganador_set(decisivo_j1, decisivo_j2)
+
+                        if ganador3 == 0:
+                            continue
+
+                        ganador_id = jugador1_id if ganador3 == 1 else jugador2_id
+                        sets.append((3, decisivo_j1, decisivo_j2, 0, 0, 1))
+
                     else:
                         continue
                 else:
                     ganador_id = jugador1_id if sets_j1 == 2 else jugador2_id
+
 
                 partes = []
                 for _, j1, j2, tbj1, tbj2, tipo_set in sets:
