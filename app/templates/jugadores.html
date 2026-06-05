@@ -220,20 +220,35 @@
                 <h2>Jugadores guardados</h2>
                 <p class="texto-suave">Lista actual de jugadores registrados.</p>
 
-            <div class="fila-botones">
-                <a href="/admin/jugadores?buscar={{ buscar }}&ordenar=apellido" class="btn">
-                    Ordenar por apellido
-                </a>
+                <form method="get" action="/admin/jugadores" class="fila-botones">
+                    <input type="text" name="buscar" value="{{ buscar }}" placeholder="Buscar jugador...">
 
-                <a href="/admin/jugadores?buscar={{ buscar }}&ordenar=club" class="btn btn-secundario">
-                    Ordenar por club
-                </a>
+                    <select name="genero_id">
+                        <option value="0">Todos los géneros</option>
+                        {% for genero in generos %}
+                            <option value="{{ genero[0] }}" {% if genero_id == genero[0] %}selected{% endif %}>
+                            {{ genero[1]|capitalize }}
+                            </option>
+                        {% endfor %}
+                    </select>
 
-                <a href="/admin/jugadores?buscar={{ buscar }}&ordenar=licencia" class="btn btn-secundario">
-                    Ordenar por licencia
-                </a>
-                
-            </div>    
+                    <input type="number" name="ano_nacimiento" value="{{ ano_nacimiento if ano_nacimiento else '' }}" placeholder="Año">
+
+                    <select name="ordenar">
+                        <option value="apellido" {% if ordenar == "apellido" %}selected{% endif %}>Apellido</option>
+                        <option value="club" {% if ordenar == "club" %}selected{% endif %}>Club + apellido</option>
+                        <option value="licencia" {% if ordenar == "licencia" %}selected{% endif %}>Licencia</option>
+                        <option value="genero_ano_apellido" {% if ordenar == "genero_ano_apellido" %}selected{% endif %}>Género + año + apellido</option>
+                        <option value="ano_genero_apellido" {% if ordenar == "ano_genero_apellido" %}selected{% endif %}>Año + género + apellido</option>
+                        <option value="club_genero_ano" {% if ordenar == "club_genero_ano" %}selected{% endif %}>Club + género + año</option>
+                        <option value="genero_club_apellido" {% if ordenar == "genero_club_apellido" %}selected{% endif %}>Género + club + apellido</option>
+                    </select>
+
+                    <button type="submit" class="btn">Aplicar</button>
+                    <a href="/admin/jugadores" class="btn btn-secundario">Limpiar</a>
+                </form>
+
+                <br>  
 
                 <div class="tabla-contenedor">
                     <table>

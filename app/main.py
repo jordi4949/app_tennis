@@ -92,6 +92,8 @@ def jugadores(
     request: Request,
     buscar: str = "",
     ordenar: str = "apellido",
+    genero_id: int = 0,
+    ano_nacimiento: int = 0,
     admin: str = Depends(comprobar_admin)
 ):
     texto_busqueda = f"%{buscar.strip()}%"
@@ -100,25 +102,19 @@ def jugadores(
         order_by = "club, apellido1, apellido2, nombre"
     elif ordenar == "licencia":
         order_by = "NULLIF(numero_licencia, '') NULLS LAST, apellido1, apellido2, nombre"
+    elif ordenar == "genero_ano_apellido":
+        order_by = "genero_id, ano_nacimiento, apellido1, apellido2, nombre"
+    elif ordenar == "ano_genero_apellido":
+        order_by = "ano_nacimiento, genero_id, apellido1, apellido2, nombre"
+    elif ordenar == "club_genero_ano":
+        order_by = "club, genero_id, ano_nacimiento, apellido1, apellido2, nombre"
+    elif ordenar == "genero_club_apellido":
+        order_by = "genero_id, club, apellido1, apellido2, nombre"
     else:
         order_by = "apellido1, apellido2, nombre"
 
     conn = get_connection()
     cur = conn.cursor()
-
-    cur.execute(f"""
-        SELECT id, nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia, genero_id
-        FROM jugadores
-        WHERE
-            nombre ILIKE %s
-            OR apellido1 ILIKE %s
-            OR COALESCE(apellido2, '') ILIKE %s
-            OR club ILIKE %s
-            OR COALESCE(numero_licencia, '') ILIKE %s
-        ORDER BY {order_by}
-    """, (texto_busqueda, texto_busqueda, texto_busqueda, texto_busqueda, texto_busqueda))
-
-    jugadores = cur.fetchall()
 
     cur.execute("""
         SELECT id, nombre
@@ -127,9 +123,57 @@ def jugadores(
     """)
     generos = cur.fetchall()
 
-    cur.close()
-    conn.close()
+    condiciones = []
+    parametros = []
 
+    if buscar:
+        texto_busqueda = f"%{buscar.strip()}%"
+        condiciones.append("""
+            (
+                nombre ILIKE %s
+                OR apellido1 ILIKE %s
+                OR COALESCE(apellido2,'') ILIKE %s
+                OR club ILIKE %s
+                OR COALESCE(numero_licencia,'') ILIKE %s
+            )
+        """)
+        parametros.extend([
+            texto_busqueda,
+            texto_busqueda,
+            texto_busqueda,
+            texto_busqueda,
+            texto_busqueda
+        ])
+
+    if genero_id != 0:
+        condiciones.append("genero_id = %s")
+        parametros.append(genero_id)
+
+    if ano_nacimiento != 0:
+        condiciones.append("ano_nacimiento = %s")
+        parametros.append(ano_nacimiento)
+
+    where_sql = ""
+
+    if condiciones:
+        where_sql = "WHERE " + " AND ".join(condiciones)
+
+    cur.execute(f"""
+        SELECT
+            id,
+            nombre,
+            apellido1,
+            apellido2,
+            club,
+            ano_nacimiento,
+            numero_licencia,
+            genero_id
+        FROM jugadores
+        {where_sql}
+        ORDER BY {order_by}
+    """, parametros)
+
+    jugadores = cur.fetchall()
 
     return templates.TemplateResponse(
         request=request,
@@ -139,7 +183,9 @@ def jugadores(
             "jugadores": jugadores,
             "buscar": buscar,
             "ordenar": ordenar,
-            "generos": generos
+            "generos": generos,
+            "genero_id": genero_id,
+            "ano_nacimiento": ano_nacimiento
         }
     )
 
