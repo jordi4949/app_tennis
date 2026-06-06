@@ -2807,9 +2807,24 @@ def ver_partidos(
             OR COALESCE(g.apellido1, '') ILIKE %s
             OR COALESCE(g.apellido2, '') ILIKE %s
             OR COALESCE(p.ronda, '') ILIKE %s
-            OR COALESCE(p.resultado, '') ILIKE %s
+            OR COALESCE(p.resultado, '') ILIKE %s    
+            OR (
+                j1.nombre || ' ' || j1.apellido1 || ' ' || COALESCE(j1.apellido2, '')
+            ) ILIKE %s
+
+            OR (
+                j2.nombre || ' ' || j2.apellido1 || ' ' || COALESCE(j2.apellido2, '')
+            ) ILIKE %s
+
+            OR (
+            COALESCE(g.nombre, '') || ' ' || COALESCE(g.apellido1, '') || ' ' || COALESCE(g.apellido2, '')
+            ) ILIKE %s
+
         ORDER BY p.fecha_partido DESC, t.nombre, c.nombre, p.ronda_numero, p.posicion_ronda
     """, (
+        texto_busqueda,
+        texto_busqueda,
+        texto_busqueda,
         texto_busqueda,
         texto_busqueda,
         texto_busqueda,
