@@ -93,7 +93,7 @@ def jugadores(
     buscar: str = "",
     ordenar: str = "apellido",
     genero_id: int = 0,
-    ano_nacimiento: int = 0,
+    ano_nacimiento: str = "",
     admin: str = Depends(comprobar_admin)
 ):
     texto_busqueda = f"%{buscar.strip()}%"
@@ -149,9 +149,9 @@ def jugadores(
         condiciones.append("genero_id = %s")
         parametros.append(genero_id)
 
-    if ano_nacimiento != 0:
+    if ano_nacimiento.strip() != "":
         condiciones.append("ano_nacimiento = %s")
-        parametros.append(ano_nacimiento)
+        parametros.append(int(ano_nacimiento))
 
     where_sql = ""
 
