@@ -674,7 +674,7 @@ def aprobar_jugador_importado(
         cur.execute("""
             DELETE FROM jugadores_importados
             WHERE id = %s
-        """, (jugador_id,))
+        """, (jugador_id,)) 
 
         conn.commit()
 
