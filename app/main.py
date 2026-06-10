@@ -650,9 +650,9 @@ def aprobar_jugador_importado(
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia
+        SELECT nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia, genero_id)
         FROM jugadores_importados
-        WHERE id = %s
+        WHERE id = %s   
     """, (jugador_id,))
 
     jugador = cur.fetchone()
@@ -666,8 +666,8 @@ def aprobar_jugador_importado(
         
         cur.execute("""
             INSERT INTO jugadores
-            (nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            (nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia, genero_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (numero_licencia) DO NOTHING
         """, jugador)
 
@@ -792,7 +792,7 @@ def aprobar_seleccionados(
     for jugador_id in jugadores_ids:
 
         cur.execute("""
-            SELECT nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia
+            SELECT nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia, genero_id
             FROM jugadores_importados
             WHERE id = %s
         """, (jugador_id,))
@@ -810,8 +810,8 @@ def aprobar_seleccionados(
             # Insertar jugador
             cur.execute("""
                 INSERT INTO jugadores
-                (nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia)
-                VALUES (%s, %s, %s, %s, %s, %s)
+                (nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia, genero_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (numero_licencia) DO NOTHING
             """, jugador)
 
