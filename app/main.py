@@ -650,7 +650,7 @@ def aprobar_jugador_importado(
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia, genero_id)
+        SELECT nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia, genero_id
         FROM jugadores_importados
         WHERE id = %s   
     """, (jugador_id,))
@@ -714,7 +714,7 @@ def editar_importado(
 
     # jugador
     cur.execute("""
-        SELECT id, nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia
+        SELECT id, nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia, genero_id
         FROM jugadores_importados
         WHERE id = %s
     """, (jugador_id,))
@@ -729,6 +729,13 @@ def editar_importado(
     
     clubs = cur.fetchall()
 
+    cur.execute("""
+        SELECT id, nombre
+        FROM generos
+        ORDER BY id
+    """)
+    generos = cur.fetchall()
+
     cur.close()
     conn.close()
 
@@ -738,7 +745,8 @@ def editar_importado(
         context={
             "request": request,
             "jugador": jugador,
-            "clubs": clubs
+            "clubs": clubs,
+            "generos": generos
         }
     )
 @app.post("/admin/importar-jugadores/editar/{jugador_id}")
@@ -751,6 +759,7 @@ def guardar_importado(
     club_nuevo: str = Form(""),
     ano_nacimiento: int = Form(...),
     numero_licencia: str = Form(...),
+    genero_id: int = Form(...),
     admin: str = Depends(comprobar_admin)
 ):
     conn = get_connection()
@@ -767,11 +776,13 @@ def guardar_importado(
     cur.execute("""
         UPDATE jugadores_importados
         SET nombre=%s, apellido1=%s, apellido2=%s,
-            club=%s, ano_nacimiento=%s, numero_licencia=%s
+            club=%s, ano_nacimiento=%s, numero_licencia=%s,
+            genero_id=%s
         WHERE id=%s
     """, (
         nombre, apellido1, apellido2,
         club_final, ano_nacimiento, numero_licencia,
+        genero_id,
         jugador_id
     ))
 

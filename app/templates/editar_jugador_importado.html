@@ -34,6 +34,15 @@ Año:
 Licencia:
 <input type="text" name="numero_licencia" value="{{ jugador[6] }}"><br>
 
+Género:
+<select name="genero_id" required>
+    {% for genero in generos %}
+        <option value="{{ genero[0] }}" {% if jugador[7] == genero[0] %}selected{% endif %}>
+            {{ genero[1]|capitalize }}
+        </option>
+    {% endfor %}
+</select><br>
+
 <button type="submit">Guardar</button>
 
 </form>

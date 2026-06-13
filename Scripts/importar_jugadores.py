@@ -1,4 +1,5 @@
 import os
+import argparse
 from dotenv import load_dotenv
 import psycopg2
 import cv2
@@ -7,6 +8,16 @@ pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tessera
 os.environ["TESSDATA_PREFIX"] = r"C:\Users\jordi\Desktop\app_tennis\tessdata"
 
 load_dotenv()
+
+parser = argparse.ArgumentParser(description="Importa jugadores por OCR a jugadores_importados.")
+parser.add_argument(
+    "--genero-id",
+    type=int,
+    required=True,
+    help="ID del genero que se guardara en jugadores_importados.",
+)
+args = parser.parse_args()
+genero_id = args.genero_id
 
 conn = psycopg2.connect(
     host=os.getenv("DB_HOST"),
@@ -117,15 +128,16 @@ for archivo in os.listdir(ruta):
     for j in jugadores:
         cur.execute("""
             INSERT INTO jugadores_importados
-            (nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            (nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia, genero_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
         """, (
             j["nombre"],
             j["apellido1"],
             j["apellido2"],
             j["club"],
             j["ano"],
-            j["licencia"]
+            j["licencia"],
+            genero_id
         ))
 
 # 💾 GUARDAR
