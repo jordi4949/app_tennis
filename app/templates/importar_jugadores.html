@@ -148,10 +148,14 @@
                 |
                 <a href="/admin/importar-jugadores/aprobar/{{ j[0] }}">Aprobar</a>
                 |
-                <a href="/admin/importar-jugadores/borrar/{{ j[0] }}"
-                   onclick="return confirm('¿Seguro que quieres borrar este jugador?')">
-                   Borrar
-                </a>
+                <form method="post"
+                      action="/admin/importar-jugadores/borrar/{{ j[0] }}"
+                      style="display:inline;">
+                    <button type="submit"
+                            onclick="return confirm('¿Seguro que quieres borrar este jugador?')">
+                        Borrar
+                    </button>
+                </form>
             </td>
         </tr>
         {% endfor %}

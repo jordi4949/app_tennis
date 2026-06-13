@@ -207,6 +207,17 @@
                             <label>Número licencia:</label>
                             <input type="text" name="numero_licencia">
                         </div>
+
+                        <div class="campo">
+                            <label>Género:</label>
+                            <select name="genero_id" required>
+                                {% for genero in generos %}
+                                    <option value="{{ genero[0] }}">
+                                        {{ genero[1]|capitalize }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
 
                     <div class="fila-botones">

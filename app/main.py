@@ -295,6 +295,36 @@ def borrar_jugador(jugador_id: int,
     conn = get_connection()
     cur = conn.cursor()
 
+    cur.execute("""
+        SELECT COUNT(*)
+        FROM partidos
+        WHERE jugador1_id = %s
+           OR jugador2_id = %s
+           OR ganador_id = %s
+    """, (jugador_id, jugador_id, jugador_id))
+    partidos_relacionados = cur.fetchone()[0]
+
+    cur.execute("""
+        SELECT COUNT(*)
+        FROM cuadro_inscritos
+        WHERE jugador_id = %s
+    """, (jugador_id,))
+    inscritos_relacionados = cur.fetchone()[0]
+
+    cur.execute("""
+        SELECT COUNT(*)
+        FROM rondas_cuadro
+        WHERE jugador1_id = %s
+           OR jugador2_id = %s
+           OR ganador_id = %s
+    """, (jugador_id, jugador_id, jugador_id))
+    rondas_relacionadas = cur.fetchone()[0]
+
+    if partidos_relacionados or inscritos_relacionados or rondas_relacionadas:
+        cur.close()
+        conn.close()
+        return RedirectResponse(url="/admin/jugadores", status_code=303)
+
     cur.execute("DELETE FROM jugadores WHERE id = %s", (jugador_id,))
 
     conn.commit()
@@ -683,7 +713,7 @@ def aprobar_jugador_importado(
 
     return RedirectResponse(url="/admin/importar-jugadores", status_code=303)
 
-@app.get("/admin/importar-jugadores/borrar/{jugador_id}")
+@app.post("/admin/importar-jugadores/borrar/{jugador_id}")
 def borrar_importado(
     jugador_id: int,
     admin: str = Depends(comprobar_admin)
@@ -719,6 +749,11 @@ def editar_importado(
         WHERE id = %s
     """, (jugador_id,))
     jugador = cur.fetchone()
+
+    if not jugador:
+        cur.close()
+        conn.close()
+        return RedirectResponse(url="/admin/importar-jugadores", status_code=303)
 
     # lista de clubs existentes
     cur.execute("""
@@ -950,6 +985,25 @@ admin: str = Depends(comprobar_admin)
 ):
     conn = get_connection()
     cur = conn.cursor()
+
+    cur.execute("""
+        SELECT COUNT(*)
+        FROM cuadros
+        WHERE torneo_id = %s
+    """, (torneo_id,))
+    cuadros_relacionados = cur.fetchone()[0]
+
+    cur.execute("""
+        SELECT COUNT(*)
+        FROM partidos
+        WHERE torneo_id = %s
+    """, (torneo_id,))
+    partidos_relacionados = cur.fetchone()[0]
+
+    if cuadros_relacionados or partidos_relacionados:
+        cur.close()
+        conn.close()
+        return RedirectResponse(url="/admin/torneos", status_code=303)
 
     cur.execute("DELETE FROM torneos WHERE id = %s", (torneo_id,))
 
@@ -2976,6 +3030,11 @@ def actualizar_partido(
     resultado: str = Form(...),
     admin: str = Depends(comprobar_admin)
 ):
+    if jugador1_id == jugador2_id:
+        return RedirectResponse(url="/admin/partidos", status_code=303)
+    if ganador_id not in (jugador1_id, jugador2_id):
+        return RedirectResponse(url="/admin/partidos", status_code=303)
+
     conn = get_connection()
     cur = conn.cursor()
 
@@ -3004,6 +3063,25 @@ admin: str = Depends(comprobar_admin)
 ):
     conn = get_connection()
     cur = conn.cursor()
+
+    cur.execute("""
+        SELECT COUNT(*)
+        FROM sets
+        WHERE partido_id = %s
+    """, (partido_id,))
+    sets_relacionados = cur.fetchone()[0]
+
+    cur.execute("""
+        SELECT COUNT(*)
+        FROM rondas_cuadro
+        WHERE partido_id = %s
+    """, (partido_id,))
+    rondas_relacionadas = cur.fetchone()[0]
+
+    if sets_relacionados or rondas_relacionadas:
+        cur.close()
+        conn.close()
+        return RedirectResponse(url="/admin/partidos", status_code=303)
 
     cur.execute("DELETE FROM partidos WHERE id = %s", (partido_id,))
 
@@ -3261,6 +3339,20 @@ def actualizar_set(
 ):
     conn = get_connection()
     cur = conn.cursor()
+
+    cur.execute("""
+        SELECT id
+        FROM sets
+        WHERE partido_id = %s
+          AND numero_set = %s
+          AND id <> %s
+    """, (partido_id, numero_set, set_id))
+    set_duplicado = cur.fetchone()
+
+    if set_duplicado:
+        cur.close()
+        conn.close()
+        return RedirectResponse(url="/admin/sets", status_code=303)
 
     cur.execute("""
         UPDATE sets
