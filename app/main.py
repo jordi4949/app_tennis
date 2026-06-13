@@ -698,7 +698,8 @@ def aprobar_jugador_importado(
             INSERT INTO jugadores
             (nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia, genero_id)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (numero_licencia) DO NOTHING
+            ON CONFLICT (numero_licencia) DO UPDATE
+            SET genero_id = COALESCE(EXCLUDED.genero_id, jugadores.genero_id)
         """, jugador)
 
         cur.execute("""
@@ -858,7 +859,8 @@ def aprobar_seleccionados(
                 INSERT INTO jugadores
                 (nombre, apellido1, apellido2, club, ano_nacimiento, numero_licencia, genero_id)
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (numero_licencia) DO NOTHING
+                ON CONFLICT (numero_licencia) DO UPDATE
+                SET genero_id = COALESCE(EXCLUDED.genero_id, jugadores.genero_id)
             """, jugador)
 
             # Borrar importado
