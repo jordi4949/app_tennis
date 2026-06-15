@@ -110,7 +110,7 @@ def ver_partidos(
     """)
     jugadores = cur.fetchall()
 
-    cur.execute("""
+    sql = f"""
         SELECT
             p.id,
             t.nombre AS torneo,
@@ -141,7 +141,9 @@ def ver_partidos(
         LEFT JOIN jugadores g ON p.ganador_id = g.id
         {where_sql}
         ORDER BY p.fecha_partido DESC, t.nombre, c.nombre, p.ronda_numero, p.posicion_ronda
-    """, parametros)
+    """
+
+    cur.execute(sql, parametros)
                 
     partidos = cur.fetchall()
 
