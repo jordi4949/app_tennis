@@ -1,74 +1,83 @@
-# 🎾 App Tenis Jordi
+# App Tenis Jordi
 
-Aplicación web para gestionar jugadores, torneos, partidos y sets de tenis.
+Aplicación web para gestionar jugadores, torneos, partidos, sets y cuadros de tenis.
 
 Proyecto en desarrollo paso a paso para aprender backend, bases de datos y desarrollo web.
 
 ---
 
-## 🚀 Tecnologías utilizadas
+## Tecnologías utilizadas
 
-* 🐍 Python
-* ⚡ FastAPI
-* 🐘 PostgreSQL
-* 🎨 HTML (templates con Jinja2)
+* Python
+* FastAPI
+* PostgreSQL
+* HTML con templates Jinja2
 
 ---
 
-## 📂 Estructura del proyecto
+## Estructura del proyecto
 
-```
+```text
 app_tennis/
-│
-├── app/
-│   ├── main.py
-│   ├── database.py
-│   └── templates/
-│       ├── index.html
-│       ├── jugadores.html
-│       ├── torneos.html
-│       ├── partidos.html
-│       └── sets.html
-│
-├── run.bat
-├── requirements.txt
-├── test_db.py
-├── .gitignore
-└── README.md
+|
+|-- app/
+|   |-- main.py
+|   |-- database.py
+|   |-- core.py
+|   |-- routers/
+|   |   |-- home.py
+|   |   |-- jugadores.py
+|   |   |-- importaciones.py
+|   |   |-- torneos.py
+|   |   |-- cuadros.py
+|   |   |-- partidos.py
+|   |   |-- sets.py
+|   |-- templates/
+|   |   |-- index.html
+|   |   |-- jugadores.html
+|   |   |-- torneos.html
+|   |   |-- partidos.html
+|   |   |-- sets.html
+|
+|-- run.bat
+|-- requirements.txt
+|-- test_db.py
+|-- .gitignore
+|-- README.md
 ```
 
 ---
 
-## ▶️ Cómo ejecutar el proyecto
+## Cómo ejecutar el proyecto
 
 1. Clonar el repositorio:
 
-```
+```bash
 git clone https://github.com/jordi4949/app_tennis.git
 ```
 
 2. Entrar en la carpeta:
 
-```
+```bash
 cd app_tennis
 ```
 
 3. Crear y activar entorno virtual:
 
-```
+```bash
 python -m venv venv
 venv\Scripts\activate
 ```
 
 4. Instalar dependencias:
 
-```
+```bash
 pip install -r requirements.txt
 ```
 
 5. Crear archivo `.env` con tus credenciales:
 
-```
+```env
 DB_HOST=localhost
 DB_NAME=Tennis_Jordi
 DB_USER=postgres
@@ -78,45 +87,49 @@ DB_PORT=5432
 
 6. Ejecutar la aplicación:
 
-```
+```bash
 uvicorn app.main:app --reload
 ```
 
-7. Abrir en navegador:
+7. Abrir en el navegador:
 
-👉 http://127.0.0.1:8000
-
----
-
-## 🔒 Seguridad
-
-Las credenciales de la base de datos NO están en el código.
-
-Se utilizan variables de entorno mediante archivo `.env` (incluido en `.gitignore`).
+```text
+http://127.0.0.1:8000
+```
 
 ---
 
-## 📌 Estado del proyecto
+## Seguridad
 
-✔ Gestión de jugadores
-✔ Gestión de torneos
-✔ Gestión de partidos (en progreso)
-✔ Gestión de sets
+Las credenciales de la base de datos no están en el código principal.
 
----
-
-## 🚧 Próximos pasos
-
-* ✏️ Editar y borrar registros
-* 📊 Estadísticas de jugadores
-* 📱 Versión accesible desde móvil
-* 🎤 Entrada por voz
-* 📄 OCR para importar resultados
-* 🤖 Integración con IA local
+Se utilizan variables de entorno mediante archivo `.env`, incluido en `.gitignore`.
 
 ---
 
-## 👨‍💻 Autor
+## Estado del proyecto
+
+* Gestión de jugadores
+* Gestión de torneos
+* Gestión de partidos
+* Gestión de sets
+* Gestión de cuadros
+* Importación de jugadores
+
+---
+
+## Próximos pasos
+
+* Editar y borrar registros
+* Estadísticas de jugadores
+* Versión accesible desde móvil
+* Entrada por voz
+* OCR para importar resultados
+* Integración con IA local
+
+---
+
+## Autor
 
 Proyecto creado por Jordi como aprendizaje y desarrollo progresivo en programación y nuevas tecnologías.
 

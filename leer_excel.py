@@ -31,9 +31,9 @@ for fila in ws.iter_rows(min_row=2):
     if jugador:
         jugador_id, nombre, apellido1, apellido2, numero_licencia = jugador
         nombre_oficial = f"{nombre} {apellido1} {apellido2 or ''}".strip()
-        print(f"✅ {licencia} | Excel: {nombre_excel} | Oficial: {nombre_oficial} | ID: {jugador_id}")
+        print(f"OK {licencia} | Excel: {nombre_excel} | Oficial: {nombre_oficial} | ID: {jugador_id}")
     else:
-        print(f"❌ {licencia} | Excel: {nombre_excel} | NO ENCONTRADO")
+        print(f"NO {licencia} | Excel: {nombre_excel} | NO ENCONTRADO")
 
 cur.close()
 conn.close()

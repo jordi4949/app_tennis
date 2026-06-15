@@ -8,7 +8,7 @@ try:
         password="postgres123"
     )
 
-    print("✅ Conexión correcta")
+    print("Conexión correcta")
 
     cur = conn.cursor()
 
@@ -16,14 +16,14 @@ try:
     cur.execute("SELECT version();")
     version = cur.fetchone()
 
-    print("📦 Versión de PostgreSQL:")
+    print("Versión de PostgreSQL:")
     print(version)
 
     # Prueba con tu tabla jugadores
     cur.execute("SELECT id, nombre FROM jugadores LIMIT 5;")
     jugadores = cur.fetchall()
 
-    print("🎾 Jugadores:")
+    print("Jugadores:")
     for j in jugadores:
         print(j)
 
@@ -31,5 +31,5 @@ try:
     conn.close()
 
 except Exception as e:
-    print("❌ Error de conexión:")
+    print("Error de conexión:")
     print(e)

@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import psycopg2
 import cv2
 import pytesseract
+
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 os.environ["TESSDATA_PREFIX"] = r"C:\Users\jordi\Desktop\app_tennis\tessdata"
 
@@ -14,7 +15,7 @@ parser.add_argument(
     "--genero-id",
     type=int,
     required=True,
-    help="ID del genero que se guardara en jugadores_importados.",
+    help="ID del género que se guardará en jugadores_importados.",
 )
 args = parser.parse_args()
 genero_id = args.genero_id
@@ -22,21 +23,21 @@ genero_id = args.genero_id
 conn = psycopg2.connect(
     host=os.getenv("DB_HOST"),
     database=os.getenv("DB_NAME"),
-    user=os.getenv("DB_USER"),  
+    user=os.getenv("DB_USER"),
     password=os.getenv("DB_PASSWORD"),
     port=os.getenv("DB_PORT")
 )
 
 cur = conn.cursor()
 
-# 📁 RUTA IMÁGENES
+# Ruta de imágenes
 ruta = r"C:\Users\jordi\Pictures\Screenshots\jugadores"
 
-# 🧠 LIMPIAR TEXTO OCR
+
 def limpiar_lineas(texto):
     return [l.strip() for l in texto.split("\n") if l.strip()]
 
-# 🎯 PROCESAR JUGADORES
+
 def procesar_bloques(lineas):
     jugadores = []
     i = 0
@@ -44,12 +45,11 @@ def procesar_bloques(lineas):
     while i < len(lineas) - 3:
         try:
             nombre_completo = lineas[i]
-            club = lineas[i+1]
-            licencia = lineas[i+2]
-            ano = lineas[i+3]
+            club = lineas[i + 1]
+            licencia = lineas[i + 2]
+            ano = lineas[i + 3]
 
             if licencia.isdigit() and len(licencia) >= 6 and ano.isdigit():
-
                 partes = nombre_completo.split()
 
                 nombre = partes[0]
@@ -74,7 +74,8 @@ def procesar_bloques(lineas):
 
     return jugadores
 
-# 🚀 PROCESAR TODAS LAS IMÁGENES
+
+# Procesar todas las imágenes
 for archivo in os.listdir(ruta):
     if not archivo.lower().endswith(".png"):
         continue
@@ -140,9 +141,9 @@ for archivo in os.listdir(ruta):
             genero_id
         ))
 
-# 💾 GUARDAR
+# Guardar
 conn.commit()
 cur.close()
 conn.close()
 
-print("Jugadores importados a Supabase 🚀")
+print("Jugadores importados a Supabase")

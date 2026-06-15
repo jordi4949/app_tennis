@@ -74,6 +74,18 @@
             flex-wrap: wrap;
         }
 
+        .tarjeta form > input {
+            box-sizing: border-box;
+            padding: 10px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 14px;
+            background: white;
+            margin-right: 8px;
+            margin-bottom: 10px;
+            min-width: 220px;
+        }
+
         .btn {
             background: #2563eb;
             color: white;
@@ -181,6 +193,16 @@
                         name="buscar"
                         value="{{ buscar }}"
                         placeholder="Buscar jugador, torneo, cuadro, categoría...">
+
+                    <input type="text"
+                        name="buscar_jugador"
+                        value="{{ buscar_jugador }}"
+                        placeholder="Jugador">
+
+                    <input type="text"
+                        name="buscar_rival"
+                        value="{{ buscar_rival }}"
+                        placeholder="Rival contra quien jugo">
 
                     <button type="submit" class="btn">Buscar</button>
 
