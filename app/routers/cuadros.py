@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from openpyxl import load_workbook
 
 from app.core import comprobar_admin, templates
 from app.database import get_connection
+from app.services.importador_cuadro_federacion import importar_pdf_cuadro_federacion
 
 router = APIRouter()
 
@@ -144,6 +145,46 @@ def ver_cuadros(
             "categorias": categorias
         }
     )
+
+@router.get("/admin/cuadros/{cuadro_id}/importar-federacion-prueba", response_class=HTMLResponse)
+def probar_importacion_federacion_form(
+    cuadro_id: int,
+    admin: str = Depends(comprobar_admin)
+):
+    return HTMLResponse(f"""
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <title>Probar importación Federación</title>
+        </head>
+        <body>
+            <h1>Probar importación Federación Catalana</h1>
+            <p>Esta prueba solo extrae texto y devuelve JSON. No guarda ni modifica datos.</p>
+            <form action="/admin/cuadros/{cuadro_id}/importar-federacion-prueba" method="post" enctype="multipart/form-data">
+                <input type="file" name="file" accept=".pdf" required>
+                <button type="submit">Analizar PDF</button>
+            </form>
+            <br>
+            <a href="/admin/cuadros/{cuadro_id}/inscritos">Volver a inscritos</a>
+        </body>
+        </html>
+    """)
+
+
+@router.post("/admin/cuadros/{cuadro_id}/importar-federacion-prueba")
+async def probar_importacion_federacion_pdf(
+    cuadro_id: int,
+    file: UploadFile = File(...),
+    admin: str = Depends(comprobar_admin)
+):
+    contenido = await file.read()
+    resultado = importar_pdf_cuadro_federacion(contenido)
+    resultado["cuadro_id"] = cuadro_id
+    resultado["archivo"] = file.filename
+    resultado["modo"] = "solo_prueba_sin_guardar"
+    return JSONResponse(resultado)
+
 
 @router.post("/admin/cuadros/{cuadro_id}/importar-excel-archivo")
 def importar_excel_archivo(
