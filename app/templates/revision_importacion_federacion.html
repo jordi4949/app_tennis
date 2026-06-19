@@ -111,6 +111,46 @@
         .comparacion-sin_inscrito {
             color: #b91c1c;
         }
+
+        .destino {
+            margin: 18px 0;
+            padding: 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: #f9fafb;
+        }
+
+        .destino h2 {
+            margin-top: 0;
+        }
+
+        .destino-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+        }
+
+        .destino-bloque {
+            padding: 10px;
+            border: 1px solid #e5e7eb;
+            background: #ffffff;
+            border-radius: 6px;
+        }
+
+        .estado-ok {
+            color: #047857;
+            font-weight: bold;
+        }
+
+        .estado-nuevo {
+            color: #92400e;
+            font-weight: bold;
+        }
+
+        .estado-error {
+            color: #b91c1c;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -138,6 +178,79 @@
         El XLSX aporta {{ inscritos|length }} inscritos cruzados por licencia.
         Esta pantalla no guarda ningun dato.
     </div>
+
+    <section class="destino">
+        <h2>Destino de importacion</h2>
+
+        {% if destino_importacion.errores %}
+            <div class="aviso">
+                <strong>Error de revision:</strong>
+                {% for error in destino_importacion.errores %}
+                    {{ error }}
+                {% endfor %}
+                No se debe permitir confirmar hasta resolverlo.
+            </div>
+        {% endif %}
+
+        <div class="destino-grid">
+            <div class="destino-bloque">
+                <h3>Torneo detectado</h3>
+                <p>
+                    Nombre: <strong>{{ destino_importacion.torneo.nombre or "" }}</strong><br>
+                    Fecha inicio: <strong>{{ destino_importacion.torneo.fecha_inicio or "" }}</strong><br>
+                    Ubicacion: <strong>{{ destino_importacion.torneo.ubicacion or "" }}</strong><br>
+                    {% if destino_importacion.torneo.existe %}
+                        Estado: <span class="estado-ok">ya existe, usar torneo_id {{ destino_importacion.torneo.torneo_id }}</span>
+                    {% else %}
+                        Estado: <span class="estado-nuevo">se crearia nuevo</span>
+                    {% endif %}
+                </p>
+            </div>
+
+            <div class="destino-bloque">
+                <h3>Categoria detectada</h3>
+                <p>
+                    Detectada: <strong>{{ destino_importacion.categoria.detectada or "No detectada" }}</strong><br>
+                    Categoria ID: <strong>{{ destino_importacion.categoria.categoria_id or "" }}</strong><br>
+                    Nombre BD: <strong>{{ destino_importacion.categoria.nombre_bd or "" }}</strong><br>
+                    {% if destino_importacion.categoria.error %}
+                        Estado: <span class="estado-error">no encontrada en base de datos</span>
+                    {% else %}
+                        Estado: <span class="estado-ok">encontrada</span>
+                    {% endif %}
+                </p>
+            </div>
+
+            <div class="destino-bloque">
+                <h3>Genero detectado</h3>
+                <p>
+                    Detectado: <strong>{{ destino_importacion.genero.detectado or "No detectado" }}</strong><br>
+                    Genero ID: <strong>{{ destino_importacion.genero.genero_id or "" }}</strong><br>
+                    Nombre BD: <strong>{{ destino_importacion.genero.nombre_bd or "" }}</strong><br>
+                    {% if destino_importacion.genero.error %}
+                        Estado: <span class="estado-error">no encontrado en base de datos</span>
+                    {% else %}
+                        Estado: <span class="estado-ok">encontrado</span>
+                    {% endif %}
+                </p>
+            </div>
+
+            <div class="destino-bloque">
+                <h3>Cuadro detectado</h3>
+                <p>
+                    Nombre: <strong>{{ destino_importacion.cuadro.nombre }}</strong><br>
+                    Tamano: <strong>{{ destino_importacion.cuadro.tamano }}</strong><br>
+                    Jugadores sin BYE: <strong>{{ destino_importacion.cuadro.numero_jugadores }}</strong><br>
+                    Ruta Excel: <strong>{{ destino_importacion.cuadro.ruta_excel }}</strong><br>
+                    {% if destino_importacion.cuadro.existe %}
+                        Estado: <span class="estado-ok">ya existe, usar cuadro_id {{ destino_importacion.cuadro.cuadro_id }}</span>
+                    {% else %}
+                        Estado: <span class="estado-nuevo">se crearia nuevo</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </section>
 
     <table>
         <thead>

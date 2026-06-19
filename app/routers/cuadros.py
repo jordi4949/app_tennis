@@ -1,6 +1,7 @@
 import os
 import re
 import unicodedata
+from datetime import date
 
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -196,6 +197,11 @@ async def probar_importacion_federacion_pdf(
         resultado.get("partidos_ronda_1", []),
         inscritos_revision,
     )
+    destino_importacion = preparar_destino_importacion(
+        resultado,
+        inscritos_revision,
+        inscritos_file.filename,
+    )
     resultado["cuadro_id"] = cuadro_id
     resultado["archivo"] = file.filename
     resultado["archivo_inscritos"] = inscritos_file.filename
@@ -210,8 +216,249 @@ async def probar_importacion_federacion_pdf(
             "entradas": resultado.get("ronda_1", []),
             "partidos": partidos,
             "inscritos": inscritos_revision,
+            "destino_importacion": destino_importacion,
         },
     )
+
+
+def preparar_destino_importacion(
+    resultado: dict,
+    inscritos_revision: dict[int, dict],
+    nombre_archivo_excel: str | None,
+) -> dict:
+    cabecera = resultado.get("cabecera", {})
+    entradas = resultado.get("ronda_1", [])
+    texto_cabecera = " ".join(cabecera.get("lineas_cabecera", []))
+    modalidad = cabecera.get("modalidad_categoria_genero_cuadro") or ""
+    texto_deteccion = " ".join([texto_cabecera, modalidad])
+
+    torneo_nombre = cabecera.get("torneo") or ""
+    fecha_inicio = extraer_fecha_inicio(cabecera.get("fechas", []))
+    ubicacion = cabecera.get("club") or ""
+    categoria_nombre = detectar_categoria_pdf(texto_deteccion)
+    genero_nombre = detectar_genero_pdf(texto_deteccion)
+    cuadro_nombre = detectar_nombre_cuadro_pdf(texto_deteccion)
+    tamano = detectar_tamano_cuadro(entradas)
+    numero_jugadores = sum(1 for entrada in entradas if not entrada.get("bye"))
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    torneo_existente = buscar_torneo_revision(
+        cur,
+        torneo_nombre,
+        fecha_inicio,
+        ubicacion,
+    )
+    categoria = buscar_catalogo_revision(cur, "categorias", categoria_nombre)
+    genero = buscar_catalogo_revision(cur, "generos", genero_nombre)
+
+    cuadro_existente = None
+    if torneo_existente and categoria and genero and cuadro_nombre:
+        cur.execute("""
+            SELECT id
+            FROM cuadros
+            WHERE torneo_id = %s
+              AND LOWER(TRIM(nombre)) = LOWER(TRIM(%s))
+              AND categoria_id = %s
+              AND genero_id = %s
+            LIMIT 1
+        """, (torneo_existente["id"], cuadro_nombre, categoria["id"], genero["id"]))
+        fila_cuadro = cur.fetchone()
+        if fila_cuadro:
+            cuadro_existente = {"id": fila_cuadro[0]}
+
+    cur.close()
+    conn.close()
+
+    errores = []
+    if not categoria:
+        errores.append("Categoria detectada no encontrada en la base de datos.")
+    if not genero:
+        errores.append("Genero detectado no encontrado en la base de datos.")
+
+    return {
+        "torneo": {
+            "nombre": torneo_nombre,
+            "fecha_inicio": fecha_inicio,
+            "ubicacion": ubicacion,
+            "existe": bool(torneo_existente),
+            "torneo_id": torneo_existente["id"] if torneo_existente else None,
+            "accion": "usar_existente" if torneo_existente else "crear_nuevo",
+        },
+        "categoria": {
+            "detectada": categoria_nombre,
+            "categoria_id": categoria["id"] if categoria else None,
+            "nombre_bd": categoria["nombre"] if categoria else None,
+            "error": not bool(categoria),
+        },
+        "genero": {
+            "detectado": genero_nombre,
+            "genero_id": genero["id"] if genero else None,
+            "nombre_bd": genero["nombre"] if genero else None,
+            "error": not bool(genero),
+        },
+        "cuadro": {
+            "nombre": cuadro_nombre,
+            "tamano": tamano,
+            "numero_jugadores": numero_jugadores,
+            "ruta_excel": nombre_archivo_excel or "",
+            "observaciones": modalidad,
+            "existe": bool(cuadro_existente),
+            "cuadro_id": cuadro_existente["id"] if cuadro_existente else None,
+            "accion": "usar_existente" if cuadro_existente else "crear_nuevo",
+        },
+        "inscritos_detectados": len(inscritos_revision),
+        "errores": errores,
+        "puede_confirmar": not errores,
+    }
+
+
+def buscar_torneo_revision(
+    cur,
+    nombre: str,
+    fecha_inicio: date | None,
+    ubicacion: str,
+) -> dict | None:
+    if not nombre:
+        return None
+
+    if fecha_inicio:
+        cur.execute("""
+            SELECT id
+            FROM torneos
+            WHERE LOWER(TRIM(nombre)) = LOWER(TRIM(%s))
+              AND fecha_inicio = %s
+              AND LOWER(TRIM(COALESCE(ubicacion, ''))) = LOWER(TRIM(%s))
+            LIMIT 1
+        """, (nombre, fecha_inicio, ubicacion or ""))
+    else:
+        cur.execute("""
+            SELECT id
+            FROM torneos
+            WHERE LOWER(TRIM(nombre)) = LOWER(TRIM(%s))
+              AND LOWER(TRIM(COALESCE(ubicacion, ''))) = LOWER(TRIM(%s))
+            LIMIT 1
+        """, (nombre, ubicacion or ""))
+
+    fila = cur.fetchone()
+    if not fila:
+        return None
+
+    return {"id": fila[0]}
+
+
+def buscar_catalogo_revision(cur, tabla: str, nombre: str | None) -> dict | None:
+    if tabla not in {"categorias", "generos"} or not nombre:
+        return None
+
+    cur.execute(f"""
+        SELECT id, nombre
+        FROM {tabla}
+    """)
+
+    nombre_normalizado = normalizar_nombre_revision(nombre)
+    for fila in cur.fetchall():
+        if normalizar_nombre_revision(fila[1]) == nombre_normalizado:
+            return {"id": fila[0], "nombre": fila[1]}
+
+    return None
+
+
+def extraer_fecha_inicio(fechas: list[str]) -> date | None:
+    if not fechas:
+        return None
+
+    fecha = fechas[0].strip()
+    match_numerica = re.search(r"(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})", fecha)
+    if match_numerica:
+        dia = int(match_numerica.group(1))
+        mes = int(match_numerica.group(2))
+        ano = int(match_numerica.group(3))
+        if ano < 100:
+            ano += 2000
+        return date(ano, mes, dia)
+
+    meses = {
+        "GENER": 1,
+        "ENERO": 1,
+        "FEBRER": 2,
+        "FEBRERO": 2,
+        "MARC": 3,
+        "MARZO": 3,
+        "ABRIL": 4,
+        "MAIG": 5,
+        "MAYO": 5,
+        "JUNY": 6,
+        "JUNIO": 6,
+        "JULIOL": 7,
+        "JULIO": 7,
+        "AGOST": 8,
+        "AGOSTO": 8,
+        "SETEMBRE": 9,
+        "SEPTIEMBRE": 9,
+        "OCTUBRE": 10,
+        "OCTUBRE": 10,
+        "NOVEMBRE": 11,
+        "NOVIEMBRE": 11,
+        "DESEMBRE": 12,
+        "DICIEMBRE": 12,
+    }
+    fecha_normalizada = normalizar_nombre_revision(fecha)
+    match_textual = re.search(r"(\d{1,2}) DE ([A-Z]+)(?: DE)? (\d{4})", fecha_normalizada)
+    if match_textual and match_textual.group(2) in meses:
+        return date(
+            int(match_textual.group(3)),
+            meses[match_textual.group(2)],
+            int(match_textual.group(1)),
+        )
+
+    return None
+
+
+def detectar_categoria_pdf(texto: str) -> str | None:
+    normalizado = normalizar_nombre_revision(texto)
+    if "SUB 10" in normalizado or "SUB10" in normalizado:
+        return "benjamin"
+    if "SUB 12" in normalizado or "SUB12" in normalizado:
+        return "alevin"
+    if "SUB 14" in normalizado or "SUB14" in normalizado:
+        return "infantil"
+    return None
+
+
+def detectar_genero_pdf(texto: str) -> str | None:
+    normalizado = normalizar_nombre_revision(texto)
+    if "MASCULINO" in normalizado or "MASCULI" in normalizado:
+        return "masculino"
+    if "FEMENINO" in normalizado or "FEMENI" in normalizado:
+        return "femenino"
+    return None
+
+
+def detectar_nombre_cuadro_pdf(texto: str) -> str:
+    normalizado = normalizar_nombre_revision(texto)
+    match = re.search(r"\b(?:CUADRO|QUADRE)\s*(\d+)\b", normalizado)
+    if match:
+        return f"Cuadro {match.group(1)}"
+    return "Cuadro 1"
+
+
+def detectar_tamano_cuadro(entradas: list[dict]) -> int:
+    posiciones = [
+        entrada.get("posicion")
+        for entrada in entradas
+        if entrada.get("posicion") is not None
+    ]
+    if not posiciones:
+        return 0
+
+    max_posicion = max(posiciones)
+    for tamano in (8, 16, 32, 64, 128):
+        if max_posicion <= tamano:
+            return tamano
+
+    return max_posicion
 
 
 def leer_inscritos_excel_para_revision(file: UploadFile) -> dict[int, dict]:
