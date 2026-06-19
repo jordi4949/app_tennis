@@ -1,3 +1,7 @@
+import os
+import re
+import unicodedata
+
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from openpyxl import load_workbook
@@ -162,8 +166,13 @@ def probar_importacion_federacion_form(
             <h1>Probar importación Federación Catalana</h1>
             <p>Esta prueba solo extrae texto y muestra una pantalla de revision. No guarda ni modifica datos.</p>
             <form action="/admin/cuadros/{cuadro_id}/importar-federacion-prueba" method="post" enctype="multipart/form-data">
+                <label>PDF del cuadro:</label>
                 <input type="file" name="file" accept=".pdf" required>
-                <button type="submit">Analizar PDF</button>
+                <br><br>
+                <label>XLSX de inscritos:</label>
+                <input type="file" name="inscritos_file" accept=".xlsx" required>
+                <br><br>
+                <button type="submit">Analizar PDF y XLSX</button>
             </form>
             <br>
             <a href="/admin/cuadros/{cuadro_id}/inscritos">Volver a inscritos</a>
@@ -177,12 +186,19 @@ async def probar_importacion_federacion_pdf(
     request: Request,
     cuadro_id: int,
     file: UploadFile = File(...),
+    inscritos_file: UploadFile = File(...),
     admin: str = Depends(comprobar_admin)
 ):
     contenido = await file.read()
     resultado = importar_pdf_cuadro_federacion(contenido)
+    inscritos_revision = leer_inscritos_excel_para_revision(inscritos_file)
+    partidos = cruzar_partidos_con_inscritos(
+        resultado.get("partidos_ronda_1", []),
+        inscritos_revision,
+    )
     resultado["cuadro_id"] = cuadro_id
     resultado["archivo"] = file.filename
+    resultado["archivo_inscritos"] = inscritos_file.filename
     resultado["modo"] = "solo_prueba_sin_guardar"
     return templates.TemplateResponse(
         request=request,
@@ -192,9 +208,216 @@ async def probar_importacion_federacion_pdf(
             "cuadro_id": cuadro_id,
             "resultado": resultado,
             "entradas": resultado.get("ronda_1", []),
-            "partidos": resultado.get("partidos_ronda_1", []),
+            "partidos": partidos,
+            "inscritos": inscritos_revision,
         },
     )
+
+
+def leer_inscritos_excel_para_revision(file: UploadFile) -> dict[int, dict]:
+    conn = get_connection()
+    cur = conn.cursor()
+    wb = load_workbook(file.file, data_only=True)
+    ws = wb.active
+    inscritos = {}
+    posicion = 1
+
+    for fila_excel in ws.iter_rows(min_row=2):
+        licencia = fila_excel[1].value  # Columna B
+        nombre_excel = fila_excel[2].value  # Columna C
+
+        if not licencia:
+            continue
+
+        licencia = str(licencia).strip().replace(".0", "")
+        nombre_excel = str(nombre_excel).strip() if nombre_excel else ""
+
+        cur.execute("""
+            SELECT
+                id,
+                nombre,
+                apellido1,
+                apellido2,
+                numero_licencia
+            FROM jugadores
+            WHERE TRIM(numero_licencia) = %s
+        """, (licencia,))
+
+        jugador = cur.fetchone()
+        jugador_id = None
+        nombre_oficial = None
+        licencia_oficial = None
+        estado = "no_encontrado"
+
+        if jugador:
+            jugador_id = jugador[0]
+            nombre_oficial = nombre_completo_jugador(jugador)
+            licencia_oficial = jugador[4]
+            estado = "encontrado"
+
+        inscritos[posicion] = {
+            "posicion": posicion,
+            "numero_licencia": licencia,
+            "nombre_excel": nombre_excel,
+            "jugador_id": jugador_id,
+            "nombre_oficial": nombre_oficial,
+            "numero_licencia_oficial": licencia_oficial,
+            "estado": estado,
+        }
+        posicion += 1
+
+    cur.close()
+    conn.close()
+    return inscritos
+
+
+def cruzar_partidos_con_inscritos(
+    partidos: list[dict],
+    inscritos_por_posicion: dict[int, dict],
+) -> list[dict]:
+    partidos_cruzados = []
+    inscritos_usados = set()
+
+    for partido in partidos:
+        partido_cruzado = dict(partido)
+        inscrito1 = buscar_inscrito_para_pdf(
+            partido.get("jugador1_detectado"),
+            partido.get("posicion_jugador1"),
+            inscritos_por_posicion,
+            inscritos_usados,
+        )
+        inscrito2 = buscar_inscrito_para_pdf(
+            partido.get("jugador2_detectado"),
+            partido.get("posicion_jugador2"),
+            inscritos_por_posicion,
+            inscritos_usados,
+        )
+
+        partido_cruzado.update(datos_inscrito_para_lado(
+            "jugador1",
+            partido.get("jugador1_detectado"),
+            inscrito1,
+        ))
+        partido_cruzado.update(datos_inscrito_para_lado(
+            "jugador2",
+            partido.get("jugador2_detectado"),
+            inscrito2,
+        ))
+        partidos_cruzados.append(partido_cruzado)
+
+    return partidos_cruzados
+
+
+def buscar_inscrito_para_pdf(
+    nombre_pdf: str | None,
+    posicion_fallback: int | None,
+    inscritos_por_posicion: dict[int, dict],
+    inscritos_usados: set,
+) -> dict | None:
+    if not nombre_pdf or nombre_pdf.upper().startswith("BYE"):
+        return None
+
+    mejor_inscrito = None
+    mejor_puntuacion = 0
+
+    for inscrito in inscritos_por_posicion.values():
+        clave = inscrito.get("numero_licencia") or inscrito.get("posicion")
+        if clave in inscritos_usados:
+            continue
+
+        puntuacion = max(
+            puntuacion_nombre_revision(nombre_pdf, inscrito.get("nombre_oficial")),
+            puntuacion_nombre_revision(nombre_pdf, inscrito.get("nombre_excel")),
+        )
+
+        if puntuacion > mejor_puntuacion:
+            mejor_puntuacion = puntuacion
+            mejor_inscrito = inscrito
+
+    if mejor_inscrito and mejor_puntuacion >= 2:
+        clave = mejor_inscrito.get("numero_licencia") or mejor_inscrito.get("posicion")
+        inscritos_usados.add(clave)
+        return mejor_inscrito
+
+    inscrito_fallback = inscritos_por_posicion.get(posicion_fallback)
+    if inscrito_fallback:
+        clave = inscrito_fallback.get("numero_licencia") or inscrito_fallback.get("posicion")
+        if clave not in inscritos_usados:
+            inscritos_usados.add(clave)
+            return inscrito_fallback
+
+    return None
+
+
+def datos_inscrito_para_lado(
+    prefijo: str,
+    nombre_pdf: str | None,
+    inscrito: dict | None,
+) -> dict:
+    nombre_oficial = inscrito.get("nombre_oficial") if inscrito else None
+    nombre_excel = inscrito.get("nombre_excel") if inscrito else None
+    numero_licencia = inscrito.get("numero_licencia") if inscrito else None
+    jugador_id = inscrito.get("jugador_id") if inscrito else None
+    estado = inscrito.get("estado") if inscrito else "sin_inscrito"
+
+    return {
+        f"{prefijo}_numero_licencia": numero_licencia,
+        f"{prefijo}_nombre_excel": nombre_excel,
+        f"{prefijo}_jugador_id_oficial": jugador_id,
+        f"{prefijo}_oficial": nombre_oficial,
+        f"{prefijo}_estado_inscrito": estado,
+        f"{prefijo}_comparacion_nombre": comparar_nombres_revision(
+            nombre_pdf,
+            nombre_oficial,
+        ),
+    }
+
+
+def nombre_completo_jugador(jugador: tuple) -> str:
+    return " ".join(
+        parte
+        for parte in (jugador[1], jugador[2], jugador[3])
+        if parte
+    ).strip()
+
+
+def comparar_nombres_revision(nombre_pdf: str | None, nombre_oficial: str | None) -> str:
+    if not nombre_pdf:
+        return "sin_pdf"
+
+    if not nombre_oficial:
+        return "sin_oficial"
+
+    pdf = normalizar_nombre_revision(nombre_pdf)
+    oficial = normalizar_nombre_revision(nombre_oficial)
+
+    if pdf == oficial:
+        return "coincide"
+
+    partes_pdf = set(pdf.split())
+    partes_oficial = set(oficial.split())
+    partes_comunes = partes_pdf.intersection(partes_oficial)
+
+    if len(partes_comunes) >= 2:
+        return "probable"
+
+    return "revisar"
+
+
+def puntuacion_nombre_revision(nombre_pdf: str | None, nombre_candidato: str | None) -> int:
+    if not nombre_pdf or not nombre_candidato:
+        return 0
+
+    partes_pdf = set(normalizar_nombre_revision(nombre_pdf).split())
+    partes_candidato = set(normalizar_nombre_revision(nombre_candidato).split())
+    return len(partes_pdf.intersection(partes_candidato))
+
+
+def normalizar_nombre_revision(nombre: str) -> str:
+    nombre = unicodedata.normalize("NFKD", nombre)
+    nombre = "".join(char for char in nombre if not unicodedata.combining(char))
+    nombre = re.sub(r"[^A-Z0-9 ]+", " ", nombre.upper())
+    return re.sub(r"\s+", " ", nombre).strip()
 
 
 @router.post("/admin/cuadros/{cuadro_id}/importar-excel-archivo")

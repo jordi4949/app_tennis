@@ -81,6 +81,36 @@
             margin: 0;
             padding-left: 18px;
         }
+
+        .jugador {
+            min-width: 260px;
+        }
+
+        .detalle {
+            margin-top: 4px;
+            color: #4b5563;
+            font-size: 0.92em;
+            line-height: 1.35;
+        }
+
+        .comparacion {
+            display: inline-block;
+            margin-top: 6px;
+            font-weight: bold;
+            text-transform: capitalize;
+        }
+
+        .comparacion-coincide,
+        .comparacion-probable {
+            color: #047857;
+        }
+
+        .comparacion-revisar,
+        .comparacion-sin_oficial,
+        .comparacion-sin_pdf,
+        .comparacion-sin_inscrito {
+            color: #b91c1c;
+        }
     </style>
 </head>
 <body>
@@ -93,6 +123,7 @@
 
 <p>
     Archivo: <strong>{{ resultado.archivo }}</strong><br>
+    Inscritos: <strong>{{ resultado.archivo_inscritos }}</strong><br>
     Cuadro: <strong>{{ cuadro_id }}</strong><br>
     Modo: <strong>solo revision, sin guardar en base de datos</strong>
 </p>
@@ -104,16 +135,17 @@
 {% else %}
     <div class="aviso">
         Se han detectado {{ entradas|length }} posiciones y {{ partidos|length }} partidos en RONDA 1.
+        El XLSX aporta {{ inscritos|length }} inscritos cruzados por licencia.
         Esta pantalla no guarda ningun dato.
     </div>
 
     <table>
         <thead>
             <tr>
-                <th>Jugador 1</th>
+                <th>Jugador 1 PDF vs oficial</th>
                 <th>Resultado J1</th>
                 <th class="bye">BYE J1</th>
-                <th>Jugador 2</th>
+                <th>Jugador 2 PDF vs oficial</th>
                 <th>Resultado J2</th>
                 <th class="bye">BYE J2</th>
                 <th>Ganador detectado</th>
@@ -124,15 +156,33 @@
         <tbody>
             {% for partido in partidos %}
             <tr>
-                <td>
-                    <strong>{{ partido.posicion_jugador1 }}</strong>
-                    {{ partido.jugador1_detectado or "" }}
+                <td class="jugador">
+                    <strong>Pos {{ partido.posicion_jugador1 }}</strong><br>
+                    PDF: {{ partido.jugador1_detectado or "" }}<br>
+                    Oficial: {{ partido.jugador1_oficial or "No encontrado" }}
+                    <div class="detalle">
+                        Licencia: {{ partido.jugador1_numero_licencia or "" }}<br>
+                        ID oficial: {{ partido.jugador1_jugador_id_oficial or "" }}<br>
+                        Nombre XLSX: {{ partido.jugador1_nombre_excel or "" }}
+                    </div>
+                    <span class="comparacion comparacion-{{ partido.jugador1_comparacion_nombre }}">
+                        {{ partido.jugador1_comparacion_nombre }}
+                    </span>
                 </td>
                 <td>{{ partido.resultado_jugador1 or "" }}</td>
                 <td class="bye">{% if partido.bye_jugador1 %}Si{% else %}No{% endif %}</td>
-                <td>
-                    <strong>{{ partido.posicion_jugador2 }}</strong>
-                    {{ partido.jugador2_detectado or "" }}
+                <td class="jugador">
+                    <strong>Pos {{ partido.posicion_jugador2 }}</strong><br>
+                    PDF: {{ partido.jugador2_detectado or "" }}<br>
+                    Oficial: {{ partido.jugador2_oficial or "No encontrado" }}
+                    <div class="detalle">
+                        Licencia: {{ partido.jugador2_numero_licencia or "" }}<br>
+                        ID oficial: {{ partido.jugador2_jugador_id_oficial or "" }}<br>
+                        Nombre XLSX: {{ partido.jugador2_nombre_excel or "" }}
+                    </div>
+                    <span class="comparacion comparacion-{{ partido.jugador2_comparacion_nombre }}">
+                        {{ partido.jugador2_comparacion_nombre }}
+                    </span>
                 </td>
                 <td>{{ partido.resultado_jugador2 or "" }}</td>
                 <td class="bye">{% if partido.bye_jugador2 %}Si{% else %}No{% endif %}</td>
