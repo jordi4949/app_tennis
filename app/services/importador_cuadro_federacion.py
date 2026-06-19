@@ -3,7 +3,7 @@ from typing import Any
 
 
 DATE_PATTERN = re.compile(
-    r"\b(?:\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{1,2}\s+DE\s+[A-ZÀ-Ü]+(?:\s+DE)?\s+\d{4})\b",
+    r"\b(?:\d{1,2}[/-]\d{1,2}[/-]\d{2,4}(?:\s+\d{1,2}:\d{2})?|\d{1,2}\s+DE\s+[A-ZÀ-Ü]+(?:\s+DE)?\s+\d{4})\b",
     re.IGNORECASE,
 )
 RESULT_PATTERN = re.compile(
@@ -42,13 +42,11 @@ def importar_pdf_cuadro_federacion(pdf_bytes: bytes) -> dict[str, Any]:
 
     all_lines = [line for pagina in paginas for line in pagina["lineas"]]
     cabecera = _extraer_cabecera(all_lines)
-    ronda_1 = []
-
-    for pagina in paginas:
-        ronda_1.extend(_extraer_ronda_1_desde_words(pagina["words"]))
+    ronda_1 = _extraer_ronda_1_desde_lineas(all_lines)
 
     if not ronda_1:
-        ronda_1 = _extraer_ronda_1_desde_lineas(all_lines)
+        for pagina in paginas:
+            ronda_1.extend(_extraer_ronda_1_desde_words(pagina["words"]))
 
     return {
         "ok": True,
@@ -222,6 +220,73 @@ def _agrupar_words_por_linea(words: list[tuple]) -> list[str]:
 
 
 def _extraer_ronda_1_desde_lineas(lines: list[str]) -> list[dict[str, Any]]:
+    segment = _segmento_ronda_1(lines)
+    if not segment:
+        return []
+
+    tamano_cuadro = _inferir_tamano_cuadro(segment)
+    extracted = []
+    index = 0
+    expected_position = 1
+
+    while index < len(segment) and expected_position <= tamano_cuadro:
+        line = segment[index]
+
+        if not _es_posicion(line, expected_position, tamano_cuadro):
+            index += 1
+            continue
+
+        position = int(line)
+        index += 1
+
+        while index < len(segment) and _ignorar_linea_ronda(segment[index]):
+            index += 1
+
+        if index >= len(segment):
+            break
+
+        player_line = segment[index]
+        index += 1
+
+        is_bye = player_line.upper().startswith("BYE")
+        player = "BYE" if is_bye else _limpiar_jugador(player_line)
+        result_lines = []
+
+        while index < len(segment):
+            current = segment[index]
+            next_position = position + 1
+
+            if _es_posicion(current, next_position, tamano_cuadro) and _parece_inicio_jugador_o_bye(
+                segment,
+                index + 1,
+                tamano_cuadro,
+            ):
+                break
+
+            if _ignorar_linea_ronda(current):
+                index += 1
+                continue
+
+            if _es_resultado_linea(current):
+                result_lines.append(current)
+
+            index += 1
+
+        extracted.append({
+            "posicion": position,
+            "jugador_detectado": player,
+            "bye": is_bye,
+            "resultado_detectado": " ".join(result_lines) if result_lines else None,
+            "texto_original": player_line,
+            "confianza": _confianza_linea(player or "", is_bye, result_lines),
+        })
+
+        expected_position = position + 1
+
+    return extracted
+
+
+def _segmento_ronda_1(lines: list[str]) -> list[str]:
     start = None
     for index, line in enumerate(lines):
         if re.search(r"\bRONDA\s*1\b", line, re.IGNORECASE):
@@ -231,13 +296,85 @@ def _extraer_ronda_1_desde_lineas(lines: list[str]) -> list[dict[str, Any]]:
     if start is None:
         return []
 
-    extracted = []
+    segment = []
     for line in lines[start:]:
         if re.search(r"\bRONDA\s*[2-9]\b|SEMIFINAL|FINAL", line, re.IGNORECASE):
             break
-        extracted.append(_parsear_linea_ronda_1(line, len(extracted) + 1))
+        clean = re.sub(r"\s+", " ", line).strip()
+        if clean:
+            segment.append(clean)
 
-    return extracted
+    return segment
+
+
+def _inferir_tamano_cuadro(lines: list[str]) -> int:
+    posiciones = []
+    for line in lines:
+        if re.fullmatch(r"\d{1,3}", line):
+            numero = int(line)
+            if 1 <= numero <= 128:
+                posiciones.append(numero)
+
+    if not posiciones:
+        return 0
+
+    max_posicion = max(posiciones)
+    for tamano in (8, 16, 32, 64, 128):
+        if max_posicion <= tamano:
+            return tamano
+
+    return max_posicion
+
+
+def _es_posicion(line: str, expected_position: int, tamano_cuadro: int) -> bool:
+    if not re.fullmatch(r"\d{1,3}", line):
+        return False
+
+    numero = int(line)
+    return numero == expected_position and 1 <= numero <= tamano_cuadro
+
+
+def _ignorar_linea_ronda(line: str) -> bool:
+    clean = line.strip()
+    return (
+        not clean
+        or re.fullmatch(r"-{3,}", clean)
+        or bool(DATE_PATTERN.fullmatch(clean))
+    )
+
+
+def _parece_inicio_jugador_o_bye(lines: list[str], index: int, tamano_cuadro: int) -> bool:
+    while index < len(lines):
+        candidate = lines[index]
+        if _ignorar_linea_ronda(candidate):
+            index += 1
+            continue
+
+        if candidate.upper().startswith("BYE"):
+            return True
+
+        if re.fullmatch(r"\d{1,3}", candidate):
+            return False
+
+        return not _es_resultado_linea(candidate)
+
+    return False
+
+
+def _es_resultado_linea(line: str) -> bool:
+    clean = line.strip()
+    return bool(
+        re.fullmatch(r"\d{1,2}", clean)
+        or re.fullmatch(r"\d{1,2}[-/]\d{1,2}(?:\s*\(\d{1,2}[-/]\d{1,2}\))?", clean)
+        or re.fullmatch(r"WO|W\.O\.|RET", clean, re.IGNORECASE)
+    )
+
+
+def _limpiar_jugador(line: str) -> str:
+    clean = re.sub(r"\([^)]*\)", " ", line)
+    clean = RESULT_PATTERN.sub(" ", clean)
+    clean = re.sub(r"\s+", " ", clean).strip(" -")
+    return clean or line.strip()
 
 
 def _parsear_linea_ronda_1(line: str, fallback_position: int) -> dict[str, Any]:
