@@ -192,6 +192,7 @@ async def probar_importacion_federacion_pdf(
             "cuadro_id": cuadro_id,
             "resultado": resultado,
             "entradas": resultado.get("ronda_1", []),
+            "partidos": resultado.get("partidos_ronda_1", []),
         },
     )
 

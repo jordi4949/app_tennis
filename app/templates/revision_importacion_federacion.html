@@ -60,12 +60,6 @@
             text-align: center;
         }
 
-        .texto-original {
-            max-width: 420px;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-
         .confianza {
             font-weight: bold;
             text-transform: capitalize;
@@ -81,6 +75,11 @@
 
         .confianza-baja {
             color: #b91c1c;
+        }
+
+        .sets {
+            margin: 0;
+            padding-left: 18px;
         }
     </style>
 </head>
@@ -104,35 +103,62 @@
     </div>
 {% else %}
     <div class="aviso">
-        Se han detectado {{ entradas|length }} posiciones en RONDA 1. Esta pantalla no guarda ningun dato.
+        Se han detectado {{ entradas|length }} posiciones y {{ partidos|length }} partidos en RONDA 1.
+        Esta pantalla no guarda ningun dato.
     </div>
 
     <table>
         <thead>
             <tr>
-                <th class="posicion">Posicion</th>
-                <th>Jugador detectado</th>
-                <th class="bye">BYE</th>
-                <th>Resultado detectado</th>
-                <th>Texto original</th>
+                <th>Jugador 1</th>
+                <th>Resultado J1</th>
+                <th class="bye">BYE J1</th>
+                <th>Jugador 2</th>
+                <th>Resultado J2</th>
+                <th class="bye">BYE J2</th>
+                <th>Ganador detectado</th>
+                <th>Sets detectados</th>
                 <th>Confianza</th>
             </tr>
         </thead>
         <tbody>
-            {% for entrada in entradas %}
+            {% for partido in partidos %}
             <tr>
-                <td class="posicion">{{ entrada.posicion }}</td>
-                <td>{{ entrada.jugador_detectado or "" }}</td>
-                <td class="bye">{% if entrada.bye %}Si{% else %}No{% endif %}</td>
-                <td>{{ entrada.resultado_detectado or "" }}</td>
-                <td class="texto-original">{{ entrada.texto_original or "" }}</td>
-                <td class="confianza confianza-{{ entrada.confianza or 'baja' }}">
-                    {{ entrada.confianza or "baja" }}
+                <td>
+                    <strong>{{ partido.posicion_jugador1 }}</strong>
+                    {{ partido.jugador1_detectado or "" }}
+                </td>
+                <td>{{ partido.resultado_jugador1 or "" }}</td>
+                <td class="bye">{% if partido.bye_jugador1 %}Si{% else %}No{% endif %}</td>
+                <td>
+                    <strong>{{ partido.posicion_jugador2 }}</strong>
+                    {{ partido.jugador2_detectado or "" }}
+                </td>
+                <td>{{ partido.resultado_jugador2 or "" }}</td>
+                <td class="bye">{% if partido.bye_jugador2 %}Si{% else %}No{% endif %}</td>
+                <td>{{ partido.ganador_detectado or "" }}</td>
+                <td>
+                    {% if partido.sets_detectados %}
+                        <ul class="sets">
+                            {% for set in partido.sets_detectados %}
+                                <li>
+                                    set{{ set.numero_set }}:
+                                    jugador1 {{ set.juegos_jugador1 }} -
+                                    {{ set.juegos_jugador2 }} jugador2
+                                    | tb {{ set.tiebreak_jugador1 }}-{{ set.tiebreak_jugador2 }}
+                                    | tipo {{ set.tipo_set }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </td>
+                <td class="confianza confianza-{{ partido.confianza or 'baja' }}">
+                    {{ partido.confianza or "baja" }}
                 </td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="6">No se han detectado posiciones para RONDA 1.</td>
+                <td colspan="9">No se han detectado partidos para RONDA 1.</td>
             </tr>
             {% endfor %}
         </tbody>

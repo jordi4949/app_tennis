@@ -48,15 +48,19 @@ def importar_pdf_cuadro_federacion(pdf_bytes: bytes) -> dict[str, Any]:
         for pagina in paginas:
             ronda_1.extend(_extraer_ronda_1_desde_words(pagina["words"]))
 
+    partidos_ronda_1 = _agrupar_ronda_1_por_partidos(ronda_1)
+
     return {
         "ok": True,
         "metodo": "pymupdf_texto_directo",
         "cabecera": cabecera,
         "ronda_1": ronda_1,
+        "partidos_ronda_1": partidos_ronda_1,
         "resumen": {
             "paginas": len(paginas),
             "lineas_extraidas": len(all_lines),
             "entradas_ronda_1": len(ronda_1),
+            "partidos_ronda_1": len(partidos_ronda_1),
         },
         "texto_preview": all_lines[:80],
     }
@@ -410,4 +414,139 @@ def _confianza_linea(jugador: str, es_bye: bool, resultados: list[str]) -> str:
         return "media"
     if jugador:
         return "media"
+    return "baja"
+
+
+def _agrupar_ronda_1_por_partidos(entradas: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    if not entradas:
+        return []
+
+    entradas_por_posicion = {
+        entrada.get("posicion"): entrada
+        for entrada in entradas
+        if entrada.get("posicion") is not None
+    }
+
+    if not entradas_por_posicion:
+        return []
+
+    partidos = []
+    max_posicion = max(entradas_por_posicion)
+
+    for posicion in range(1, max_posicion + 1, 2):
+        jugador1 = entradas_por_posicion.get(posicion, {})
+        jugador2 = entradas_por_posicion.get(posicion + 1, {})
+
+        resultado_jugador1 = jugador1.get("resultado_detectado")
+        resultado_jugador2 = jugador2.get("resultado_detectado")
+        bye_jugador1 = bool(jugador1.get("bye"))
+        bye_jugador2 = bool(jugador2.get("bye"))
+        sets_detectados = _sets_desde_resultados_jugadores(
+            resultado_jugador1,
+            resultado_jugador2,
+        )
+        ganador_detectado = _detectar_ganador_partido(
+            jugador1,
+            jugador2,
+            sets_detectados,
+        )
+
+        partidos.append({
+            "posicion_jugador1": posicion,
+            "jugador1_detectado": jugador1.get("jugador_detectado"),
+            "resultado_jugador1": resultado_jugador1,
+            "bye_jugador1": bye_jugador1,
+            "posicion_jugador2": posicion + 1,
+            "jugador2_detectado": jugador2.get("jugador_detectado"),
+            "resultado_jugador2": resultado_jugador2,
+            "bye_jugador2": bye_jugador2,
+            "ganador_detectado": ganador_detectado,
+            "sets_detectados": sets_detectados,
+            "confianza": _confianza_partido(jugador1, jugador2, sets_detectados),
+        })
+
+    return partidos
+
+
+def _sets_desde_resultados_jugadores(
+    resultado_jugador1: str | None,
+    resultado_jugador2: str | None,
+) -> list[dict[str, int]]:
+    juegos_jugador1 = _numeros_resultado_jugador(resultado_jugador1)
+    juegos_jugador2 = _numeros_resultado_jugador(resultado_jugador2)
+    total_sets = min(len(juegos_jugador1), len(juegos_jugador2))
+    sets = []
+
+    for index in range(total_sets):
+        sets.append({
+            "numero_set": index + 1,
+            "juegos_jugador1": juegos_jugador1[index],
+            "juegos_jugador2": juegos_jugador2[index],
+            "tiebreak_jugador1": 0,
+            "tiebreak_jugador2": 0,
+            "tipo_set": 1,
+        })
+
+    return sets
+
+
+def _numeros_resultado_jugador(resultado: str | None) -> list[int]:
+    if not resultado:
+        return []
+
+    if re.search(r"\b(?:WO|W\.O\.|RET|BYE)\b", resultado, re.IGNORECASE):
+        return []
+
+    return [int(match.group(0)) for match in re.finditer(r"\d{1,2}", resultado)]
+
+
+def _detectar_ganador_partido(
+    jugador1: dict[str, Any],
+    jugador2: dict[str, Any],
+    sets_detectados: list[dict[str, int]],
+) -> str | None:
+    if jugador1.get("bye") and not jugador2.get("bye"):
+        return jugador2.get("jugador_detectado")
+
+    if jugador2.get("bye") and not jugador1.get("bye"):
+        return jugador1.get("jugador_detectado")
+
+    sets_jugador1 = 0
+    sets_jugador2 = 0
+
+    for set_detectado in sets_detectados:
+        juegos_jugador1 = set_detectado["juegos_jugador1"]
+        juegos_jugador2 = set_detectado["juegos_jugador2"]
+
+        if juegos_jugador1 > juegos_jugador2:
+            sets_jugador1 += 1
+        elif juegos_jugador2 > juegos_jugador1:
+            sets_jugador2 += 1
+
+    if sets_jugador1 > sets_jugador2:
+        return jugador1.get("jugador_detectado")
+
+    if sets_jugador2 > sets_jugador1:
+        return jugador2.get("jugador_detectado")
+
+    return None
+
+
+def _confianza_partido(
+    jugador1: dict[str, Any],
+    jugador2: dict[str, Any],
+    sets_detectados: list[dict[str, int]],
+) -> str:
+    if not jugador1 or not jugador2:
+        return "baja"
+
+    if jugador1.get("bye") or jugador2.get("bye"):
+        return "alta"
+
+    if sets_detectados and jugador1.get("resultado_detectado") and jugador2.get("resultado_detectado"):
+        return "alta"
+
+    if jugador1.get("jugador_detectado") and jugador2.get("jugador_detectado"):
+        return "media"
+
     return "baja"
