@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from openpyxl import load_workbook
 
 from app.core import comprobar_admin, templates
@@ -160,7 +160,7 @@ def probar_importacion_federacion_form(
         </head>
         <body>
             <h1>Probar importación Federación Catalana</h1>
-            <p>Esta prueba solo extrae texto y devuelve JSON. No guarda ni modifica datos.</p>
+            <p>Esta prueba solo extrae texto y muestra una pantalla de revision. No guarda ni modifica datos.</p>
             <form action="/admin/cuadros/{cuadro_id}/importar-federacion-prueba" method="post" enctype="multipart/form-data">
                 <input type="file" name="file" accept=".pdf" required>
                 <button type="submit">Analizar PDF</button>
@@ -174,6 +174,7 @@ def probar_importacion_federacion_form(
 
 @router.post("/admin/cuadros/{cuadro_id}/importar-federacion-prueba")
 async def probar_importacion_federacion_pdf(
+    request: Request,
     cuadro_id: int,
     file: UploadFile = File(...),
     admin: str = Depends(comprobar_admin)
@@ -183,7 +184,16 @@ async def probar_importacion_federacion_pdf(
     resultado["cuadro_id"] = cuadro_id
     resultado["archivo"] = file.filename
     resultado["modo"] = "solo_prueba_sin_guardar"
-    return JSONResponse(resultado)
+    return templates.TemplateResponse(
+        request=request,
+        name="revision_importacion_federacion.html",
+        context={
+            "request": request,
+            "cuadro_id": cuadro_id,
+            "resultado": resultado,
+            "entradas": resultado.get("ronda_1", []),
+        },
+    )
 
 
 @router.post("/admin/cuadros/{cuadro_id}/importar-excel-archivo")
