@@ -151,6 +151,43 @@
             color: #b91c1c;
             font-weight: bold;
         }
+
+        .resumen {
+            margin: 18px 0;
+            padding: 14px;
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+            background: #eff6ff;
+        }
+
+        .resumen h2 {
+            margin-top: 0;
+        }
+
+        .resumen-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+        }
+
+        .resumen-dato {
+            padding: 9px;
+            border: 1px solid #dbeafe;
+            border-radius: 6px;
+            background: #ffffff;
+        }
+
+        .resumen-dato span {
+            display: block;
+            color: #4b5563;
+            font-size: 0.9em;
+        }
+
+        .resumen-dato strong {
+            display: block;
+            margin-top: 3px;
+            font-size: 1.1em;
+        }
     </style>
 </head>
 <body>
@@ -173,6 +210,66 @@
         No se ha podido analizar el PDF: {{ resultado.error }}
     </div>
 {% else %}
+    <section class="resumen">
+        <h2>Resumen final</h2>
+        <div class="resumen-grid">
+            <div class="resumen-dato">
+                <span>Torneo</span>
+                <strong>{{ resumen_revision.torneo_estado }}</strong>
+            </div>
+            <div class="resumen-dato">
+                <span>Cuadro</span>
+                <strong>{{ resumen_revision.cuadro_estado }}</strong>
+            </div>
+            <div class="resumen-dato">
+                <span>Categoria detectada</span>
+                <strong>{{ resumen_revision.categoria_detectada or "No detectada" }}</strong>
+            </div>
+            <div class="resumen-dato">
+                <span>Genero detectado</span>
+                <strong>{{ resumen_revision.genero_detectado or "No detectado" }}</strong>
+            </div>
+            <div class="resumen-dato">
+                <span>Tamano</span>
+                <strong>{{ resumen_revision.tamano }}</strong>
+            </div>
+            <div class="resumen-dato">
+                <span>Jugadores reales</span>
+                <strong>{{ resumen_revision.numero_jugadores_reales }}</strong>
+            </div>
+            <div class="resumen-dato">
+                <span>BYEs</span>
+                <strong>{{ resumen_revision.numero_byes }}</strong>
+            </div>
+            <div class="resumen-dato">
+                <span>Oficiales encontrados</span>
+                <strong>{{ resumen_revision.jugadores_oficiales_encontrados }}</strong>
+            </div>
+            <div class="resumen-dato">
+                <span>Sin oficial</span>
+                <strong>{{ resumen_revision.jugadores_sin_oficial }}</strong>
+            </div>
+            <div class="resumen-dato">
+                <span>Partidos detectados</span>
+                <strong>{{ resumen_revision.partidos_detectados }}</strong>
+            </div>
+            <div class="resumen-dato">
+                <span>Errores bloqueantes</span>
+                <strong class="{% if resumen_revision.errores_bloqueantes %}estado-error{% else %}estado-ok{% endif %}">
+                    {{ resumen_revision.errores_bloqueantes }}
+                </strong>
+            </div>
+        </div>
+
+        {% if resumen_revision.errores %}
+            <div class="aviso">
+                {% for error in resumen_revision.errores %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </section>
+
     <div class="aviso">
         Se han detectado {{ entradas|length }} posiciones y {{ partidos|length }} partidos en RONDA 1.
         El XLSX aporta {{ inscritos|length }} inscritos cruzados por licencia.

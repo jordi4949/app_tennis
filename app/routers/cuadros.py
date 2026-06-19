@@ -202,6 +202,11 @@ async def probar_importacion_federacion_pdf(
         inscritos_revision,
         inscritos_file.filename,
     )
+    resumen_revision = crear_resumen_revision(
+        resultado,
+        partidos,
+        destino_importacion,
+    )
     resultado["cuadro_id"] = cuadro_id
     resultado["archivo"] = file.filename
     resultado["archivo_inscritos"] = inscritos_file.filename
@@ -217,8 +222,49 @@ async def probar_importacion_federacion_pdf(
             "partidos": partidos,
             "inscritos": inscritos_revision,
             "destino_importacion": destino_importacion,
+            "resumen_revision": resumen_revision,
         },
     )
+
+
+def crear_resumen_revision(
+    resultado: dict,
+    partidos: list[dict],
+    destino_importacion: dict,
+) -> dict:
+    entradas = resultado.get("ronda_1", [])
+    numero_byes = sum(1 for entrada in entradas if entrada.get("bye"))
+    jugadores_oficiales = 0
+    jugadores_sin_oficial = 0
+
+    for partido in partidos:
+        for prefijo in ("jugador1", "jugador2"):
+            if partido.get(f"bye_{prefijo}"):
+                continue
+            if not partido.get(f"{prefijo}_detectado"):
+                continue
+
+            if partido.get(f"{prefijo}_jugador_id_oficial"):
+                jugadores_oficiales += 1
+            else:
+                jugadores_sin_oficial += 1
+
+    errores = destino_importacion.get("errores", [])
+
+    return {
+        "torneo_estado": "existente" if destino_importacion["torneo"]["existe"] else "nuevo",
+        "cuadro_estado": "existente" if destino_importacion["cuadro"]["existe"] else "nuevo",
+        "categoria_detectada": destino_importacion["categoria"]["detectada"],
+        "genero_detectado": destino_importacion["genero"]["detectado"],
+        "tamano": destino_importacion["cuadro"]["tamano"],
+        "numero_jugadores_reales": destino_importacion["cuadro"]["numero_jugadores"],
+        "numero_byes": numero_byes,
+        "jugadores_oficiales_encontrados": jugadores_oficiales,
+        "jugadores_sin_oficial": jugadores_sin_oficial,
+        "partidos_detectados": len(partidos),
+        "errores_bloqueantes": len(errores),
+        "errores": errores,
+    }
 
 
 def preparar_destino_importacion(
