@@ -251,9 +251,15 @@ def crear_resumen_revision(
 
     errores = destino_importacion.get("errores", [])
 
+    cuadro_estado = "nuevo"
+    if destino_importacion["cuadro"]["existe"]:
+        cuadro_estado = "existente"
+    elif destino_importacion["cuadro"].get("posibles_existentes"):
+        cuadro_estado = "posibles existentes"
+
     return {
         "torneo_estado": "existente" if destino_importacion["torneo"]["existe"] else "nuevo",
-        "cuadro_estado": "existente" if destino_importacion["cuadro"]["existe"] else "nuevo",
+        "cuadro_estado": cuadro_estado,
         "categoria_detectada": destino_importacion["categoria"]["detectada"],
         "genero_detectado": destino_importacion["genero"]["detectado"],
         "tamano": destino_importacion["cuadro"]["tamano"],
@@ -300,19 +306,18 @@ def preparar_destino_importacion(
     genero = buscar_catalogo_revision(cur, "generos", genero_nombre)
 
     cuadro_existente = None
+    posibles_cuadros = []
     if torneo_existente and categoria and genero and cuadro_nombre:
-        cur.execute("""
-            SELECT id
-            FROM cuadros
-            WHERE torneo_id = %s
-              AND LOWER(TRIM(nombre)) = LOWER(TRIM(%s))
-              AND categoria_id = %s
-              AND genero_id = %s
-            LIMIT 1
-        """, (torneo_existente["id"], cuadro_nombre, categoria["id"], genero["id"]))
-        fila_cuadro = cur.fetchone()
-        if fila_cuadro:
-            cuadro_existente = {"id": fila_cuadro[0]}
+        resultado_cuadro = buscar_cuadro_existente_revision(
+            cur,
+            torneo_existente["id"],
+            categoria["id"],
+            genero["id"],
+            tamano,
+            cuadro_nombre,
+        )
+        cuadro_existente = resultado_cuadro["cuadro"]
+        posibles_cuadros = resultado_cuadro["posibles"]
 
     cur.close()
     conn.close()
@@ -322,6 +327,8 @@ def preparar_destino_importacion(
         errores.append("Categoria detectada no encontrada en la base de datos.")
     if not genero:
         errores.append("Genero detectado no encontrado en la base de datos.")
+    if posibles_cuadros and not cuadro_existente:
+        errores.append("Hay posibles cuadros existentes. Revisa y elige manualmente antes de crear uno nuevo.")
 
     return {
         "torneo": {
@@ -352,12 +359,79 @@ def preparar_destino_importacion(
             "observaciones": modalidad,
             "existe": bool(cuadro_existente),
             "cuadro_id": cuadro_existente["id"] if cuadro_existente else None,
-            "accion": "usar_existente" if cuadro_existente else "crear_nuevo",
+            "nombre_bd": cuadro_existente["nombre"] if cuadro_existente else None,
+            "posibles_existentes": posibles_cuadros,
+            "accion": "usar_existente" if cuadro_existente else (
+                "elegir_manual" if posibles_cuadros else "crear_nuevo"
+            ),
         },
         "inscritos_detectados": len(inscritos_revision),
         "errores": errores,
         "puede_confirmar": not errores,
     }
+
+
+def buscar_cuadro_existente_revision(
+    cur,
+    torneo_id: int,
+    categoria_id: int,
+    genero_id: int,
+    tamano: int,
+    cuadro_nombre: str,
+) -> dict:
+    if not tamano:
+        return {"cuadro": None, "posibles": []}
+
+    cur.execute("""
+        SELECT id, nombre, tamano
+        FROM cuadros
+        WHERE torneo_id = %s
+          AND categoria_id = %s
+          AND genero_id = %s
+          AND tamano = %s
+        ORDER BY id
+    """, (torneo_id, categoria_id, genero_id, tamano))
+
+    marcador_pdf = extraer_marcador_cuadro_revision(cuadro_nombre)
+    candidatos = [
+        {
+            "id": fila[0],
+            "nombre": fila[1],
+            "tamano": fila[2],
+            "coincide_marcador": (
+                bool(marcador_pdf)
+                and extraer_marcador_cuadro_revision(fila[1]) == marcador_pdf
+            ),
+        }
+        for fila in cur.fetchall()
+    ]
+
+    candidatos_claros = [
+        candidato
+        for candidato in candidatos
+        if candidato["coincide_marcador"]
+    ]
+
+    if len(candidatos_claros) == 1:
+        return {"cuadro": candidatos_claros[0], "posibles": []}
+
+    if len(candidatos_claros) > 1:
+        return {"cuadro": None, "posibles": candidatos_claros}
+
+    return {"cuadro": None, "posibles": candidatos}
+
+
+def extraer_marcador_cuadro_revision(nombre: str | None) -> str | None:
+    if not nombre:
+        return None
+
+    normalizado = normalizar_nombre_revision(nombre)
+    normalizado = re.sub(r"\b(?:CUADRE|QUADRE)\b", "CUADRO", normalizado)
+    match = re.search(r"\bCUADRO\s*(\d+)\b", normalizado)
+    if not match:
+        return None
+
+    return f"CUADRO {int(match.group(1))}"
 
 
 def buscar_torneo_revision(
@@ -484,7 +558,7 @@ def detectar_genero_pdf(texto: str) -> str | None:
 
 def detectar_nombre_cuadro_pdf(texto: str) -> str:
     normalizado = normalizar_nombre_revision(texto)
-    match = re.search(r"\b(?:CUADRO|QUADRE)\s*(\d+)\b", normalizado)
+    match = re.search(r"\b(?:CUADRO|CUADRE|QUADRE)\s*(\d+)\b", normalizado)
     if match:
         return f"Cuadro {match.group(1)}"
     return "Cuadro 1"

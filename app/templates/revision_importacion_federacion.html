@@ -340,11 +340,26 @@
                     Jugadores sin BYE: <strong>{{ destino_importacion.cuadro.numero_jugadores }}</strong><br>
                     Ruta Excel: <strong>{{ destino_importacion.cuadro.ruta_excel }}</strong><br>
                     {% if destino_importacion.cuadro.existe %}
-                        Estado: <span class="estado-ok">ya existe, usar cuadro_id {{ destino_importacion.cuadro.cuadro_id }}</span>
+                        Estado: <span class="estado-ok">ya existe, usar cuadro_id {{ destino_importacion.cuadro.cuadro_id }}</span><br>
+                        Nombre BD: <strong>{{ destino_importacion.cuadro.nombre_bd }}</strong>
+                    {% elif destino_importacion.cuadro.posibles_existentes %}
+                        Estado: <span class="estado-error">posibles cuadros existentes, elegir manualmente</span>
                     {% else %}
                         Estado: <span class="estado-nuevo">se crearia nuevo</span>
                     {% endif %}
                 </p>
+                {% if destino_importacion.cuadro.posibles_existentes %}
+                    <h4>Posibles cuadros existentes</h4>
+                    <ul>
+                        {% for cuadro_posible in destino_importacion.cuadro.posibles_existentes %}
+                            <li>
+                                cuadro_id {{ cuadro_posible.id }}:
+                                <strong>{{ cuadro_posible.nombre }}</strong>
+                                (tamano {{ cuadro_posible.tamano }})
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
             </div>
         </div>
     </section>
