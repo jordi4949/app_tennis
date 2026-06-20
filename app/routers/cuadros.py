@@ -182,6 +182,36 @@ def probar_importacion_federacion_form(
     """)
 
 
+@router.get("/admin/importar-federacion", response_class=HTMLResponse)
+def importar_federacion_global_form(
+    admin: str = Depends(comprobar_admin)
+):
+    return HTMLResponse("""
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <title>Importacion Federacion</title>
+        </head>
+        <body>
+            <h1>Importacion Federacion Catalana</h1>
+            <p>Esta pantalla solo extrae datos y muestra una revision. No guarda ni modifica datos.</p>
+            <form action="/admin/importar-federacion" method="post" enctype="multipart/form-data">
+                <label>PDF del cuadro:</label>
+                <input type="file" name="file" accept=".pdf" required>
+                <br><br>
+                <label>XLSX de inscritos:</label>
+                <input type="file" name="inscritos_file" accept=".xlsx" required>
+                <br><br>
+                <button type="submit">Analizar PDF y XLSX</button>
+            </form>
+            <br>
+            <a href="/admin">Volver al panel</a>
+        </body>
+        </html>
+    """)
+
+
 @router.post("/admin/cuadros/{cuadro_id}/importar-federacion-prueba")
 async def probar_importacion_federacion_pdf(
     request: Request,
@@ -217,6 +247,51 @@ async def probar_importacion_federacion_pdf(
         context={
             "request": request,
             "cuadro_id": cuadro_id,
+            "resultado": resultado,
+            "entradas": resultado.get("ronda_1", []),
+            "partidos": partidos,
+            "inscritos": inscritos_revision,
+            "destino_importacion": destino_importacion,
+            "resumen_revision": resumen_revision,
+        },
+    )
+
+
+@router.post("/admin/importar-federacion")
+async def importar_federacion_global_revision(
+    request: Request,
+    file: UploadFile = File(...),
+    inscritos_file: UploadFile = File(...),
+    admin: str = Depends(comprobar_admin)
+):
+    contenido = await file.read()
+    resultado = importar_pdf_cuadro_federacion(contenido)
+    inscritos_revision = leer_inscritos_excel_para_revision(inscritos_file)
+    partidos = cruzar_partidos_con_inscritos(
+        resultado.get("partidos_ronda_1", []),
+        inscritos_revision,
+    )
+    destino_importacion = preparar_destino_importacion(
+        resultado,
+        inscritos_revision,
+        inscritos_file.filename,
+    )
+    resumen_revision = crear_resumen_revision(
+        resultado,
+        partidos,
+        destino_importacion,
+    )
+    resultado["archivo"] = file.filename
+    resultado["archivo_inscritos"] = inscritos_file.filename
+    resultado["modo"] = "global_sin_guardar"
+    return templates.TemplateResponse(
+        request=request,
+        name="revision_importacion_federacion.html",
+        context={
+            "request": request,
+            "cuadro_id": None,
+            "modo_importacion": "global",
+            "volver_revision_url": "/admin/importar-federacion",
             "resultado": resultado,
             "entradas": resultado.get("ronda_1", []),
             "partidos": partidos,
@@ -592,12 +667,14 @@ def leer_inscritos_excel_para_revision(file: UploadFile) -> dict[int, dict]:
     for fila_excel in ws.iter_rows(min_row=2):
         licencia = fila_excel[1].value  # Columna B
         nombre_excel = fila_excel[2].value  # Columna C
+        club_excel = fila_excel[3].value if len(fila_excel) > 3 else None  # Columna D
 
         if not licencia:
             continue
 
         licencia = str(licencia).strip().replace(".0", "")
         nombre_excel = str(nombre_excel).strip() if nombre_excel else ""
+        club_excel = str(club_excel).strip() if club_excel else ""
 
         cur.execute("""
             SELECT
@@ -626,6 +703,7 @@ def leer_inscritos_excel_para_revision(file: UploadFile) -> dict[int, dict]:
             "posicion": posicion,
             "numero_licencia": licencia,
             "nombre_excel": nombre_excel,
+            "club_excel": club_excel,
             "jugador_id": jugador_id,
             "nombre_oficial": nombre_oficial,
             "numero_licencia_oficial": licencia_oficial,
@@ -723,6 +801,7 @@ def datos_inscrito_para_lado(
 ) -> dict:
     nombre_oficial = inscrito.get("nombre_oficial") if inscrito else None
     nombre_excel = inscrito.get("nombre_excel") if inscrito else None
+    club_excel = inscrito.get("club_excel") if inscrito else None
     numero_licencia = inscrito.get("numero_licencia") if inscrito else None
     jugador_id = inscrito.get("jugador_id") if inscrito else None
     estado = inscrito.get("estado") if inscrito else "sin_inscrito"
@@ -730,6 +809,7 @@ def datos_inscrito_para_lado(
     return {
         f"{prefijo}_numero_licencia": numero_licencia,
         f"{prefijo}_nombre_excel": nombre_excel,
+        f"{prefijo}_club_excel": club_excel,
         f"{prefijo}_jugador_id_oficial": jugador_id,
         f"{prefijo}_oficial": nombre_oficial,
         f"{prefijo}_estado_inscrito": estado,

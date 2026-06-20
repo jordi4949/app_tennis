@@ -195,13 +195,13 @@
 <h1>Revision de importacion Federacion</h1>
 
 <div class="acciones">
-    <a class="boton-volver" href="/admin/cuadros/{{ cuadro_id }}/importar-federacion-prueba">Volver</a>
+    <a class="boton-volver" href="{{ volver_revision_url or ('/admin/cuadros/' ~ cuadro_id ~ '/importar-federacion-prueba') }}">Volver</a>
 </div>
 
 <p>
     Archivo: <strong>{{ resultado.archivo }}</strong><br>
     Inscritos: <strong>{{ resultado.archivo_inscritos }}</strong><br>
-    Cuadro: <strong>{{ cuadro_id }}</strong><br>
+    Origen: <strong>{% if cuadro_id %}cuadro existente {{ cuadro_id }}{% else %}importacion global{% endif %}</strong><br>
     Modo: <strong>solo revision, sin guardar en base de datos</strong>
 </p>
 
@@ -389,6 +389,7 @@
                         Licencia: {{ partido.jugador1_numero_licencia or "" }}<br>
                         ID oficial: {{ partido.jugador1_jugador_id_oficial or "" }}<br>
                         Nombre XLSX: {{ partido.jugador1_nombre_excel or "" }}
+                        {% if partido.jugador1_club_excel %}<br>Club XLSX: {{ partido.jugador1_club_excel }}{% endif %}
                     </div>
                     <span class="comparacion comparacion-{{ partido.jugador1_comparacion_nombre }}">
                         {{ partido.jugador1_comparacion_nombre }}
@@ -404,6 +405,7 @@
                         Licencia: {{ partido.jugador2_numero_licencia or "" }}<br>
                         ID oficial: {{ partido.jugador2_jugador_id_oficial or "" }}<br>
                         Nombre XLSX: {{ partido.jugador2_nombre_excel or "" }}
+                        {% if partido.jugador2_club_excel %}<br>Club XLSX: {{ partido.jugador2_club_excel }}{% endif %}
                     </div>
                     <span class="comparacion comparacion-{{ partido.jugador2_comparacion_nombre }}">
                         {{ partido.jugador2_comparacion_nombre }}
@@ -441,7 +443,7 @@
 {% endif %}
 
 <div class="acciones">
-    <a class="boton-volver" href="/admin/cuadros/{{ cuadro_id }}/importar-federacion-prueba">Volver</a>
+    <a class="boton-volver" href="{{ volver_revision_url or ('/admin/cuadros/' ~ cuadro_id ~ '/importar-federacion-prueba') }}">Volver</a>
 </div>
 
 </body>
