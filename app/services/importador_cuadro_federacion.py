@@ -472,19 +472,23 @@ def _sets_desde_resultados_jugadores(
     resultado_jugador1: str | None,
     resultado_jugador2: str | None,
 ) -> list[dict[str, int]]:
-    juegos_jugador1 = _numeros_resultado_jugador(resultado_jugador1)
-    juegos_jugador2 = _numeros_resultado_jugador(resultado_jugador2)
-    total_sets = min(len(juegos_jugador1), len(juegos_jugador2))
+    juegos_por_set_jugador1 = _numeros_resultado_jugador(resultado_jugador1)
+    juegos_por_set_jugador2 = _numeros_resultado_jugador(resultado_jugador2)
+    total_sets = min(len(juegos_por_set_jugador1), len(juegos_por_set_jugador2))
     sets = []
 
     for index in range(total_sets):
+        juegos_jugador1 = juegos_por_set_jugador1[index]
+        juegos_jugador2 = juegos_por_set_jugador2[index]
+        tipo_set = 3 if index == 2 and max(juegos_jugador1, juegos_jugador2) >= 10 else 1
+
         sets.append({
             "numero_set": index + 1,
-            "juegos_jugador1": juegos_jugador1[index],
-            "juegos_jugador2": juegos_jugador2[index],
+            "juegos_jugador1": juegos_jugador1,
+            "juegos_jugador2": juegos_jugador2,
             "tiebreak_jugador1": 0,
             "tiebreak_jugador2": 0,
-            "tipo_set": 1,
+            "tipo_set": tipo_set,
         })
 
     return sets
