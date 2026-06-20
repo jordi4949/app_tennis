@@ -97,7 +97,7 @@ def ver_partidos(
         where_sql = "WHERE " + " AND ".join(condiciones)
 
     cur.execute("""
-        SELECT id, nombre, fecha_inicio, categoria, ubicacion
+        SELECT id, nombre, fecha_inicio, ubicacion
         FROM torneos
         ORDER BY id
     """)
@@ -219,7 +219,7 @@ admin: str = Depends(comprobar_admin)
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT id, nombre, fecha_inicio, categoria, ubicacion
+        SELECT id, nombre, fecha_inicio, ubicacion
         FROM torneos
         ORDER BY id
     """)

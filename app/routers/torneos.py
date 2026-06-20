@@ -12,7 +12,7 @@ def ver_torneos(request: Request, admin: str = Depends(comprobar_admin)):
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT id, nombre, fecha_inicio, categoria, ubicacion
+        SELECT id, nombre, fecha_inicio, ubicacion
         FROM torneos
         ORDER BY id;
     """)
@@ -35,7 +35,6 @@ def ver_torneos(request: Request, admin: str = Depends(comprobar_admin)):
 def guardar_torneo(
     nombre: str = Form(...),
     fecha_inicio: str = Form(...),
-    categoria: str = Form(...),
     ubicacion: str = Form(...),
     admin: str = Depends(comprobar_admin)
 ):
@@ -45,7 +44,7 @@ def guardar_torneo(
     cur.execute("""
         INSERT INTO torneos (nombre, fecha_inicio, categoria, ubicacion)
         VALUES (%s, %s, %s, %s)
-    """, (nombre, fecha_inicio, categoria, ubicacion))
+    """, (nombre, fecha_inicio, "", ubicacion))
 
     conn.commit()
 
@@ -61,7 +60,7 @@ admin: str = Depends(comprobar_admin)
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT id, nombre, fecha_inicio, categoria, ubicacion
+        SELECT id, nombre, fecha_inicio, ubicacion
         FROM torneos
         WHERE id = %s
     """, (torneo_id,))
@@ -89,7 +88,6 @@ def actualizar_torneo(
     torneo_id: int,
     nombre: str = Form(...),
     fecha_inicio: str = Form(...),
-    categoria: str = Form(...),
     ubicacion: str = Form(...),
     admin: str = Depends(comprobar_admin)
 ):
@@ -103,7 +101,7 @@ def actualizar_torneo(
             categoria = %s,
             ubicacion = %s
         WHERE id = %s
-    """, (nombre, fecha_inicio, categoria, ubicacion, torneo_id))
+    """, (nombre, fecha_inicio, "", ubicacion, torneo_id))
 
     conn.commit()
     cur.close()

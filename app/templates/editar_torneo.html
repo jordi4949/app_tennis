@@ -91,13 +91,11 @@
 <body>
     <div class="overlay">
         <div class="contenedor">
-
             <div class="tarjeta">
                 <h1>Editar torneo</h1>
 
                 <form action="/admin/torneos/editar/{{ torneo[0] }}" method="post">
                     <div class="grid-form">
-
                         <div class="campo">
                             <label>Nombre:</label>
                             <input type="text" name="nombre" value="{{ torneo[1] }}" required>
@@ -109,15 +107,9 @@
                         </div>
 
                         <div class="campo">
-                            <label>Categoría:</label>
-                            <input type="text" name="categoria" value="{{ torneo[3] or '' }}">
+                            <label>Ubicaci&oacute;n:</label>
+                            <input type="text" name="ubicacion" value="{{ torneo[3] or '' }}">
                         </div>
-
-                        <div class="campo">
-                            <label>Ubicación:</label>
-                            <input type="text" name="ubicacion" value="{{ torneo[4] or '' }}">
-                        </div>
-
                     </div>
 
                     <div class="fila-botones">
@@ -125,9 +117,7 @@
                         <a href="/admin/torneos" class="btn btn-secundario">Cancelar</a>
                     </div>
                 </form>
-
             </div>
-
         </div>
     </div>
 </body>

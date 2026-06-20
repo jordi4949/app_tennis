@@ -23,7 +23,7 @@ def ver_cuadros(
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT id, nombre, fecha_inicio, categoria, ubicacion
+        SELECT id, nombre, fecha_inicio, ubicacion
         FROM torneos
         ORDER BY fecha_inicio DESC, nombre
     """)
@@ -2436,7 +2436,7 @@ def editar_cuadro_form(
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT id, nombre, fecha_inicio, categoria, ubicacion
+        SELECT id, nombre, fecha_inicio, ubicacion
         FROM torneos
         ORDER BY fecha_inicio DESC, nombre
     """)

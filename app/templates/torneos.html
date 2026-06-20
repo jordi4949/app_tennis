@@ -111,54 +111,53 @@
         tr:hover td {
             background: #f8fafc;
         }
+
         .acciones {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-    align-items: center;
-}
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            align-items: center;
+        }
 
-.btn-editar {
-    background-color: orange;
-    color: white;
-    padding: 8px 12px;
-    text-decoration: none;
-    border-radius: 8px;
-    font-weight: bold;
-    display: inline-block;
-}
+        .btn-editar {
+            background-color: orange;
+            color: white;
+            padding: 8px 12px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            display: inline-block;
+        }
 
-.btn-editar:hover {
-    background-color: darkorange;
-}
+        .btn-editar:hover {
+            background-color: darkorange;
+        }
 
-.btn-borrar {
-    background-color: red;
-    color: white;
-    padding: 8px 12px;
-    border: none;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-}
+        .btn-borrar {
+            background-color: red;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
 
-.btn-borrar:hover {
-    background-color: darkred;
-}
+        .btn-borrar:hover {
+            background-color: darkred;
+        }
     </style>
 </head>
 
 <body>
     <div class="overlay">
         <div class="contenedor">
-
             <div class="tarjeta">
                 <h1>Torneos</h1>
                 <p class="texto-suave">Crear nuevo torneo</p>
 
                 <form method="post" action="/admin/torneos">
                     <div class="grid-form">
-
                         <div class="campo">
                             <label>Nombre:</label>
                             <input type="text" name="nombre" required>
@@ -170,15 +169,9 @@
                         </div>
 
                         <div class="campo">
-                            <label>Categoría:</label>
-                            <input type="text" name="categoria" required>
-                        </div>
-
-                        <div class="campo">
-                            <label>Ubicación:</label>
+                            <label>Ubicaci&oacute;n:</label>
                             <input type="text" name="ubicacion" required>
                         </div>
-
                     </div>
 
                     <div class="fila-botones">
@@ -196,8 +189,7 @@
                     <tr>
                         <th>Nombre</th>
                         <th>Fecha inicio</th>
-                        <th>Categoría</th>
-                        <th>Ubicación</th>
+                        <th>Ubicaci&oacute;n</th>
                         <th>Acciones</th>
                     </tr>
 
@@ -206,14 +198,13 @@
                         <td>{{ torneo[1] }}</td>
                         <td>{{ torneo[2] }}</td>
                         <td>{{ torneo[3] }}</td>
-                        <td>{{ torneo[4] }}</td>
                         <td>
                             <div class="acciones">
                                 <a href="/admin/torneos/editar/{{ torneo[0] }}" class="btn-editar">Editar</a>
 
                                 <form action="/admin/torneos/borrar/{{ torneo[0] }}" method="post" style="display:inline;">
                                     <button type="submit" class="btn-borrar"
-                                            onclick="return confirm('¿Seguro que quieres borrar este torneo?')">
+                                            onclick="return confirm('&iquest;Seguro que quieres borrar este torneo?')">
                                         Borrar
                                     </button>
                                 </form>
@@ -221,15 +212,8 @@
                         </td>
                     </tr>
                     {% endfor %}
-                        
-                        
-                        
-                    
-                    
-
                 </table>
             </div>
-
         </div>
     </div>
 </body>

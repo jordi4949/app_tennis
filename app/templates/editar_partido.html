@@ -115,7 +115,7 @@
                             <select name="torneo_id" id="torneo_id" required>
                                 {% for torneo in torneos %}
                                     <option value="{{ torneo[0] }}" {% if torneo[0] == partido[1] %}selected{% endif %}>
-                                        {{ torneo[1] }} - {{ torneo[2] }} - {{ torneo[3] }} - {{ torneo[4] }}
+                                        {{ torneo[1] }} - {{ torneo[3] }} - {{ torneo[2] }}
                                     </option>
                                 {% endfor %}
                             </select>
