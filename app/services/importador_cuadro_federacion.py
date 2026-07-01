@@ -42,11 +42,13 @@ def importar_pdf_cuadro_federacion(pdf_bytes: bytes) -> dict[str, Any]:
 
     all_lines = [line for pagina in paginas for line in pagina["lineas"]]
     cabecera = _extraer_cabecera(all_lines)
-    ronda_1 = _extraer_ronda_1_desde_lineas(all_lines)
+    ronda_1 = []
+
+    for pagina in paginas:
+        ronda_1.extend(_extraer_ronda_1_desde_words(pagina["words"]))
 
     if not ronda_1:
-        for pagina in paginas:
-            ronda_1.extend(_extraer_ronda_1_desde_words(pagina["words"]))
+        ronda_1 = _extraer_ronda_1_desde_lineas(all_lines)
 
     partidos_ronda_1 = _agrupar_ronda_1_por_partidos(ronda_1)
 
