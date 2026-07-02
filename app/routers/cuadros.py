@@ -227,6 +227,7 @@ async def probar_importacion_federacion_pdf(
         resultado.get("partidos_ronda_1", []),
         inscritos_revision,
     )
+    jugadores_revision = cargar_jugadores_revision()
     rondas_revision = preparar_rondas_revision(
         resultado.get("rondas_detectadas", []),
         partidos,
@@ -255,6 +256,7 @@ async def probar_importacion_federacion_pdf(
             "entradas": resultado.get("ronda_1", []),
             "partidos": partidos,
             "rondas_revision": rondas_revision,
+            "jugadores_revision": jugadores_revision,
             "inscritos": inscritos_revision,
             "destino_importacion": destino_importacion,
             "resumen_revision": resumen_revision,
@@ -276,6 +278,7 @@ async def importar_federacion_global_revision(
         resultado.get("partidos_ronda_1", []),
         inscritos_revision,
     )
+    jugadores_revision = cargar_jugadores_revision()
     rondas_revision = preparar_rondas_revision(
         resultado.get("rondas_detectadas", []),
         partidos,
@@ -305,11 +308,36 @@ async def importar_federacion_global_revision(
             "entradas": resultado.get("ronda_1", []),
             "partidos": partidos,
             "rondas_revision": rondas_revision,
+            "jugadores_revision": jugadores_revision,
             "inscritos": inscritos_revision,
             "destino_importacion": destino_importacion,
             "resumen_revision": resumen_revision,
         },
     )
+
+
+def cargar_jugadores_revision() -> list[dict]:
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT id, nombre, apellido1, apellido2, numero_licencia
+        FROM jugadores
+        ORDER BY apellido1, apellido2, nombre
+    """)
+
+    jugadores = [
+        {
+            "id": fila[0],
+            "nombre": nombre_completo_jugador(fila),
+            "numero_licencia": fila[4],
+        }
+        for fila in cur.fetchall()
+    ]
+
+    cur.close()
+    conn.close()
+    return jugadores
 
 
 def preparar_rondas_revision(

@@ -188,6 +188,68 @@
             margin-top: 3px;
             font-size: 1.1em;
         }
+
+        .campo {
+            display: block;
+            width: 100%;
+            max-width: 220px;
+            box-sizing: border-box;
+            margin-top: 4px;
+            padding: 4px 6px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            background: #ffffff;
+        }
+
+        .campo-corto {
+            width: 58px;
+        }
+
+        .campo-medio {
+            max-width: 140px;
+        }
+
+        .pdf-dato {
+            color: #475569;
+            font-size: 0.9em;
+            margin-bottom: 6px;
+        }
+
+        .manual-dato {
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px dashed #cbd5e1;
+        }
+
+        .sets-editables {
+            display: grid;
+            grid-template-columns: auto auto auto;
+            gap: 4px 6px;
+            align-items: center;
+        }
+
+        .confirmar {
+            margin: 20px 0;
+            padding: 14px;
+            border: 1px solid #bbf7d0;
+            border-radius: 6px;
+            background: #f0fdf4;
+        }
+
+        .boton-confirmar {
+            padding: 10px 16px;
+            border: 0;
+            border-radius: 6px;
+            background: #16a34a;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .boton-confirmar:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -364,6 +426,10 @@
         </div>
     </section>
 
+    <form id="revision-importacion-form" method="post">
+    <input type="hidden" name="modo_revision" value="{{ resultado.modo }}">
+    <input type="hidden" name="cuadro_id" value="{{ cuadro_id or '' }}">
+
     {% for ronda_revision in rondas_revision or [{"nombre": "Ronda 1", "cabecera_pdf": "RONDA 1", "partidos": partidos}] %}
     <h2>{{ ronda_revision.nombre }}{% if ronda_revision.cabecera_pdf %} ({{ ronda_revision.cabecera_pdf }}){% endif %}</h2>
 
@@ -372,35 +438,71 @@
         <thead>
             <tr>
                 <th>Jugador 1</th>
-                <th>Resultado J1</th>
                 <th>Jugador 2</th>
-                <th>Resultado J2</th>
-                <th>Ganador detectado</th>
-                <th>Sets detectados</th>
+                <th>Tipo</th>
+                <th>Ganador</th>
+                <th>Sets</th>
             </tr>
         </thead>
         <tbody>
             {% for partido in ronda_revision.partidos %}
+            {% set clave = "r" ~ ronda_revision.numero ~ "_p" ~ partido.numero_partido %}
+            {% set set1 = partido.sets_detectados[0] if partido.sets_detectados|length > 0 else none %}
+            {% set set2 = partido.sets_detectados[1] if partido.sets_detectados|length > 1 else none %}
+            {% set set3 = partido.sets_detectados[2] if partido.sets_detectados|length > 2 else none %}
             <tr>
-                <td>{{ partido.jugador1_detectado or "" }}</td>
-                <td>{{ partido.resultado_jugador1_normalizado or partido.resultado_jugador1 or "" }}</td>
-                <td>{{ partido.jugador2_detectado or "" }}</td>
-                <td>{{ partido.resultado_jugador2_normalizado or partido.resultado_jugador2 or "" }}</td>
-                <td>{{ partido.ganador_detectado or "" }}</td>
                 <td>
-                    {% if partido.sets_detectados %}
-                        <ul class="sets">
-                            {% for set in partido.sets_detectados %}
-                                <li>
-                                    set{{ set.numero_set }}:
-                                    jugador1 {{ set.juegos_jugador1 }} -
-                                    {{ set.juegos_jugador2 }} jugador2
-                                    | tb {{ set.tiebreak_jugador1 }}-{{ set.tiebreak_jugador2 }}
-                                    | tipo {{ set.tipo_set }}
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    {% endif %}
+                    <div class="pdf-dato">PDF: {{ partido.jugador1_detectado or "" }}</div>
+                    <input class="campo" type="text" name="{{ clave }}_jugador1_nombre" value="{{ partido.jugador1_detectado or '' }}">
+                    <input type="hidden" name="{{ clave }}_jugador1_pdf" value="{{ partido.jugador1_detectado or '' }}">
+                </td>
+                <td>
+                    <div class="pdf-dato">PDF: {{ partido.jugador2_detectado or "" }}</div>
+                    <input class="campo" type="text" name="{{ clave }}_jugador2_nombre" value="{{ partido.jugador2_detectado or '' }}">
+                    <input type="hidden" name="{{ clave }}_jugador2_pdf" value="{{ partido.jugador2_detectado or '' }}">
+                </td>
+                <td>
+                    <select class="campo campo-medio" name="{{ clave }}_tipo_resultado">
+                        <option value="normal">Normal</option>
+                        <option value="bye" {% if partido.bye_jugador1 or partido.bye_jugador2 %}selected{% endif %}>BYE</option>
+                        <option value="wo">WO</option>
+                        <option value="ret">RET</option>
+                        <option value="vo">VO</option>
+                    </select>
+                </td>
+                <td>
+                    <select class="campo campo-medio" name="{{ clave }}_ganador_lado">
+                        <option value="">Revisar</option>
+                        <option value="jugador1" {% if partido.ganador_detectado == partido.jugador1_detectado %}selected{% endif %}>Jugador 1</option>
+                        <option value="jugador2" {% if partido.ganador_detectado == partido.jugador2_detectado %}selected{% endif %}>Jugador 2</option>
+                    </select>
+                    <div class="pdf-dato">PDF: {{ partido.ganador_detectado or "" }}</div>
+                </td>
+                <td>
+                    <div class="pdf-dato">
+                        PDF J1: {{ partido.resultado_jugador1 or "" }}<br>
+                        PDF J2: {{ partido.resultado_jugador2 or "" }}
+                    </div>
+                    <label>Resultado J1</label>
+                    <input class="campo campo-medio" type="text" name="{{ clave }}_resultado_jugador1" value="{{ partido.resultado_jugador1_normalizado or partido.resultado_jugador1 or '' }}">
+                    <label>Resultado J2</label>
+                    <input class="campo campo-medio" type="text" name="{{ clave }}_resultado_jugador2" value="{{ partido.resultado_jugador2_normalizado or partido.resultado_jugador2 or '' }}">
+                    <div class="sets-editables">
+                        <span>Set 1</span>
+                        <input class="campo campo-corto" type="number" name="{{ clave }}_set1_j1" value="{{ set1.juegos_jugador1 if set1 else '' }}">
+                        <input class="campo campo-corto" type="number" name="{{ clave }}_set1_j2" value="{{ set1.juegos_jugador2 if set1 else '' }}">
+                        <span>Set 2</span>
+                        <input class="campo campo-corto" type="number" name="{{ clave }}_set2_j1" value="{{ set2.juegos_jugador1 if set2 else '' }}">
+                        <input class="campo campo-corto" type="number" name="{{ clave }}_set2_j2" value="{{ set2.juegos_jugador2 if set2 else '' }}">
+                        <span>Dec.</span>
+                        <input class="campo campo-corto" type="number" name="{{ clave }}_set3_j1" value="{{ set3.juegos_jugador1 if set3 else '' }}">
+                        <input class="campo campo-corto" type="number" name="{{ clave }}_set3_j2" value="{{ set3.juegos_jugador2 if set3 else '' }}">
+                    </div>
+                    <select class="campo campo-medio" name="{{ clave }}_decisivo_tipo">
+                        <option value="">Sin decisivo</option>
+                        <option value="normal" {% if set3 and set3.tipo_set == 1 %}selected{% endif %}>3er set</option>
+                        <option value="super" {% if set3 and set3.tipo_set == 3 %}selected{% endif %}>Super TB</option>
+                    </select>
                 </td>
             </tr>
             {% else %}
@@ -431,58 +533,111 @@
         </thead>
         <tbody>
             {% for partido in ronda_revision.partidos %}
+            {% set clave = "r" ~ ronda_revision.numero ~ "_p" ~ partido.numero_partido %}
+            {% set set1 = partido.sets_detectados[0] if partido.sets_detectados|length > 0 else none %}
+            {% set set2 = partido.sets_detectados[1] if partido.sets_detectados|length > 1 else none %}
+            {% set set3 = partido.sets_detectados[2] if partido.sets_detectados|length > 2 else none %}
             <tr>
                 <td class="jugador">
-                    <strong>{% if partido.posicion_jugador1 %}Pos {{ partido.posicion_jugador1 }}{% else %}P{{ partido.numero_partido }}{% endif %}</strong><br>
-                    PDF: {{ partido.jugador1_detectado or "" }}<br>
-                    Oficial: {{ partido.jugador1_oficial or "No encontrado" }}
-                    <div class="detalle">
-                        Licencia: {{ partido.jugador1_numero_licencia or "" }}<br>
-                        ID oficial: {{ partido.jugador1_jugador_id_oficial or "" }}<br>
-                        Nombre XLSX: {{ partido.jugador1_nombre_excel or "" }}
-                        {% if partido.jugador1_club_excel %}<br>Club XLSX: {{ partido.jugador1_club_excel }}{% endif %}
+                    <div class="pdf-dato">
+                        PDF: {{ partido.jugador1_detectado or "" }}<br>
+                        Oficial detectado: {{ partido.jugador1_oficial or "No encontrado" }}<br>
+                        Licencia: {{ partido.jugador1_numero_licencia or "" }}
                     </div>
+                    <label>Posición</label>
+                    <input class="campo campo-corto" type="number" name="{{ clave }}_jugador1_posicion" value="{{ partido.posicion_jugador1 or '' }}">
+                    <label>Estado</label>
+                    <select class="campo campo-medio estado-oficial" name="{{ clave }}_jugador1_estado_revision">
+                        <option value="oficial" {% if partido.jugador1_jugador_id_oficial %}selected{% endif %}>Oficial</option>
+                        <option value="nuevo" {% if not partido.jugador1_jugador_id_oficial and partido.jugador1_detectado %}selected{% endif %}>Jugador nuevo</option>
+                        <option value="revision" {% if not partido.jugador1_jugador_id_oficial and not partido.jugador1_detectado %}selected{% endif %}>Revisión</option>
+                    </select>
+                    <label>Jugador oficial</label>
+                    <select class="campo jugador-oficial" name="{{ clave }}_jugador1_id">
+                        <option value="">-- Sin asignar --</option>
+                        {% for jugador in jugadores_revision %}
+                            <option value="{{ jugador.id }}" {% if jugador.id == partido.jugador1_jugador_id_oficial %}selected{% endif %}>
+                                {{ jugador.nombre }}{% if jugador.numero_licencia %} - {{ jugador.numero_licencia }}{% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <input type="hidden" name="{{ clave }}_jugador1_pdf" value="{{ partido.jugador1_detectado or '' }}">
                     <span class="comparacion comparacion-{{ partido.jugador1_comparacion_nombre }}">
                         {{ partido.jugador1_comparacion_nombre }}
                     </span>
                 </td>
                 <td>{{ partido.resultado_jugador1 or "" }}</td>
                 <td>{{ partido.resultado_jugador1_original or "" }}</td>
-                <td>{{ partido.resultado_jugador1_normalizado or "" }}</td>
+                <td>
+                    <input class="campo campo-medio" type="text" name="{{ clave }}_resultado_jugador1" value="{{ partido.resultado_jugador1_normalizado or '' }}">
+                </td>
                 <td class="bye">{% if partido.bye_jugador1 %}Si{% else %}No{% endif %}</td>
                 <td class="jugador">
-                    <strong>Pos {{ partido.posicion_jugador2 }}</strong><br>
-                    PDF: {{ partido.jugador2_detectado or "" }}<br>
-                    Oficial: {{ partido.jugador2_oficial or "No encontrado" }}
-                    <div class="detalle">
-                        Licencia: {{ partido.jugador2_numero_licencia or "" }}<br>
-                        ID oficial: {{ partido.jugador2_jugador_id_oficial or "" }}<br>
-                        Nombre XLSX: {{ partido.jugador2_nombre_excel or "" }}
-                        {% if partido.jugador2_club_excel %}<br>Club XLSX: {{ partido.jugador2_club_excel }}{% endif %}
+                    <div class="pdf-dato">
+                        PDF: {{ partido.jugador2_detectado or "" }}<br>
+                        Oficial detectado: {{ partido.jugador2_oficial or "No encontrado" }}<br>
+                        Licencia: {{ partido.jugador2_numero_licencia or "" }}
                     </div>
+                    <label>Posición</label>
+                    <input class="campo campo-corto" type="number" name="{{ clave }}_jugador2_posicion" value="{{ partido.posicion_jugador2 or '' }}">
+                    <label>Estado</label>
+                    <select class="campo campo-medio estado-oficial" name="{{ clave }}_jugador2_estado_revision">
+                        <option value="oficial" {% if partido.jugador2_jugador_id_oficial %}selected{% endif %}>Oficial</option>
+                        <option value="nuevo" {% if not partido.jugador2_jugador_id_oficial and partido.jugador2_detectado %}selected{% endif %}>Jugador nuevo</option>
+                        <option value="revision" {% if not partido.jugador2_jugador_id_oficial and not partido.jugador2_detectado %}selected{% endif %}>Revisión</option>
+                    </select>
+                    <label>Jugador oficial</label>
+                    <select class="campo jugador-oficial" name="{{ clave }}_jugador2_id">
+                        <option value="">-- Sin asignar --</option>
+                        {% for jugador in jugadores_revision %}
+                            <option value="{{ jugador.id }}" {% if jugador.id == partido.jugador2_jugador_id_oficial %}selected{% endif %}>
+                                {{ jugador.nombre }}{% if jugador.numero_licencia %} - {{ jugador.numero_licencia }}{% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <input type="hidden" name="{{ clave }}_jugador2_pdf" value="{{ partido.jugador2_detectado or '' }}">
                     <span class="comparacion comparacion-{{ partido.jugador2_comparacion_nombre }}">
                         {{ partido.jugador2_comparacion_nombre }}
                     </span>
                 </td>
                 <td>{{ partido.resultado_jugador2 or "" }}</td>
                 <td>{{ partido.resultado_jugador2_original or "" }}</td>
-                <td>{{ partido.resultado_jugador2_normalizado or "" }}</td>
-                <td class="bye">{% if partido.bye_jugador2 %}Si{% else %}No{% endif %}</td>
-                <td>{{ partido.ganador_detectado or "" }}</td>
                 <td>
-                    {% if partido.sets_detectados %}
-                        <ul class="sets">
-                            {% for set in partido.sets_detectados %}
-                                <li>
-                                    set{{ set.numero_set }}:
-                                    jugador1 {{ set.juegos_jugador1 }} -
-                                    {{ set.juegos_jugador2 }} jugador2
-                                    | tb {{ set.tiebreak_jugador1 }}-{{ set.tiebreak_jugador2 }}
-                                    | tipo {{ set.tipo_set }}
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    {% endif %}
+                    <input class="campo campo-medio" type="text" name="{{ clave }}_resultado_jugador2" value="{{ partido.resultado_jugador2_normalizado or '' }}">
+                </td>
+                <td class="bye">{% if partido.bye_jugador2 %}Si{% else %}No{% endif %}</td>
+                <td>
+                    <div class="pdf-dato">PDF: {{ partido.ganador_detectado or "" }}</div>
+                    <select class="campo campo-medio" name="{{ clave }}_ganador_lado">
+                        <option value="">Revisar</option>
+                        <option value="jugador1" {% if partido.ganador_detectado == partido.jugador1_detectado %}selected{% endif %}>Jugador 1</option>
+                        <option value="jugador2" {% if partido.ganador_detectado == partido.jugador2_detectado %}selected{% endif %}>Jugador 2</option>
+                    </select>
+                    <select class="campo campo-medio" name="{{ clave }}_tipo_resultado">
+                        <option value="normal">Normal</option>
+                        <option value="bye" {% if partido.bye_jugador1 or partido.bye_jugador2 %}selected{% endif %}>BYE</option>
+                        <option value="wo">WO</option>
+                        <option value="ret">RET</option>
+                        <option value="vo">VO</option>
+                    </select>
+                </td>
+                <td>
+                    <div class="sets-editables">
+                        <span>Set 1</span>
+                        <input class="campo campo-corto" type="number" name="{{ clave }}_set1_j1" value="{{ set1.juegos_jugador1 if set1 else '' }}">
+                        <input class="campo campo-corto" type="number" name="{{ clave }}_set1_j2" value="{{ set1.juegos_jugador2 if set1 else '' }}">
+                        <span>Set 2</span>
+                        <input class="campo campo-corto" type="number" name="{{ clave }}_set2_j1" value="{{ set2.juegos_jugador1 if set2 else '' }}">
+                        <input class="campo campo-corto" type="number" name="{{ clave }}_set2_j2" value="{{ set2.juegos_jugador2 if set2 else '' }}">
+                        <span>Dec.</span>
+                        <input class="campo campo-corto" type="number" name="{{ clave }}_set3_j1" value="{{ set3.juegos_jugador1 if set3 else '' }}">
+                        <input class="campo campo-corto" type="number" name="{{ clave }}_set3_j2" value="{{ set3.juegos_jugador2 if set3 else '' }}">
+                    </div>
+                    <select class="campo campo-medio" name="{{ clave }}_decisivo_tipo">
+                        <option value="">Sin decisivo</option>
+                        <option value="normal" {% if set3 and set3.tipo_set == 1 %}selected{% endif %}>3er set</option>
+                        <option value="super" {% if set3 and set3.tipo_set == 3 %}selected{% endif %}>Super TB</option>
+                    </select>
                 </td>
                 <td class="confianza confianza-{{ partido.confianza or 'baja' }}">
                     {{ partido.confianza or "baja" }}
@@ -497,11 +652,59 @@
     </table>
     {% endif %}
     {% endfor %}
+
+    <div class="confirmar">
+        <button id="confirmar-importacion" class="boton-confirmar" type="button">
+            Confirmar importación
+        </button>
+        <div id="confirmar-aviso" class="detalle">
+            El guardado definitivo aún no está conectado. Esta pantalla solo prepara los datos editados.
+        </div>
+    </div>
+    </form>
 {% endif %}
 
 <div class="acciones">
     <a class="boton-volver" href="{{ volver_revision_url or ('/admin/cuadros/' ~ cuadro_id ~ '/importar-federacion-prueba') }}">Volver</a>
 </div>
+
+<script>
+function actualizarConfirmacion() {
+    let bloqueado = false;
+
+    document.querySelectorAll(".estado-oficial").forEach((estado) => {
+        const celda = estado.closest("td");
+        const jugador = celda ? celda.querySelector(".jugador-oficial") : null;
+        if (estado.value === "oficial" && jugador && !jugador.value) {
+            bloqueado = true;
+        }
+    });
+
+    const boton = document.getElementById("confirmar-importacion");
+    const aviso = document.getElementById("confirmar-aviso");
+    if (!boton || !aviso) {
+        return;
+    }
+
+    boton.disabled = bloqueado;
+    aviso.textContent = bloqueado
+        ? "Hay jugadores de RONDA 1 marcados como oficiales sin jugador asignado. Corrige el jugador o marca nuevo/revisión."
+        : "El guardado definitivo aún no está conectado. Esta pantalla solo prepara los datos editados.";
+}
+
+document.querySelectorAll(".estado-oficial, .jugador-oficial").forEach((campo) => {
+    campo.addEventListener("change", actualizarConfirmacion);
+});
+
+const botonConfirmar = document.getElementById("confirmar-importacion");
+if (botonConfirmar) {
+    botonConfirmar.addEventListener("click", () => {
+        alert("La confirmación definitiva todavía no está implementada. No se ha guardado nada.");
+    });
+}
+
+actualizarConfirmacion();
+</script>
 
 </body>
 </html>
