@@ -10,6 +10,14 @@ RESULT_PATTERN = re.compile(
     r"\b(?:\d{1,2}[-/]\d{1,2}(?:\s*\(\d{1,2}[-/]\d{1,2}\))?|WO|W\.O\.|RET|BYE)\b",
     re.IGNORECASE,
 )
+FIRST_ROUND_PATTERN = re.compile(
+    r"\b(?:RONDA\s*1|RND\s*(?:8|16|32|64|128))\b",
+    re.IGNORECASE,
+)
+NEXT_ROUND_PATTERN = re.compile(
+    r"\b(?:RONDA\s*[2-9]|RND\s*(?:4|8|16|32|64|128)|SEMIFINAL|FINAL)\b",
+    re.IGNORECASE,
+)
 
 
 def importar_pdf_cuadro_federacion(pdf_bytes: bytes) -> dict[str, Any]:
@@ -42,19 +50,22 @@ def importar_pdf_cuadro_federacion(pdf_bytes: bytes) -> dict[str, Any]:
 
     all_lines = [line for pagina in paginas for line in pagina["lineas"]]
     cabecera = _extraer_cabecera(all_lines)
-    ronda_1 = []
+    ronda_1_words = []
 
     for pagina in paginas:
-        ronda_1.extend(_extraer_ronda_1_desde_words(pagina["words"]))
+        ronda_1_words.extend(_extraer_ronda_1_desde_words(pagina["words"]))
 
-    if not ronda_1:
-        ronda_1 = _extraer_ronda_1_desde_lineas(all_lines)
+    ronda_1_lineas = _extraer_ronda_1_desde_lineas(all_lines)
+    ronda_1, metodo_ronda_1 = _elegir_extraccion_ronda_1(
+        ronda_1_words,
+        ronda_1_lineas,
+    )
 
     partidos_ronda_1 = _agrupar_ronda_1_por_partidos(ronda_1)
 
     return {
         "ok": True,
-        "metodo": "pymupdf_texto_directo",
+        "metodo": metodo_ronda_1,
         "cabecera": cabecera,
         "ronda_1": ronda_1,
         "partidos_ronda_1": partidos_ronda_1,
@@ -62,6 +73,7 @@ def importar_pdf_cuadro_federacion(pdf_bytes: bytes) -> dict[str, Any]:
             "paginas": len(paginas),
             "lineas_extraidas": len(all_lines),
             "entradas_ronda_1": len(ronda_1),
+            "resultados_detectados": _contar_resultados_detectados(ronda_1),
             "partidos_ronda_1": len(partidos_ronda_1),
         },
         "texto_preview": all_lines[:80],
@@ -74,6 +86,57 @@ def _normalizar_lineas(text: str) -> list[str]:
         for line in text.splitlines()
         if line.strip()
     ]
+
+
+def _elegir_extraccion_ronda_1(
+    entradas_words: list[dict[str, Any]],
+    entradas_lineas: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], str]:
+    if not entradas_words:
+        return entradas_lineas, "pymupdf_lineas"
+
+    if not entradas_lineas:
+        return entradas_words, "pymupdf_words"
+
+    words_coherente = _extraccion_ronda_coherente(entradas_words)
+    lineas_coherente = _extraccion_ronda_coherente(entradas_lineas)
+
+    if lineas_coherente and not words_coherente:
+        return entradas_lineas, "pymupdf_lineas"
+
+    if words_coherente and not lineas_coherente:
+        return entradas_words, "pymupdf_words"
+
+    resultados_words = _contar_resultados_detectados(entradas_words)
+    resultados_lineas = _contar_resultados_detectados(entradas_lineas)
+
+    if resultados_lineas > resultados_words:
+        return entradas_lineas, "pymupdf_lineas"
+
+    return entradas_words, "pymupdf_words"
+
+
+def _contar_resultados_detectados(entradas: list[dict[str, Any]]) -> int:
+    return sum(1 for entrada in entradas if entrada.get("resultado_detectado"))
+
+
+def _extraccion_ronda_coherente(entradas: list[dict[str, Any]]) -> bool:
+    posiciones = [
+        entrada.get("posicion")
+        for entrada in entradas
+        if isinstance(entrada.get("posicion"), int)
+    ]
+
+    if not posiciones or len(posiciones) != len(entradas):
+        return False
+
+    if len(posiciones) != len(set(posiciones)):
+        return False
+
+    if len(posiciones) not in {8, 16, 32, 64, 128}:
+        return False
+
+    return min(posiciones) == 1 and max(posiciones) == len(posiciones)
 
 
 def _extraer_cabecera(lines: list[str]) -> dict[str, Any]:
@@ -142,7 +205,7 @@ def _buscar_modalidad(lines: list[str]) -> str | None:
 
 def _es_cabecera_ronda(line: str) -> bool:
     upper = line.upper()
-    return bool(re.search(r"\bRONDA\s*1\b", upper)) or "SEMIFINAL" in upper or "FINAL" == upper
+    return bool(FIRST_ROUND_PATTERN.search(upper)) or "SEMIFINAL" in upper or "FINAL" == upper
 
 
 def _extraer_ronda_1_desde_words(words: list[tuple]) -> list[dict[str, Any]]:
@@ -152,11 +215,14 @@ def _extraer_ronda_1_desde_words(words: list[tuple]) -> list[dict[str, Any]]:
     headers = []
     for index, word in enumerate(words):
         text = str(word[4]).upper()
-        if text == "RONDA":
+        if text in {"RONDA", "RND"}:
             next_text = str(words[index + 1][4]).upper() if index + 1 < len(words) else ""
-            if next_text == "1":
+            if _es_primera_ronda_header(text, next_text):
                 headers.append(_merge_word_boxes([word, words[index + 1]]))
-        elif text in {"RONDA1", "RONDA", "1"} and "RONDA 1" in " ".join(str(w[4]).upper() for w in words[index:index + 2]):
+        elif _es_primera_ronda_texto(text) or (
+            text in {"RONDA1", "RONDA", "1"}
+            and FIRST_ROUND_PATTERN.search(" ".join(str(w[4]).upper() for w in words[index:index + 2]))
+        ):
             headers.append(_merge_word_boxes([word]))
 
     if not headers:
@@ -164,8 +230,8 @@ def _extraer_ronda_1_desde_words(words: list[tuple]) -> list[dict[str, Any]]:
 
     header = sorted(headers, key=lambda item: item["x0"])[0]
     next_header_x = _buscar_siguiente_cabecera_x(words, header["x0"])
-    x0 = max(header["x0"] - 30, 0)
-    x1 = next_header_x if next_header_x else header["x0"] + 260
+    x0 = max(header["x0"] - 180, 0)
+    x1 = next_header_x if next_header_x else header["x0"] + 320
     y0 = header["y1"]
 
     column_words = [
@@ -182,7 +248,7 @@ def _buscar_siguiente_cabecera_x(words: list[tuple], current_x: float) -> float 
     candidates = []
     for index, word in enumerate(words):
         text = str(word[4]).upper()
-        if text == "RONDA":
+        if text in {"RONDA", "RND"}:
             next_text = str(words[index + 1][4]).upper() if index + 1 < len(words) else ""
             if next_text.isdigit() and int(next_text) > 1:
                 candidates.append(word[0])
@@ -200,6 +266,20 @@ def _merge_word_boxes(words: list[tuple]) -> dict[str, float]:
         "x1": max(word[2] for word in words),
         "y1": max(word[3] for word in words),
     }
+
+
+def _es_primera_ronda_header(text: str, next_text: str) -> bool:
+    if text == "RONDA":
+        return next_text == "1"
+
+    if text == "RND":
+        return next_text in {"8", "16", "32", "64", "128"}
+
+    return False
+
+
+def _es_primera_ronda_texto(text: str) -> bool:
+    return bool(FIRST_ROUND_PATTERN.fullmatch(text.replace("_", " ")))
 
 
 def _agrupar_words_por_linea(words: list[tuple]) -> list[str]:
@@ -295,7 +375,7 @@ def _extraer_ronda_1_desde_lineas(lines: list[str]) -> list[dict[str, Any]]:
 def _segmento_ronda_1(lines: list[str]) -> list[str]:
     start = None
     for index, line in enumerate(lines):
-        if re.search(r"\bRONDA\s*1\b", line, re.IGNORECASE):
+        if FIRST_ROUND_PATTERN.search(line):
             start = index + 1
             break
 
@@ -304,7 +384,7 @@ def _segmento_ronda_1(lines: list[str]) -> list[str]:
 
     segment = []
     for line in lines[start:]:
-        if re.search(r"\bRONDA\s*[2-9]\b|SEMIFINAL|FINAL", line, re.IGNORECASE):
+        if NEXT_ROUND_PATTERN.search(line):
             break
         clean = re.sub(r"\s+", " ", line).strip()
         if clean:
