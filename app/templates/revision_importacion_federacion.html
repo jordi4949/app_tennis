@@ -369,9 +369,13 @@
             <tr>
                 <th>Jugador 1 PDF vs oficial</th>
                 <th>Resultado J1</th>
+                <th>J1 original</th>
+                <th>J1 normalizado</th>
                 <th class="bye">BYE J1</th>
                 <th>Jugador 2 PDF vs oficial</th>
                 <th>Resultado J2</th>
+                <th>J2 original</th>
+                <th>J2 normalizado</th>
                 <th class="bye">BYE J2</th>
                 <th>Ganador detectado</th>
                 <th>Sets detectados</th>
@@ -396,6 +400,8 @@
                     </span>
                 </td>
                 <td>{{ partido.resultado_jugador1 or "" }}</td>
+                <td>{{ partido.resultado_jugador1_original or "" }}</td>
+                <td>{{ partido.resultado_jugador1_normalizado or "" }}</td>
                 <td class="bye">{% if partido.bye_jugador1 %}Si{% else %}No{% endif %}</td>
                 <td class="jugador">
                     <strong>Pos {{ partido.posicion_jugador2 }}</strong><br>
@@ -412,6 +418,8 @@
                     </span>
                 </td>
                 <td>{{ partido.resultado_jugador2 or "" }}</td>
+                <td>{{ partido.resultado_jugador2_original or "" }}</td>
+                <td>{{ partido.resultado_jugador2_normalizado or "" }}</td>
                 <td class="bye">{% if partido.bye_jugador2 %}Si{% else %}No{% endif %}</td>
                 <td>{{ partido.ganador_detectado or "" }}</td>
                 <td>
@@ -435,7 +443,7 @@
             </tr>
             {% else %}
             <tr>
-                <td colspan="9">No se han detectado partidos para RONDA 1.</td>
+                <td colspan="13">No se han detectado partidos para RONDA 1.</td>
             </tr>
             {% endfor %}
         </tbody>

@@ -521,11 +521,13 @@ def _agrupar_ronda_1_por_partidos(entradas: list[dict[str, Any]]) -> list[dict[s
 
         resultado_jugador1 = jugador1.get("resultado_detectado")
         resultado_jugador2 = jugador2.get("resultado_detectado")
+        resultado_jugador1_normalizado = _resultado_normalizado_jugador(resultado_jugador1)
+        resultado_jugador2_normalizado = _resultado_normalizado_jugador(resultado_jugador2)
         bye_jugador1 = bool(jugador1.get("bye"))
         bye_jugador2 = bool(jugador2.get("bye"))
         sets_detectados = _sets_desde_resultados_jugadores(
-            resultado_jugador1,
-            resultado_jugador2,
+            resultado_jugador1_normalizado,
+            resultado_jugador2_normalizado,
         )
         ganador_detectado = _detectar_ganador_partido(
             jugador1,
@@ -537,10 +539,14 @@ def _agrupar_ronda_1_por_partidos(entradas: list[dict[str, Any]]) -> list[dict[s
             "posicion_jugador1": posicion,
             "jugador1_detectado": jugador1.get("jugador_detectado"),
             "resultado_jugador1": resultado_jugador1,
+            "resultado_jugador1_original": resultado_jugador1,
+            "resultado_jugador1_normalizado": resultado_jugador1_normalizado,
             "bye_jugador1": bye_jugador1,
             "posicion_jugador2": posicion + 1,
             "jugador2_detectado": jugador2.get("jugador_detectado"),
             "resultado_jugador2": resultado_jugador2,
+            "resultado_jugador2_original": resultado_jugador2,
+            "resultado_jugador2_normalizado": resultado_jugador2_normalizado,
             "bye_jugador2": bye_jugador2,
             "ganador_detectado": ganador_detectado,
             "sets_detectados": sets_detectados,
@@ -554,8 +560,8 @@ def _sets_desde_resultados_jugadores(
     resultado_jugador1: str | None,
     resultado_jugador2: str | None,
 ) -> list[dict[str, int]]:
-    juegos_por_set_jugador1 = _numeros_resultado_jugador(resultado_jugador1)
-    juegos_por_set_jugador2 = _numeros_resultado_jugador(resultado_jugador2)
+    juegos_por_set_jugador1 = _numeros_resultado_jugador(resultado_jugador1, normalizar=False)
+    juegos_por_set_jugador2 = _numeros_resultado_jugador(resultado_jugador2, normalizar=False)
     sets = []
 
     for numero_set, (juegos_jugador1, juegos_jugador2) in enumerate(
@@ -576,14 +582,27 @@ def _sets_desde_resultados_jugadores(
     return sets
 
 
-def _numeros_resultado_jugador(resultado: str | None) -> list[int]:
+def _numeros_resultado_jugador(resultado: str | None, normalizar: bool = True) -> list[int]:
     if not resultado:
         return []
 
     if re.search(r"\b(?:WO|W\.O\.|RET|BYE)\b", resultado, re.IGNORECASE):
         return []
 
-    return [int(match.group(0)) for match in re.finditer(r"\d{1,2}", resultado)]
+    numeros = [int(match.group(0)) for match in re.finditer(r"\d{1,2}", resultado)]
+
+    if normalizar and len(numeros) > 1:
+        numeros = numeros[::-1]
+
+    return numeros
+
+
+def _resultado_normalizado_jugador(resultado: str | None) -> str | None:
+    numeros = _numeros_resultado_jugador(resultado)
+    if not numeros:
+        return resultado
+
+    return " ".join(str(numero) for numero in numeros)
 
 
 def _detectar_ganador_partido(
