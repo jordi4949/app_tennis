@@ -227,6 +227,10 @@ async def probar_importacion_federacion_pdf(
         resultado.get("partidos_ronda_1", []),
         inscritos_revision,
     )
+    rondas_revision = preparar_rondas_revision(
+        resultado.get("rondas_detectadas", []),
+        partidos,
+    )
     destino_importacion = preparar_destino_importacion(
         resultado,
         inscritos_revision,
@@ -250,6 +254,7 @@ async def probar_importacion_federacion_pdf(
             "resultado": resultado,
             "entradas": resultado.get("ronda_1", []),
             "partidos": partidos,
+            "rondas_revision": rondas_revision,
             "inscritos": inscritos_revision,
             "destino_importacion": destino_importacion,
             "resumen_revision": resumen_revision,
@@ -270,6 +275,10 @@ async def importar_federacion_global_revision(
     partidos = cruzar_partidos_con_inscritos(
         resultado.get("partidos_ronda_1", []),
         inscritos_revision,
+    )
+    rondas_revision = preparar_rondas_revision(
+        resultado.get("rondas_detectadas", []),
+        partidos,
     )
     destino_importacion = preparar_destino_importacion(
         resultado,
@@ -295,11 +304,34 @@ async def importar_federacion_global_revision(
             "resultado": resultado,
             "entradas": resultado.get("ronda_1", []),
             "partidos": partidos,
+            "rondas_revision": rondas_revision,
             "inscritos": inscritos_revision,
             "destino_importacion": destino_importacion,
             "resumen_revision": resumen_revision,
         },
     )
+
+
+def preparar_rondas_revision(
+    rondas_detectadas: list[dict],
+    partidos_ronda_1_cruzados: list[dict],
+) -> list[dict]:
+    if not rondas_detectadas:
+        return [{
+            "numero": 1,
+            "nombre": "Ronda 1",
+            "cabecera_pdf": "RONDA 1",
+            "partidos": partidos_ronda_1_cruzados,
+        }]
+
+    rondas_revision = []
+    for ronda in rondas_detectadas:
+        ronda_revision = dict(ronda)
+        if ronda.get("numero") == 1:
+            ronda_revision["partidos"] = partidos_ronda_1_cruzados
+        rondas_revision.append(ronda_revision)
+
+    return rondas_revision
 
 
 def crear_resumen_revision(
@@ -1435,31 +1467,38 @@ def tiebreak_valido(j1, j2, minimo):
     perdedor = min(j1, j2)
     return ganador >= minimo and ganador - perdedor >= 2
 
-def guardar_o_actualizar_bye(
+
+def guardar_partido_cuadro(
     cur,
     torneo_id,
     cuadro_id,
-    nombre_primera_ronda,
+    ronda_numero,
+    nombre_ronda,
     numero_partido,
     jugador1_id,
     jugador2_id,
     ganador_id,
-    jugador1_pos,
-    jugador2_pos
+    estado,
+    resultado,
+    sets=None,
+    jugador1_posicion=None,
+    jugador2_posicion=None
 ):
+    sets = sets or []
+
     ronda_cuadro_id = guardar_o_actualizar_ronda_cuadro(
         cur,
         cuadro_id,
-        1,
-        nombre_primera_ronda,
+        ronda_numero,
+        nombre_ronda,
         numero_partido,
         jugador1_id,
         jugador2_id,
         ganador_id,
-        jugador1_pos,
-        jugador2_pos,
-        "bye",
-        "BYE",
+        jugador1_posicion,
+        jugador2_posicion,
+        estado,
+        resultado,
         None
     )
 
@@ -1467,9 +1506,9 @@ def guardar_o_actualizar_bye(
         SELECT id
         FROM partidos
         WHERE cuadro_id = %s
-          AND ronda_numero = 1
+          AND ronda_numero = %s
           AND posicion_ronda = %s
-    """, (cuadro_id, numero_partido))
+    """, (cuadro_id, ronda_numero, numero_partido))
 
     partido_existente = cur.fetchone()
 
@@ -1485,25 +1524,23 @@ def guardar_o_actualizar_bye(
                 resultado = %s,
                 jugador1_posicion = %s,
                 jugador2_posicion = %s,
-                estado = 'bye',
+                estado = %s,
                 ronda_cuadro_id = %s
             WHERE id = %s
         """, (
             jugador1_id,
             jugador2_id,
             ganador_id,
-            nombre_primera_ronda,
-            "BYE",
-            jugador1_pos,
-            jugador2_pos,
+            nombre_ronda,
+            resultado,
+            jugador1_posicion,
+            jugador2_posicion,
+            estado,
             ronda_cuadro_id,
             partido_id
         ))
 
-        cur.execute("""
-            DELETE FROM sets
-            WHERE partido_id = %s
-        """, (partido_id,))
+        cur.execute("DELETE FROM sets WHERE partido_id = %s", (partido_id,))
 
     else:
         cur.execute("""
@@ -1524,19 +1561,21 @@ def guardar_o_actualizar_bye(
                 estado,
                 ronda_cuadro_id
             )
-            VALUES (%s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, 1, %s, %s, %s, 'bye', %s)
+            VALUES (%s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
         """, (
             torneo_id,
             jugador1_id,
             jugador2_id,
             ganador_id,
-            nombre_primera_ronda,
-            "BYE",
+            nombre_ronda,
+            resultado,
             cuadro_id,
+            ronda_numero,
             numero_partido,
-            jugador1_pos,
-            jugador2_pos,
+            jugador1_posicion,
+            jugador2_posicion,
+            estado,
             ronda_cuadro_id
         ))
         partido_id = cur.fetchone()[0]
@@ -1545,7 +1584,66 @@ def guardar_o_actualizar_bye(
         UPDATE rondas_cuadro
         SET partido_id = %s
         WHERE id = %s
-    """, (partido_id, ronda_cuadro_id))    
+    """, (partido_id, ronda_cuadro_id))
+
+    for numero_set, j1, j2, tbj1, tbj2, tipo_set in sets:
+        if j1 == 0 and j2 == 0:
+            continue
+
+        cur.execute("""
+            INSERT INTO sets
+            (
+                partido_id,
+                numero_set,
+                juegos_jugador1,
+                juegos_jugador2,
+                tiebreak_jugador1,
+                tiebreak_jugador2,
+                tipo_set
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (
+            partido_id,
+            numero_set,
+            j1,
+            j2,
+            tbj1,
+            tbj2,
+            tipo_set
+        ))
+
+    return partido_id
+
+
+def guardar_o_actualizar_bye(
+    cur,
+    torneo_id,
+    cuadro_id,
+    nombre_primera_ronda,
+    numero_partido,
+    jugador1_id,
+    jugador2_id,
+    ganador_id,
+    jugador1_pos,
+    jugador2_pos,
+    ronda_numero=1
+):
+    return guardar_partido_cuadro(
+        cur,
+        torneo_id,
+        cuadro_id,
+        ronda_numero,
+        nombre_primera_ronda,
+        numero_partido,
+        jugador1_id,
+        jugador2_id,
+        ganador_id,
+        "bye",
+        "BYE",
+        [],
+        jugador1_pos,
+        jugador2_pos
+    )
 
 
 @router.post("/admin/cuadros/{cuadro_id}/guardar-resultados")
@@ -1948,7 +2046,8 @@ async def guardar_resultados_ronda(
                 None,
                 jugador1_id,
                 None,
-                None
+                None,
+                ronda_numero=ronda_numero
             )
 
             continue
@@ -1968,7 +2067,8 @@ async def guardar_resultados_ronda(
                 jugador2_id,
                 jugador2_id,
                 None,
-                None
+                None,
+                ronda_numero=ronda_numero
             )
 
             continue
@@ -2086,8 +2186,9 @@ async def guardar_resultados_ronda(
                 resultado = " ".join(partes)
                 estado = "jugado"
 
-        ronda_cuadro_id = guardar_o_actualizar_ronda_cuadro(
+        guardar_partido_cuadro(
             cur,
+            torneo_id,
             cuadro_id,
             ronda_numero,
             nombre_ronda,
@@ -2095,101 +2196,10 @@ async def guardar_resultados_ronda(
             jugador1_id,
             jugador2_id,
             ganador_id,
-            None,
-            None,
             estado,
             resultado,
-            None
+            sets
         )
-
-        cur.execute("""
-            SELECT id
-            FROM partidos
-            WHERE cuadro_id = %s
-              AND ronda_numero = %s
-              AND posicion_ronda = %s
-        """, (cuadro_id, ronda_numero, numero_partido))
-
-        partido_existente = cur.fetchone()
-
-        if partido_existente:
-            partido_id = partido_existente[0]
-
-            cur.execute("""
-                UPDATE partidos
-                SET jugador1_id = %s,
-                    jugador2_id = %s,
-                    ganador_id = %s,
-                    resultado = %s,
-                    ronda = %s,
-                    estado = %s,
-                    ronda_cuadro_id = %s
-                WHERE id = %s
-            """, (
-                jugador1_id,
-                jugador2_id,
-                ganador_id,
-                resultado,
-                nombre_ronda,
-                estado,
-                ronda_cuadro_id,
-                partido_id
-            ))
-
-            cur.execute("DELETE FROM sets WHERE partido_id = %s", (partido_id,))
-
-        else:
-            cur.execute("""
-                INSERT INTO partidos
-                (
-                    torneo_id, fecha_partido, jugador1_id, jugador2_id,
-                    ganador_id, ronda, resultado, cuadro_id,
-                    ronda_numero, posicion_ronda, estado, ronda_cuadro_id
-                )
-                VALUES (%s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING id
-            """, (
-                torneo_id,
-                jugador1_id,
-                jugador2_id,
-                ganador_id,
-                nombre_ronda,
-                resultado,
-                cuadro_id,
-                ronda_numero,
-                numero_partido,
-                estado,
-                ronda_cuadro_id
-            ))
-
-            partido_id = cur.fetchone()[0]
-
-        cur.execute("""
-            UPDATE rondas_cuadro
-            SET partido_id = %s
-            WHERE id = %s
-        """, (partido_id, ronda_cuadro_id))
-
-        for numero_set, j1, j2, tbj1, tbj2, tipo_set in sets:
-            if j1 == 0 and j2 == 0:
-                continue
-
-            cur.execute("""
-                INSERT INTO sets
-                (
-                    partido_id, numero_set, juegos_jugador1, juegos_jugador2,
-                    tiebreak_jugador1, tiebreak_jugador2, tipo_set
-                )
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-            """, (
-                partido_id,
-                numero_set,
-                j1,
-                j2,
-                tbj1,
-                tbj2,
-                tipo_set
-            ))
 
     conn.commit()
     cur.close()

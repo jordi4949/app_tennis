@@ -18,6 +18,10 @@ NEXT_ROUND_PATTERN = re.compile(
     r"\b(?:RONDA\s*[2-9]|RND\s*(?:4|8|16|32|64|128)|SEMIFINAL|FINAL)\b",
     re.IGNORECASE,
 )
+ROUND_HEADER_PATTERN = re.compile(
+    r"\b(?:RONDA\s*\d+|RND\s*(?:4|8|16|32|64|128)|CUARTOS|CUARTS|SEMIFINAL|FINAL)\b",
+    re.IGNORECASE,
+)
 
 
 def importar_pdf_cuadro_federacion(pdf_bytes: bytes) -> dict[str, Any]:
@@ -62,6 +66,12 @@ def importar_pdf_cuadro_federacion(pdf_bytes: bytes) -> dict[str, Any]:
     )
 
     partidos_ronda_1 = _agrupar_ronda_1_por_partidos(ronda_1)
+    tamano_cuadro = _inferir_tamano_desde_entradas(ronda_1)
+    rondas_detectadas = _extraer_rondas_desde_lineas(
+        all_lines,
+        tamano_cuadro,
+        partidos_ronda_1,
+    )
 
     return {
         "ok": True,
@@ -69,12 +79,14 @@ def importar_pdf_cuadro_federacion(pdf_bytes: bytes) -> dict[str, Any]:
         "cabecera": cabecera,
         "ronda_1": ronda_1,
         "partidos_ronda_1": partidos_ronda_1,
+        "rondas_detectadas": rondas_detectadas,
         "resumen": {
             "paginas": len(paginas),
             "lineas_extraidas": len(all_lines),
             "entradas_ronda_1": len(ronda_1),
             "resultados_detectados": _contar_resultados_detectados(ronda_1),
             "partidos_ronda_1": len(partidos_ronda_1),
+            "rondas_detectadas": len(rondas_detectadas),
         },
         "texto_preview": all_lines[:80],
     }
@@ -137,6 +149,287 @@ def _extraccion_ronda_coherente(entradas: list[dict[str, Any]]) -> bool:
         return False
 
     return min(posiciones) == 1 and max(posiciones) == len(posiciones)
+
+
+def _inferir_tamano_desde_entradas(entradas: list[dict[str, Any]]) -> int:
+    posiciones = [
+        entrada.get("posicion")
+        for entrada in entradas
+        if isinstance(entrada.get("posicion"), int)
+    ]
+
+    if not posiciones:
+        return 0
+
+    max_posicion = max(posiciones)
+    for tamano in (8, 16, 32, 64, 128):
+        if max_posicion <= tamano:
+            return tamano
+
+    return max_posicion
+
+
+def _nombres_rondas_por_tamano(tamano: int) -> list[str]:
+    if tamano == 8:
+        return ["Cuartos", "Semifinal", "Final"]
+
+    if tamano == 16:
+        return ["Octavos", "Cuartos", "Semifinal", "Final"]
+
+    if tamano == 32:
+        return ["Dieciseisavos", "Octavos", "Cuartos", "Semifinal", "Final"]
+
+    if tamano == 64:
+        return ["Treintaidosavos", "Dieciseisavos", "Octavos", "Cuartos", "Semifinal", "Final"]
+
+    if tamano == 128:
+        return ["Sesentaicuatroavos", "Treintaidosavos", "Dieciseisavos", "Octavos", "Cuartos", "Semifinal", "Final"]
+
+    return []
+
+
+def _extraer_rondas_desde_lineas(
+    lines: list[str],
+    tamano_cuadro: int,
+    partidos_ronda_1: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    nombres_rondas = _nombres_rondas_por_tamano(tamano_cuadro)
+    if not nombres_rondas:
+        return []
+
+    segmentos = _segmentos_rondas(lines, tamano_cuadro)
+    rondas = []
+    rondas_usadas = set()
+
+    for segmento in segmentos:
+        ronda_numero = segmento["numero"]
+        if not ronda_numero or ronda_numero in rondas_usadas:
+            continue
+
+        if ronda_numero < 1 or ronda_numero > len(nombres_rondas):
+            continue
+
+        nombre_ronda = nombres_rondas[ronda_numero - 1]
+
+        if ronda_numero == 1:
+            partidos = partidos_ronda_1
+        else:
+            partidos_esperados = max(tamano_cuadro // (2 ** ronda_numero), 1)
+            partidos = _parsear_partidos_segmento_ronda(
+                segmento["lineas"],
+                ronda_numero,
+                nombre_ronda,
+                partidos_esperados,
+            )
+
+        if partidos:
+            rondas.append({
+                "numero": ronda_numero,
+                "nombre": nombre_ronda,
+                "cabecera_pdf": segmento["cabecera"],
+                "partidos": partidos,
+            })
+            rondas_usadas.add(ronda_numero)
+
+    if 1 not in rondas_usadas and partidos_ronda_1:
+        rondas.insert(0, {
+            "numero": 1,
+            "nombre": nombres_rondas[0],
+            "cabecera_pdf": "RONDA 1",
+            "partidos": partidos_ronda_1,
+        })
+
+    return sorted(rondas, key=lambda ronda: ronda["numero"])
+
+
+def _segmentos_rondas(lines: list[str], tamano_cuadro: int) -> list[dict[str, Any]]:
+    cabeceras = []
+    for index, line in enumerate(lines):
+        if ROUND_HEADER_PATTERN.search(line):
+            numero = _numero_ronda_desde_cabecera(line, tamano_cuadro)
+            if numero:
+                cabeceras.append({
+                    "index": index,
+                    "numero": numero,
+                    "cabecera": line,
+                })
+
+    segmentos = []
+    for idx, cabecera in enumerate(cabeceras):
+        start = cabecera["index"] + 1
+        end = cabeceras[idx + 1]["index"] if idx + 1 < len(cabeceras) else len(lines)
+        segmentos.append({
+            "numero": cabecera["numero"],
+            "cabecera": cabecera["cabecera"],
+            "lineas": lines[start:end],
+        })
+
+    return segmentos
+
+
+def _numero_ronda_desde_cabecera(line: str, tamano_cuadro: int) -> int | None:
+    normalizada = line.upper()
+
+    match_ronda = re.search(r"\bRONDA\s*(\d+)\b", normalizada)
+    if match_ronda:
+        return int(match_ronda.group(1))
+
+    match_rnd = re.search(r"\bRND\s*(\d+)\b", normalizada)
+    if match_rnd and tamano_cuadro:
+        bloque = int(match_rnd.group(1))
+        if bloque <= 0 or bloque > tamano_cuadro:
+            return None
+
+        ronda = 1
+        actual = tamano_cuadro
+        while actual > bloque:
+            actual //= 2
+            ronda += 1
+        return ronda if actual == bloque else None
+
+    nombres_rondas = _nombres_rondas_por_tamano(tamano_cuadro)
+    if ("CUARTOS" in normalizada or "CUARTS" in normalizada) and "Cuartos" in nombres_rondas:
+        return nombres_rondas.index("Cuartos") + 1
+
+    if "SEMIFINAL" in normalizada and "Semifinal" in nombres_rondas:
+        return nombres_rondas.index("Semifinal") + 1
+
+    if "FINAL" in normalizada and "SEMIFINAL" not in normalizada:
+        return len(nombres_rondas) if nombres_rondas else None
+
+    return None
+
+
+def _parsear_partidos_segmento_ronda(
+    lines: list[str],
+    ronda_numero: int,
+    nombre_ronda: str,
+    partidos_esperados: int,
+) -> list[dict[str, Any]]:
+    partidos = []
+    index = 0
+
+    while index < len(lines) and len(partidos) < partidos_esperados:
+        fecha = None
+        while index < len(lines) and _ignorar_linea_ronda_sin_fecha(lines[index]):
+            index += 1
+
+        if index < len(lines) and DATE_PATTERN.fullmatch(lines[index]):
+            fecha = lines[index]
+            index += 1
+
+        jugador1, resultado_jugador1, index = _leer_jugador_resultado_ronda(lines, index)
+        jugador2, resultado_jugador2, index = _leer_jugador_resultado_ronda(lines, index)
+
+        if not jugador1 and not jugador2:
+            index += 1
+            continue
+
+        partido = _crear_partido_detectado(
+            jugador1,
+            resultado_jugador1,
+            jugador2,
+            resultado_jugador2,
+            numero_partido=len(partidos) + 1,
+            ronda_numero=ronda_numero,
+            nombre_ronda=nombre_ronda,
+            fecha=fecha,
+        )
+        partidos.append(partido)
+
+    return partidos
+
+
+def _leer_jugador_resultado_ronda(lines: list[str], index: int) -> tuple[str | None, str | None, int]:
+    while index < len(lines):
+        line = lines[index]
+        if _ignorar_linea_ronda_sin_fecha(line):
+            index += 1
+            continue
+
+        if DATE_PATTERN.fullmatch(line):
+            return None, None, index
+
+        if not _es_resultado_linea(line):
+            break
+
+        index += 1
+
+    if index >= len(lines):
+        return None, None, index
+
+    jugador_linea = lines[index]
+    jugador = "BYE" if jugador_linea.upper().startswith("BYE") else _limpiar_jugador(jugador_linea)
+    index += 1
+
+    resultados = []
+    while index < len(lines) and _es_resultado_linea(lines[index]):
+        resultados.append(lines[index])
+        index += 1
+
+    return jugador, " ".join(resultados) if resultados else None, index
+
+
+def _ignorar_linea_ronda_sin_fecha(line: str) -> bool:
+    clean = line.strip()
+    return (
+        not clean
+        or re.fullmatch(r"-{3,}", clean)
+    )
+
+
+def _crear_partido_detectado(
+    jugador1: str | None,
+    resultado_jugador1: str | None,
+    jugador2: str | None,
+    resultado_jugador2: str | None,
+    numero_partido: int,
+    ronda_numero: int,
+    nombre_ronda: str,
+    fecha: str | None,
+) -> dict[str, Any]:
+    resultado_jugador1_normalizado = _resultado_normalizado_jugador(resultado_jugador1)
+    resultado_jugador2_normalizado = _resultado_normalizado_jugador(resultado_jugador2)
+    entrada_jugador1 = {
+        "jugador_detectado": jugador1,
+        "resultado_detectado": resultado_jugador1,
+        "bye": bool(jugador1 and jugador1.upper().startswith("BYE")),
+    }
+    entrada_jugador2 = {
+        "jugador_detectado": jugador2,
+        "resultado_detectado": resultado_jugador2,
+        "bye": bool(jugador2 and jugador2.upper().startswith("BYE")),
+    }
+    sets_detectados = _sets_desde_resultados_jugadores(
+        resultado_jugador1_normalizado,
+        resultado_jugador2_normalizado,
+    )
+
+    return {
+        "numero_partido": numero_partido,
+        "ronda_numero": ronda_numero,
+        "nombre_ronda": nombre_ronda,
+        "fecha": fecha,
+        "posicion_jugador1": None,
+        "jugador1_detectado": jugador1,
+        "resultado_jugador1": resultado_jugador1,
+        "resultado_jugador1_original": resultado_jugador1,
+        "resultado_jugador1_normalizado": resultado_jugador1_normalizado,
+        "bye_jugador1": entrada_jugador1["bye"],
+        "posicion_jugador2": None,
+        "jugador2_detectado": jugador2,
+        "resultado_jugador2": resultado_jugador2,
+        "resultado_jugador2_original": resultado_jugador2,
+        "resultado_jugador2_normalizado": resultado_jugador2_normalizado,
+        "bye_jugador2": entrada_jugador2["bye"],
+        "ganador_detectado": _detectar_ganador_partido(
+            entrada_jugador1,
+            entrada_jugador2,
+            sets_detectados,
+        ),
+        "sets_detectados": sets_detectados,
+        "confianza": _confianza_partido(entrada_jugador1, entrada_jugador2, sets_detectados),
+    }
 
 
 def _extraer_cabecera(lines: list[str]) -> dict[str, Any]:
@@ -536,6 +829,10 @@ def _agrupar_ronda_1_por_partidos(entradas: list[dict[str, Any]]) -> list[dict[s
         )
 
         partidos.append({
+            "numero_partido": ((posicion - 1) // 2) + 1,
+            "ronda_numero": 1,
+            "nombre_ronda": None,
+            "fecha": None,
             "posicion_jugador1": posicion,
             "jugador1_detectado": jugador1.get("jugador_detectado"),
             "resultado_jugador1": resultado_jugador1,

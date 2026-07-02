@@ -364,10 +364,14 @@
         </div>
     </section>
 
+    {% for ronda_revision in rondas_revision or [{"nombre": "Ronda 1", "cabecera_pdf": "RONDA 1", "partidos": partidos}] %}
+    <h2>{{ ronda_revision.nombre }}{% if ronda_revision.cabecera_pdf %} ({{ ronda_revision.cabecera_pdf }}){% endif %}</h2>
+
     <table>
         <thead>
             <tr>
                 <th>Jugador 1 PDF vs oficial</th>
+                <th>Fecha</th>
                 <th>Resultado J1</th>
                 <th>J1 original</th>
                 <th>J1 normalizado</th>
@@ -383,10 +387,10 @@
             </tr>
         </thead>
         <tbody>
-            {% for partido in partidos %}
+            {% for partido in ronda_revision.partidos %}
             <tr>
                 <td class="jugador">
-                    <strong>Pos {{ partido.posicion_jugador1 }}</strong><br>
+                    <strong>{% if partido.posicion_jugador1 %}Pos {{ partido.posicion_jugador1 }}{% else %}P{{ partido.numero_partido }}{% endif %}</strong><br>
                     PDF: {{ partido.jugador1_detectado or "" }}<br>
                     Oficial: {{ partido.jugador1_oficial or "No encontrado" }}
                     <div class="detalle">
@@ -399,6 +403,7 @@
                         {{ partido.jugador1_comparacion_nombre }}
                     </span>
                 </td>
+                <td>{{ partido.fecha or "" }}</td>
                 <td>{{ partido.resultado_jugador1 or "" }}</td>
                 <td>{{ partido.resultado_jugador1_original or "" }}</td>
                 <td>{{ partido.resultado_jugador1_normalizado or "" }}</td>
@@ -443,11 +448,12 @@
             </tr>
             {% else %}
             <tr>
-                <td colspan="13">No se han detectado partidos para RONDA 1.</td>
+                <td colspan="14">No se han detectado partidos para esta ronda.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    {% endfor %}
 {% endif %}
 
 <div class="acciones">
