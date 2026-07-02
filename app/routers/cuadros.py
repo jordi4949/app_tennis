@@ -316,12 +316,15 @@ def preparar_rondas_revision(
     rondas_detectadas: list[dict],
     partidos_ronda_1_cruzados: list[dict],
 ) -> list[dict]:
+    jugadores_ronda_1 = indice_jugadores_revision_ronda_1(partidos_ronda_1_cruzados)
+
     if not rondas_detectadas:
         return [{
             "numero": 1,
             "nombre": "Ronda 1",
             "cabecera_pdf": "RONDA 1",
             "partidos": partidos_ronda_1_cruzados,
+            "revision_oficial": True,
         }]
 
     rondas_revision = []
@@ -329,9 +332,88 @@ def preparar_rondas_revision(
         ronda_revision = dict(ronda)
         if ronda.get("numero") == 1:
             ronda_revision["partidos"] = partidos_ronda_1_cruzados
+            ronda_revision["revision_oficial"] = True
+        else:
+            ronda_revision["partidos"] = [
+                simplificar_partido_ronda_posterior(partido, jugadores_ronda_1)
+                for partido in ronda.get("partidos", [])
+            ]
+            ronda_revision["revision_oficial"] = False
         rondas_revision.append(ronda_revision)
 
     return rondas_revision
+
+
+def indice_jugadores_revision_ronda_1(partidos: list[dict]) -> dict[str, dict]:
+    indice = {}
+
+    for partido in partidos:
+        for prefijo in ("jugador1", "jugador2"):
+            nombre_pdf = partido.get(f"{prefijo}_detectado")
+            if not nombre_pdf or partido.get(f"bye_{prefijo}"):
+                continue
+
+            clave = normalizar_nombre_revision(nombre_pdf)
+            indice[clave] = {
+                "jugador_id": partido.get(f"{prefijo}_jugador_id_oficial"),
+                "numero_licencia": partido.get(f"{prefijo}_numero_licencia"),
+                "nombre_oficial": partido.get(f"{prefijo}_oficial"),
+                "nombre_excel": partido.get(f"{prefijo}_nombre_excel"),
+                "club_excel": partido.get(f"{prefijo}_club_excel"),
+            }
+
+    return indice
+
+
+def simplificar_partido_ronda_posterior(
+    partido: dict,
+    jugadores_ronda_1: dict[str, dict],
+) -> dict:
+    partido_simple = dict(partido)
+
+    for prefijo in ("jugador1", "jugador2"):
+        datos = buscar_jugador_en_indice_ronda_1(
+            partido.get(f"{prefijo}_detectado"),
+            jugadores_ronda_1,
+        )
+        if not datos:
+            continue
+
+        partido_simple[f"{prefijo}_jugador_id_oficial"] = datos.get("jugador_id")
+        partido_simple[f"{prefijo}_numero_licencia"] = datos.get("numero_licencia")
+        partido_simple[f"{prefijo}_oficial"] = datos.get("nombre_oficial")
+        partido_simple[f"{prefijo}_nombre_excel"] = datos.get("nombre_excel")
+        partido_simple[f"{prefijo}_club_excel"] = datos.get("club_excel")
+
+    partido_simple["fecha"] = None
+    return partido_simple
+
+
+def buscar_jugador_en_indice_ronda_1(
+    nombre_pdf: str | None,
+    jugadores_ronda_1: dict[str, dict],
+) -> dict | None:
+    if not nombre_pdf:
+        return None
+
+    nombre_normalizado = normalizar_nombre_revision(nombre_pdf)
+    if nombre_normalizado in jugadores_ronda_1:
+        return jugadores_ronda_1[nombre_normalizado]
+
+    mejor_clave = None
+    mejor_puntuacion = 0
+    partes_nombre = set(nombre_normalizado.split())
+
+    for clave in jugadores_ronda_1:
+        puntuacion = len(partes_nombre.intersection(set(clave.split())))
+        if puntuacion > mejor_puntuacion:
+            mejor_puntuacion = puntuacion
+            mejor_clave = clave
+
+    if mejor_clave and mejor_puntuacion >= 2:
+        return jugadores_ronda_1[mejor_clave]
+
+    return None
 
 
 def crear_resumen_revision(

@@ -409,7 +409,7 @@ def _crear_partido_detectado(
         "numero_partido": numero_partido,
         "ronda_numero": ronda_numero,
         "nombre_ronda": nombre_ronda,
-        "fecha": fecha,
+        "fecha": None,
         "posicion_jugador1": None,
         "jugador1_detectado": jugador1,
         "resultado_jugador1": resultado_jugador1,

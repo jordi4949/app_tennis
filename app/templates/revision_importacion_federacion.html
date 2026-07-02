@@ -367,11 +367,54 @@
     {% for ronda_revision in rondas_revision or [{"nombre": "Ronda 1", "cabecera_pdf": "RONDA 1", "partidos": partidos}] %}
     <h2>{{ ronda_revision.nombre }}{% if ronda_revision.cabecera_pdf %} ({{ ronda_revision.cabecera_pdf }}){% endif %}</h2>
 
+    {% if ronda_revision.revision_oficial is sameas false %}
+    <table>
+        <thead>
+            <tr>
+                <th>Jugador 1</th>
+                <th>Resultado J1</th>
+                <th>Jugador 2</th>
+                <th>Resultado J2</th>
+                <th>Ganador detectado</th>
+                <th>Sets detectados</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for partido in ronda_revision.partidos %}
+            <tr>
+                <td>{{ partido.jugador1_detectado or "" }}</td>
+                <td>{{ partido.resultado_jugador1_normalizado or partido.resultado_jugador1 or "" }}</td>
+                <td>{{ partido.jugador2_detectado or "" }}</td>
+                <td>{{ partido.resultado_jugador2_normalizado or partido.resultado_jugador2 or "" }}</td>
+                <td>{{ partido.ganador_detectado or "" }}</td>
+                <td>
+                    {% if partido.sets_detectados %}
+                        <ul class="sets">
+                            {% for set in partido.sets_detectados %}
+                                <li>
+                                    set{{ set.numero_set }}:
+                                    jugador1 {{ set.juegos_jugador1 }} -
+                                    {{ set.juegos_jugador2 }} jugador2
+                                    | tb {{ set.tiebreak_jugador1 }}-{{ set.tiebreak_jugador2 }}
+                                    | tipo {{ set.tipo_set }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6">No se han detectado partidos para esta ronda.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
     <table>
         <thead>
             <tr>
                 <th>Jugador 1 PDF vs oficial</th>
-                <th>Fecha</th>
                 <th>Resultado J1</th>
                 <th>J1 original</th>
                 <th>J1 normalizado</th>
@@ -403,7 +446,6 @@
                         {{ partido.jugador1_comparacion_nombre }}
                     </span>
                 </td>
-                <td>{{ partido.fecha or "" }}</td>
                 <td>{{ partido.resultado_jugador1 or "" }}</td>
                 <td>{{ partido.resultado_jugador1_original or "" }}</td>
                 <td>{{ partido.resultado_jugador1_normalizado or "" }}</td>
@@ -448,11 +490,12 @@
             </tr>
             {% else %}
             <tr>
-                <td colspan="14">No se han detectado partidos para esta ronda.</td>
+                <td colspan="13">No se han detectado partidos para esta ronda.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    {% endif %}
     {% endfor %}
 {% endif %}
 
